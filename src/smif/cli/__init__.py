@@ -68,6 +68,7 @@ from __future__ import print_function
 import logging
 import os
 import sys
+import warnings
 from argparse import ArgumentParser
 
 import pkg_resources
@@ -208,20 +209,44 @@ def write_scenario_variants(config_store, scenario_name, list_of_variants):
         The original scenario file is first duplicated in {scenario_name}_template.yml
     """
     scenario_file = scenario_name+'.yml'
-    
-    """Make a copy of the original file under {scenario_name}_template.yml in the
+    full_path = os.path.join(config_store.config_folders['scenarios'], scenario_file)
+    full_path_template = os.path.join(config_store.config_folders['scenarios'], scenario_name+'_template.yml')
+
+    # check that template file exists
+    if not os.path.isfile(full_path_template):
+        raise FileNotFoundError('Could not found template file {}.'.format(full_path_template))
+    # check if scenario file already exists and ask permission from user for overwriting it
+    if os.path.isfile(full_path):
+        print('File {} has been found and will be overwritten. Continue ? [y/n]'.format(full_path))
+        yes_or_no = input()
+        while(True):
+            if yes_or_no=='yes' or yes_or_no=='y':
+                break
+            elif yes_or_no=='no' or yes_or_no=='n':
+                sys.exit('Abort.')
+            else:
+                print('Please answer yes or no [y/n]')
+        
+    """Copy the template {scenario_name}_template.yml to {scenario_name}.yml the
        config/scenarios/ directory
     """
-    full_path = os.path.join(config_store.config_folders['scenarios'], scenario_name)
-    copy_template_file = 'cp '+full_path+'.yml '+full_path+'_template.yml'
+    full_path_template = os.path.join(config_store.config_folders['scenarios'], scenario_name+'_template.yml')
+    copy_template_file = 'cp '+full_path_template+' '+full_path
     os.system(copy_template_file)
 
     scenario = config_store.read_scenario(scenario_name)
+    # check that template scenario file does not have more than one variant
+    if len(scenario['variants'])<1:
+        sys.exit('Template file {} should must define a template variant'.format(full_path_template))
+    elif len(scenario['variants'])>1:
+        warnings.warn('More than one variant found in scenario template file {}.'.format(full_path_template))
+    variant_template_name = scenario['variants'][0]['name']
+    # Get first variant defined in template scenario file
+    variant = config_store.read_scenario_variant(scenario_name, variant_template_name)
+
     root = {}
-    variant = config_store.read_scenario_variant(scenario_name,
-                                                         scenario_name+'_variant')
     """ root is a dict. keyed on scenario outputs. 
-        Entries contain the root of the variants filename
+        Entries contain the root of the variants filenames
     """
     for output in scenario['provides']:
         root[output['name']], ext = os.path.splitext(variant['data'][output['name']])
@@ -236,7 +261,7 @@ def write_scenario_variants(config_store, scenario_name, list_of_variants):
         if(first_variant):
             first_variant = False
             config_store.update_scenario_variant(scenario_name,
-                                                    scenario_name+'_variant', variant)
+                                                    variant_template_name, variant)
         else:
             config_store.write_scenario_variant(scenario_name, variant)
 
