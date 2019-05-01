@@ -195,17 +195,27 @@ class Results:
 
         results = pd.concat(list_of_df, keys=names_of_df, names=['model_run']).reset_index()
 
-        # Unpack the timestep_decision tuples into individual columns and return
+        # Unpack the timestep_decision tuples into individual columns and drop the combined
         results[['timestep', 'decision']] = pd.DataFrame(results['timestep_decision'].tolist(),
                                                          index=results.index)
 
-        return results.drop(columns=['timestep_decision'])
+        results = results.drop(columns=['timestep_decision'])
 
         # Rename the output columns to include units
         renamed_cols = dict()
         for key, val in self._output_units.items():
             renamed_cols[key] = '{}_({})'.format(key, val)
         results = results.rename(index=str, columns=renamed_cols)
+
+        # Now reorder the columns. Want model_run then timestep then decision
+        cols = results.columns.tolist()
+
+        assert (cols[0] == 'model_run')
+        cols.insert(1, cols.pop(cols.index('timestep')))
+        cols.insert(2, cols.pop(cols.index('decision')))
+        assert(cols[0:3] == ['model_run', 'timestep', 'decision'])
+
+        return results[cols]
 
     def get_units(self, output_name: str):
         """ Return the units of a given output.
