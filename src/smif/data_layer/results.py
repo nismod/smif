@@ -149,13 +149,33 @@ class Results:
              decisions: list = None,
              time_decision_tuples: list = None,
              ):
-        """ Return the results from the store.
+        """ Return results from the store as a formatted pandas data frame. There are a number
+        of ways of requesting specific timesteps/decisions. You can specify either:
+
+            a list of (timestep, decision) tuples
+                in which case data for all of those tuples matching the available results will
+                be returned
+        or:
+            a list of timesteps
+                in which case data for all of those timesteps (and any decision iterations)
+                matching the available results will be returned
+        or:
+            a list of decision iterations
+                in which case data for all of those decision iterations (and any timesteps)
+                matching the available results will be returned
+        or:
+            a list of timesteps and a list of decision iterations
+                in which case data for the Cartesian product of those timesteps and those
+                decision iterations matching the available results will be returned
+        or:
+            nothing
+                in which case all available results will be returned
 
         Parameters
         ----------
         model_run_names: list the requested model run names
         sec_model_names: list the requested sector model names (exactly one required)
-        output_names: list the requested output names (exactly one required)
+        output_names: list the requested output names (output specs must all match)
         timesteps: list the requested timesteps
         decisions: list the requested decision iterations
         time_decision_tuples: list a list of requested (timestep, decision) tuples
@@ -165,10 +185,7 @@ class Results:
         A Pandas dataframe
         """
 
-        if len(sec_model_names) != 1:
-            raise NotImplementedError(
-                'Results.read() currently requires exactly one sector model'
-            )
+        self.validate_names(model_run_names, sec_model_names, output_names)
 
         results_dict = self._store.get_results(
             model_run_names,
@@ -240,3 +257,20 @@ class Results:
         str the units of the output
         """
         return self._output_units[output_name]
+
+    def validate_names(self, model_run_names, sec_model_names, output_names):
+
+        if len(sec_model_names) != 1:
+            raise NotImplementedError(
+                'Results.read() currently requires exactly one sector model'
+            )
+
+        if len(model_run_names) < 1:
+            raise ValueError(
+                'Results.read() requires at least one sector model name'
+            )
+
+        if len(output_names) < 1:
+            raise ValueError(
+                'Results.read() requires at least one output name'
+            )

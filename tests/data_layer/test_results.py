@@ -139,7 +139,7 @@ class TestSomeResults:
         output_answer_b = {0: [2010, 2015, 2020, 2025, 2030]}
         assert outputs_b['energy_use'] == output_answer_b
 
-    def test_read_exceptions(self, results_with_results):
+    def test_read_validate_names(self, results_with_results):
 
         # Passing anything other than one sector model or output is current not implemented
         with raises(NotImplementedError) as e:
@@ -158,21 +158,21 @@ class TestSomeResults:
             )
         assert 'requires exactly one sector model' in str(e.value)
 
-        with raises(NotImplementedError) as e:
+        with raises(ValueError) as e:
             results_with_results.read(
-                model_run_names=['one', 'two'],
+                model_run_names=[],
+                sec_model_names=['one'],
+                output_names=['one']
+            )
+        assert 'requires at least one sector model name' in str(e.value)
+
+        with raises(ValueError) as e:
+            results_with_results.read(
+                model_run_names=['one'],
                 sec_model_names=['one'],
                 output_names=[]
             )
-        assert 'requires exactly one output' in str(e.value)
-
-        with raises(NotImplementedError) as e:
-            results_with_results.read(
-                model_run_names=['one', 'two'],
-                sec_model_names=['one'],
-                output_names=['one', 'two']
-            )
-        assert 'requires exactly one output' in str(e.value)
+        assert 'requires at least one output name' in str(e.value)
 
     def test_read(self):
         # This is difficult to test without fixtures defining an entire canonical project.
