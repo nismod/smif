@@ -15,7 +15,6 @@ SmifDataReadError
     to database
 """
 import itertools
-import warnings
 from copy import deepcopy
 from logging import getLogger
 from operator import itemgetter
@@ -805,7 +804,7 @@ class Store():
 
         Parameters
         ----------
-        model_run_id : str
+        model_run_name : str
         model_name : str
         output_spec : smif.metadata.Spec
         timestep : int, default=None
@@ -1110,60 +1109,62 @@ class Store():
             model_run_name, sec_model_name, output_name, sorted(list_of_tuples)
         )
 
-    def get_results(self, model_runs, sec_model_name, outputs, timesteps=None,
-                    decision_iteration=None, t_d_tuples=None):
+    def get_results(self,
+                    model_run_names: list,
+                    sec_model_name: str,
+                    output_names: list,
+                    timesteps: list = None,
+                    decisions: list = None,
+                    time_decision_tuples: list = None,
+                    ):
         """Return data for multiple timesteps and decision iterations for a given output from
         a given sector model for multiple model runs.
 
         Parameters
         ----------
-        model_runs : List of str (model run names)
-        sec_model_name : str
-        output_name : str
-        timesteps : optional list of timesteps
-        decision_iteration : optional list of decision iterations
-        t_d_tuples : optional list of unique (timestep, decision) tuples
+        model_run_names: list the requested model run names
+        sec_model_name: the requested sector model name
+        output_names: list the requested output names (output specs must all match)
+        timesteps: list the requested timesteps
+        decisions: list the requested decision iterations
+        time_decision_tuples: list a list of requested (timestep, decision) tuples
 
         Returns
         -------
-        Dictionary of DataArray objects keyed on model run names.
+        Nested dictionary of DataArray objects, keyed on model run name and output name.
         Returned DataArrays include one extra (timestep, decision_iteration) dimension.
         """
-        list_model_outputs = []
-        # Build list of model outputs name
-        sec_model = self.read_model(sec_model_name)
-        for output in sec_model['outputs']:
-            list_model_outputs.append(output['name'])
-        # Check wether each queried output is available
-        found_outputs = []
-        for output_name in outputs:
-            if output_name in list_model_outputs:
-                found_outputs.append(output_name)
-            else:
-                warnings.warn('Output {} not found and ignored.'.format(output_name))
-        # Get Spec shape of first found output
-        for output in sec_model['outputs']:
-            if output['name'] == found_outputs[0]:
-                spec_shape = Spec.from_dict(output).shape
-        # Check subsequent found outputs and check that the shape matches
-        # Must loop over all sector model outputs again to extract spec object
-        for output in sec_model['outputs']:
-            for output_name in found_outputs[1:]:
-              if output['name'] == output_name:
-                  if not(Spec.from_dict(output).shape == spec_shape):
-                      raise ValueError('spec dimension for output {} not matching {}'.format(output_name, spec_shape))
-        results_dict = {}
-        for model_run_name in model_runs:
-            results_dict[model_run_name] = {}
-            for output_name in found_outputs:
+
+        # List the available output names and verify requested outputs match
+        outputs = self.read_model(sec_model_name)['outputs']
+        available_outputs = [output['name'] for output in outputs]
+
+        for output_name in output_names:
+            assert output_name in available_outputs, \
+                '{} is not an output of sector model {}.'.format(output_name, sec_model_name)
+
+        # The spec for each requested output must be the same. We check they have the same
+        # coordinates
+        coords = [Spec.from_dict(output).coords for output in outputs if
+                  output['name'] in output_names]
+
+        for coord in coords:
+            if coord != coords[0]:
+                raise ValueError('Different outputs must have the same coordinates')
+
+        # Now actually obtain the requested results
+        results_dict = dict()
+        for model_run_name in model_run_names:
+            results_dict[model_run_name] = dict()
+            for output_name in output_names:
                 results_dict[model_run_name][output_name] = self.get_result_darray(
                     model_run_name,
                     sec_model_name,
                     output_name,
                     timesteps,
-                    decision_iteration,
-                    t_d_tuples
-            )
+                    decisions,
+                    time_decision_tuples
+                )
         return results_dict
 
     # endregion
