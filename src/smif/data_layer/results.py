@@ -170,52 +170,63 @@ class Results:
                 'Results.read() currently requires exactly one sector model'
             )
 
-        if len(output_names) != 1:
-            raise NotImplementedError(
-                'Results.read() currently requires exactly one output'
-            )
-
         results_dict = self._store.get_results(
             model_run_names,
             sec_model_names[0],
-            output_names[0],
+            output_names,
             timesteps,
             decisions,
             time_decision_tuples
         )
 
         # Keep tabs on the units for each output
-        for x in results_dict.values():
-            self._output_units[x.name] = x.unit
+        for model_run_name in model_run_names:
+            for output_name in output_names:
+                res = results_dict[model_run_name][output_name]
+                self._output_units[res.name] = res.unit
 
-        # Get each DataArray as a pandas data frame and concatenate, resetting the index to
-        # give back a flat data array
-        list_of_df = [x.as_df() for x in results_dict.values()]
-        names_of_df = [x for x in results_dict.keys()]
+        # For each output, concatenate all requested model runs into a single data frame
+        formatted_frames = []
+        for output_name in output_names:
+            # Get each DataArray as a pandas data frame and concatenate, resetting the index to
+            # give back a flat data array
+            list_of_df = [results_dict[x][output_name].as_df() for x in model_run_names]
+            names_of_df = [x for x in results_dict.keys()]
 
-        results = pd.concat(list_of_df, keys=names_of_df, names=['model_run']).reset_index()
+            formatted_frames.append(
+                pd.concat(list_of_df, keys=names_of_df, names=['model_run']).reset_index())
+
+        # Append the other output columns to the first data frame
+        formatted_frame = formatted_frames.pop(0)
+        output_names.pop(0)
+
+        for other_frame, output_name in zip(formatted_frames, output_names):
+            assert (formatted_frame['model_run'] == other_frame['model_run']).all()
+            assert (formatted_frame['timestep_decision'] == other_frame[
+                'timestep_decision']).all()
+            formatted_frame[output_name] = other_frame[output_name]
 
         # Unpack the timestep_decision tuples into individual columns and drop the combined
-        results[['timestep', 'decision']] = pd.DataFrame(results['timestep_decision'].tolist(),
-                                                         index=results.index)
+        formatted_frame[['timestep', 'decision']] = pd.DataFrame(
+            formatted_frame['timestep_decision'].tolist(), index=formatted_frame.index)
 
-        results = results.drop(columns=['timestep_decision'])
+        formatted_frame = formatted_frame.drop(columns=['timestep_decision'])
 
         # Rename the output columns to include units
         renamed_cols = dict()
         for key, val in self._output_units.items():
             renamed_cols[key] = '{}_({})'.format(key, val)
-        results = results.rename(index=str, columns=renamed_cols)
+        formatted_frame = formatted_frame.rename(index=str, columns=renamed_cols)
 
         # Now reorder the columns. Want model_run then timestep then decision
-        cols = results.columns.tolist()
+        cols = formatted_frame.columns.tolist()
 
         assert (cols[0] == 'model_run')
         cols.insert(1, cols.pop(cols.index('timestep')))
         cols.insert(2, cols.pop(cols.index('decision')))
-        assert(cols[0:3] == ['model_run', 'timestep', 'decision'])
+        assert (cols[0:3] == ['model_run', 'timestep', 'decision'])
 
-        return results[cols]
+        return formatted_frame[cols]
 
     def get_units(self, output_name: str):
         """ Return the units of a given output.
