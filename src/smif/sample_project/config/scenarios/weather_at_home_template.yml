@@ -1,0 +1,35 @@
+name: weather_at_home
+description: UK weather
+provides:
+- name: maximum_temperature
+  description: ''
+  dims:
+  - region
+  dtype: float
+  unit: K
+- name: minimum_temperature
+  description: ''
+  dims:
+  - region
+  dtype: float
+  unit: K
+- name: average_radiation
+  description: ''
+  dims:
+  - region
+  dtype: float
+  unit: K
+- name: average_wind_speed
+  description: ''
+  dims:
+  - region
+  dtype: float
+  unit: m.s-1
+variants:
+- name: blabla
+  description: ''
+  data:
+    maximum_temperature: t_max__NF.csv
+    minimum_temperature: t_min__NF.csv
+    average_radiation: rsds__NF.csv
+    average_wind_speed: wss__NF.csv
