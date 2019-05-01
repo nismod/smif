@@ -15,6 +15,7 @@ SmifDataReadError
     to database
 """
 import itertools
+import warnings
 from copy import deepcopy
 from logging import getLogger
 from operator import itemgetter
@@ -1109,7 +1110,7 @@ class Store():
             model_run_name, sec_model_name, output_name, sorted(list_of_tuples)
         )
 
-    def get_results(self, model_runs, sec_model_name, output_name, timesteps=None,
+    def get_results(self, model_runs, sec_model_name, outputs, timesteps=None,
                     decision_iteration=None, t_d_tuples=None):
         """Return data for multiple timesteps and decision iterations for a given output from
         a given sector model for multiple model runs.
@@ -1128,15 +1129,40 @@ class Store():
         Dictionary of DataArray objects keyed on model run names.
         Returned DataArrays include one extra (timestep, decision_iteration) dimension.
         """
+        list_model_outputs = []
+        # Build list of model outputs name
+        sec_model = self.read_model(sec_model_name)
+        for output in sec_model['outputs']:
+            list_model_outputs.append(output['name'])
+        # Check wether each queried output is available
+        found_outputs = []
+        for output_name in outputs:
+            if output_name in list_model_outputs:
+                found_outputs.append(output_name)
+            else:
+                warnings.warn('Output {} not found and ignored.'.format(output_name))
+        # Get Spec shape of first found output
+        for output in sec_model['outputs']:
+            if output['name'] == found_outputs[0]:
+                spec_shape = Spec.from_dict(output).shape
+        # Check subsequent found outputs and check that the shape matches
+        # Must loop over all sector model outputs again to extract spec object
+        for output in sec_model['outputs']:
+            for output_name in found_outputs[1:]:
+              if output['name'] == output_name:
+                  if not(Spec.from_dict(output).shape == spec_shape):
+                      raise ValueError('spec dimension for output {} not matching {}'.format(output_name, spec_shape))
         results_dict = {}
         for model_run_name in model_runs:
-            results_dict[model_run_name] = self.get_result_darray(
-                model_run_name,
-                sec_model_name,
-                output_name,
-                timesteps,
-                decision_iteration,
-                t_d_tuples
+            results_dict[model_run_name] = {}
+            for output_name in found_outputs:
+                results_dict[model_run_name][output_name] = self.get_result_darray(
+                    model_run_name,
+                    sec_model_name,
+                    output_name,
+                    timesteps,
+                    decision_iteration,
+                    t_d_tuples
             )
         return results_dict
 
