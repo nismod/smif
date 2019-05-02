@@ -229,12 +229,6 @@ class Results:
 
         formatted_frame = formatted_frame.drop(columns=['timestep_decision'])
 
-        # Rename the output columns to include units
-        renamed_cols = dict()
-        for key, val in self._output_units.items():
-            renamed_cols[key] = '{}_({})'.format(key, val)
-        formatted_frame = formatted_frame.rename(index=str, columns=renamed_cols)
-
         # Now reorder the columns. Want model_run then timestep then decision
         cols = formatted_frame.columns.tolist()
 
