@@ -13,14 +13,7 @@ from smif.metadata import Spec
 
 
 @fixture
-def results(empty_store):
-    """Results fixture
-    """
-    return Results(store=empty_store)
-
-
-@fixture
-def results_with_results(empty_store):
+def results_no_results(empty_store):
     """Results fixture with a model run and fictional results
     """
     empty_store.write_dimension({
@@ -84,25 +77,39 @@ def results_with_results(empty_store):
         'narratives': {}
     })
 
+    return Results(store=empty_store)
+
+
+@fixture
+def results_with_results(results_no_results):
+
+    sample_output = {
+        'name': 'sample_output',
+        'dtype': 'float',
+        'dims': ['sample_dim'],
+        'coords': {'sample_dim': [{'name': 'a'}, {'name': 'b'}]},
+        'unit': 'm'
+    }
+
     spec = Spec.from_dict(sample_output)
     data = np.zeros((2,), dtype=float)
     sample_results = DataArray(spec, data)
 
-    empty_store.write_results(sample_results, 'model_run_1', 'a_model', 2010, 0)
-    empty_store.write_results(sample_results, 'model_run_1', 'a_model', 2015, 0)
-    empty_store.write_results(sample_results, 'model_run_1', 'a_model', 2020, 0)
-    empty_store.write_results(sample_results, 'model_run_1', 'a_model', 2015, 1)
-    empty_store.write_results(sample_results, 'model_run_1', 'a_model', 2020, 1)
-    empty_store.write_results(sample_results, 'model_run_1', 'a_model', 2015, 2)
-    empty_store.write_results(sample_results, 'model_run_1', 'a_model', 2020, 2)
+    results_no_results._store.write_results(sample_results, 'model_run_1', 'a_model', 2010, 0)
+    results_no_results._store.write_results(sample_results, 'model_run_1', 'a_model', 2015, 0)
+    results_no_results._store.write_results(sample_results, 'model_run_1', 'a_model', 2020, 0)
+    results_no_results._store.write_results(sample_results, 'model_run_1', 'a_model', 2015, 1)
+    results_no_results._store.write_results(sample_results, 'model_run_1', 'a_model', 2020, 1)
+    results_no_results._store.write_results(sample_results, 'model_run_1', 'a_model', 2015, 2)
+    results_no_results._store.write_results(sample_results, 'model_run_1', 'a_model', 2020, 2)
 
-    empty_store.write_results(sample_results, 'model_run_1', 'b_model', 2010, 0)
-    empty_store.write_results(sample_results, 'model_run_1', 'b_model', 2015, 0)
-    empty_store.write_results(sample_results, 'model_run_1', 'b_model', 2020, 0)
-    empty_store.write_results(sample_results, 'model_run_1', 'b_model', 2025, 0)
-    empty_store.write_results(sample_results, 'model_run_1', 'b_model', 2030, 0)
+    results_no_results._store.write_results(sample_results, 'model_run_1', 'b_model', 2010, 0)
+    results_no_results._store.write_results(sample_results, 'model_run_1', 'b_model', 2015, 0)
+    results_no_results._store.write_results(sample_results, 'model_run_1', 'b_model', 2020, 0)
+    results_no_results._store.write_results(sample_results, 'model_run_1', 'b_model', 2025, 0)
+    results_no_results._store.write_results(sample_results, 'model_run_1', 'b_model', 2030, 0)
 
-    return Results(store=empty_store)
+    return results_no_results
 
 
 class TestNoResults:
@@ -148,36 +155,20 @@ class TestNoResults:
             Results(store={'interface': 'local_csv', 'dir': invalid_dir})
         assert 'to be a valid directory' in str(e)
 
-    def test_list_model_runs(self, results_with_results):
-        assert results_with_results.list_model_runs() == ['model_run_1', 'model_run_2']
+    def test_list_model_runs(self, results_no_results):
+        assert results_no_results.list_model_runs() == ['model_run_1', 'model_run_2']
 
-    def test_list_no_model_runs(self, results):
+    def test_list_no_model_runs(self, empty_store):
         # Should be no model runs in an empty Results()
+        results = Results(store=empty_store)
         assert results.list_model_runs() == []
 
-    def test_available_results(self, results_with_results):
-        available = results_with_results.available_results('model_run_1')
+    def test_available_results(self, results_no_results):
+        available = results_no_results.available_results('model_run_1')
 
         assert available['model_run'] == 'model_run_1'
         assert available['sos_model'] == 'a_sos_model'
-        assert available['sector_models'] == {
-            'a_model': {
-                'outputs': {
-                    'sample_output': {
-                        0: [2010, 2015, 2020],
-                        1: [2015, 2020],
-                        2: [2015, 2020]
-                    }
-                }
-            },
-            'b_model': {
-                'outputs': {
-                    'sample_output': {
-                        0: [2010, 2015, 2020, 2025, 2030]
-                    }
-                }
-            }
-        }
+        assert available['sector_models'] == {}
 
 
 class TestSomeResults:
