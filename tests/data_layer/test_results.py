@@ -109,6 +109,12 @@ def results_with_results(results_no_results):
     results_no_results._store.write_results(sample_results, 'model_run_1', 'b_model', 2025, 0)
     results_no_results._store.write_results(sample_results, 'model_run_1', 'b_model', 2030, 0)
 
+    results_no_results._store.write_results(sample_results, 'model_run_2', 'b_model', 2010, 0)
+    results_no_results._store.write_results(sample_results, 'model_run_2', 'b_model', 2015, 0)
+    results_no_results._store.write_results(sample_results, 'model_run_2', 'b_model', 2020, 0)
+    results_no_results._store.write_results(sample_results, 'model_run_2', 'b_model', 2025, 0)
+    results_no_results._store.write_results(sample_results, 'model_run_2', 'b_model', 2030, 0)
+
     return results_no_results
 
 
@@ -197,6 +203,21 @@ class TestSomeResults:
         output_answer_b = {0: [2010, 2015, 2020, 2025, 2030]}
         assert outputs_b['sample_output'] == output_answer_b
 
+        available = results_with_results.available_results('model_run_2')
+
+        assert available['model_run'] == 'model_run_2'
+        assert available['sos_model'] == 'a_sos_model'
+
+        sec_models = available['sector_models']
+        assert sorted(sec_models.keys()) == ['b_model']
+
+        # Check a_model outputs are correct
+        outputs = sec_models['b_model']['outputs']
+        assert sorted(outputs_a.keys()) == ['sample_output']
+
+        output_answer = {0: [2010, 2015, 2020, 2025, 2030]}
+        assert outputs['sample_output'] == output_answer
+
     def test_read_validate_names(self, results_with_results):
 
         # Passing anything other than one sector model or output is current not implemented
@@ -233,10 +254,8 @@ class TestSomeResults:
         assert 'requires at least one output name' in str(e.value)
 
     def test_read(self, results_with_results):
-        # This is difficult to test without fixtures defining an entire canonical project.
-        # See smif issue #304 (https://github.com/nismod/smif/issues/304).
 
-        # should pass validation
+        # Read one model run and one output
         results_data = results_with_results.read(
             model_run_names=['model_run_1'],
             model_names=['a_model'],
@@ -251,6 +270,25 @@ class TestSomeResults:
                 ('decision', [0, 0, 1, 2, 0, 1, 2, 0, 0, 1, 2, 0, 1, 2]),
                 ('sample_dim', ['a', 'a', 'a', 'a', 'a', 'a', 'a',
                                 'b', 'b', 'b', 'b', 'b', 'b', 'b']),
+                ('sample_output', 0.0),
+            ])
+        )
+
+        pd.testing.assert_frame_equal(results_data, expected)
+
+        # Read two model runs and one output
+        results_data = results_with_results.read(
+            model_run_names=['model_run_1', 'model_run_2'],
+            model_names=['b_model'],
+            output_names=['sample_output']
+        )
+
+        expected = pd.DataFrame(
+            OrderedDict([
+                ('model_run', ['model_run_1'] * 10 + ['model_run_2'] * 10),
+                ('timestep', [2010, 2015, 2020, 2025, 2030] * 4),
+                ('decision', 0),
+                ('sample_dim', ['a'] * 5 + ['b'] * 5 + ['a'] * 5 + ['b'] * 5),
                 ('sample_output', 0.0),
             ])
         )
