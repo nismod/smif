@@ -2,6 +2,7 @@
 """
 
 import os
+from collections import OrderedDict
 
 import numpy as np
 import pandas as pd
@@ -24,13 +25,13 @@ def results_with_results(empty_store):
     """
     empty_store.write_dimension({
         'name': 'sample_dim',
-        'elements': [ {'name': 'a'}, {'name': 'b'} ]
+        'elements': [{'name': 'a'}, {'name': 'b'}]
     })
     sample_output = {
         'name': 'sample_output',
         'dtype': 'float',
         'dims': ['sample_dim'],
-        'coords': { 'sample_dim': [ {'name': 'a'}, {'name': 'b'} ] },
+        'coords': {'sample_dim': [{'name': 'a'}, {'name': 'b'}]},
         'unit': 'm'
     }
     empty_store.write_model({
@@ -240,7 +241,6 @@ class TestSomeResults:
             )
         assert 'requires at least one output name' in str(e.value)
 
-
     def test_read(self, results_with_results):
         # This is difficult to test without fixtures defining an entire canonical project.
         # See smif issue #304 (https://github.com/nismod/smif/issues/304).
@@ -251,18 +251,17 @@ class TestSomeResults:
             model_names=['a_model'],
             output_names=['sample_output']
         )
-        print(results_data)
-        expected = pd.DataFrame({
-            'model_run': 'model_run_1',
-            'timestep': [
-                2010, 2015, 2015, 2015, 2020, 2020, 2020,
-                2010, 2015, 2015, 2015, 2020, 2020, 2020],
-            'decision': [
-                0, 0, 1, 2, 0, 1, 2,
-                0, 0, 1, 2, 0, 1, 2],
-            'sample_dim': [
-                'a', 'a', 'a', 'a', 'a', 'a', 'a',
-                'b', 'b', 'b', 'b', 'b', 'b', 'b'],
-            'sample_output': 0.0,
-        })
+
+        expected = pd.DataFrame(
+            OrderedDict([
+                ('model_run', 'model_run_1'),
+                ('timestep', [2010, 2015, 2015, 2015, 2020, 2020, 2020,
+                              2010, 2015, 2015, 2015, 2020, 2020, 2020]),
+                ('decision', [0, 0, 1, 2, 0, 1, 2, 0, 0, 1, 2, 0, 1, 2]),
+                ('sample_dim', ['a', 'a', 'a', 'a', 'a', 'a', 'a',
+                                'b', 'b', 'b', 'b', 'b', 'b', 'b']),
+                ('sample_output', 0.0),
+            ])
+        )
+
         pd.testing.assert_frame_equal(results_data, expected)
