@@ -15,8 +15,9 @@ SmifDataReadError
     to database
 """
 import itertools
+import logging
+import os
 from copy import deepcopy
-from logging import getLogger
 from operator import itemgetter
 from typing import Dict, List, Optional
 
@@ -24,7 +25,8 @@ import numpy as np  # type: ignore
 from smif.data_layer import DataArray
 from smif.data_layer.abstract_data_store import DataStore
 from smif.data_layer.abstract_metadata_store import MetadataStore
-from smif.data_layer.file import CSVDataStore, ParquetDataStore
+from smif.data_layer.file import (CSVDataStore, FileMetadataStore,
+                                  ParquetDataStore, YamlConfigStore)
 from smif.data_layer.validate import (validate_sos_model_config,
                                       validate_sos_model_format)
 from smif.exception import SmifDataNotFoundError
@@ -32,7 +34,8 @@ from smif.metadata.spec import Spec
 
 
 class Store():
-    """Common interface to data store, composed of config, metadata and data store implementations.
+    """Common interface to data store, composed of config, metadata and data store
+    implementations.
 
     Parameters
     ----------
@@ -42,12 +45,49 @@ class Store():
     """
     def __init__(self, config_store, metadata_store: MetadataStore,
                  data_store: DataStore, model_base_folder="."):
-        self.logger = getLogger(__name__)
+        self.logger = logging.getLogger(__name__)
         self.config_store = config_store
         self.metadata_store = metadata_store
         self.data_store = data_store
         # base folder for any relative paths to models
         self.model_base_folder = str(model_base_folder)
+
+    @classmethod
+    def from_dict(cls, config):
+        """Create Store from configuration dict
+        """
+
+        try:
+            interface = config['interface']
+        except KeyError:
+            logging.warning('No interface provided for Results().  Assuming local_csv')
+            interface = 'local_csv'
+
+        try:
+            directory = config['dir']
+        except KeyError:
+            logging.warning("No directory provided for Results().  Assuming '.'")
+            directory = '.'
+
+        # Check that the directory is valid
+        if not os.path.isdir(directory):
+            raise ValueError('Expected {} to be a valid directory'.format(directory))
+
+        if interface == 'local_csv':
+            data_store = CSVDataStore(directory)
+        elif interface == 'local_parquet':
+            data_store = ParquetDataStore(directory)
+        else:
+            raise ValueError(
+                'Unsupported interface "{}". Supply local_csv or local_parquet'.format(
+                    interface))
+
+        return cls(
+            config_store=YamlConfigStore(directory),
+            metadata_store=FileMetadataStore(directory),
+            data_store=data_store,
+            model_base_folder=directory
+        )
 
     #
     # CONFIG
@@ -896,8 +936,8 @@ class Store():
 
         canonical_list = []
 
-        for t, d, sec_model_name, output_name in available_results:
-            canonical_list.append((t, 0, sec_model_name, output_name))
+        for t, d, model_name, output_name in available_results:
+            canonical_list.append((t, 0, model_name, output_name))
 
         # Return as a set to remove duplicates
         return set(canonical_list)
@@ -923,7 +963,7 @@ class Store():
         """
 
         # Model results are returned as a tuple
-        # (timestep, decision_it, sec_model_name, output_name)
+        # (timestep, decision_it, model_name, output_name)
         # so we first build the full list of expected results tuples.
 
         expected_results = []
@@ -937,13 +977,13 @@ class Store():
         sos_config = self.read_sos_model(sos_model_name)
 
         # For each sector model, get the outputs and create the tuples
-        for sec_model_name in sos_config['sector_models']:
+        for model_name in sos_config['sector_models']:
 
-            sec_model_config = self.read_model(sec_model_name)
-            outputs = sec_model_config['outputs']
+            model_config = self.read_model(model_name)
+            outputs = model_config['outputs']
 
             for output, t in itertools.product(outputs, timesteps):
-                expected_results.append((t, 0, sec_model_name, output['name']))
+                expected_results.append((t, 0, model_name, output['name']))
 
         # Return as a set to remove duplicates
         return set(expected_results)
@@ -967,12 +1007,12 @@ class Store():
         return self.canonical_expected_results(
             model_run_name) - self.canonical_available_results(model_run_name)
 
-    def _get_result_darray_internal(self, model_run_name, sec_model_name, output_name,
-                                    t_d_tuples):
+    def _get_result_darray_internal(self, model_run_name, model_name, output_name,
+                                    time_decision_tuples):
         """Internal implementation for `get_result_darray`, after the unique list of
         (timestep, decision) tuples has been generated and validated.
 
-        This method gets the spec for the output defined by the model_run_name, sec_model_name
+        This method gets the spec for the output defined by the model_run_name, model_name
         and output_name and expands the spec to include an additional dimension for the list of
         tuples.
 
@@ -983,9 +1023,9 @@ class Store():
         Parameters
         ----------
         model_run_name : str
-        sec_model_name : str
+        model_name : str
         output_name : str
-        t_d_tuples : list of unique (timestep, decision) tuples
+        time_decision_tuples : list of unique (timestep, decision) tuples
 
         Returns
         -------
@@ -994,9 +1034,9 @@ class Store():
 
         # Get the output spec given the name of the sector model and output
         output_spec = None
-        sec_model = self.read_model(sec_model_name)
+        model = self.read_model(model_name)
 
-        for output in sec_model['outputs']:
+        for output in model['outputs']:
 
             # Ignore if the output name doesn't match
             if output_name != output['name']:
@@ -1009,8 +1049,8 @@ class Store():
         # Read the results for each (timestep, decision) tuple and stack them
         list_of_numpy_arrays = []
 
-        for t, d in t_d_tuples:
-            d_array = self.read_results(model_run_name, sec_model_name, output_spec, t, d)
+        for t, d in time_decision_tuples:
+            d_array = self.read_results(model_run_name, model_name, output_spec, t, d)
             list_of_numpy_arrays.append(d_array.data)
 
         stacked_data = np.vstack(list_of_numpy_arrays)
@@ -1019,15 +1059,15 @@ class Store():
         # Add new dimensions to the data spec
         output_dict = output_spec.as_dict()
         output_dict['dims'].append('timestep_decision')
-        output_dict['coords']['timestep_decision'] = t_d_tuples
+        output_dict['coords']['timestep_decision'] = time_decision_tuples
 
         output_spec = Spec.from_dict(output_dict)
 
         # Create a new DataArray from the modified spec and stacked data
         return DataArray(output_spec, np.reshape(data, output_spec.shape))
 
-    def get_result_darray(self, model_run_name, sec_model_name, output_name, timesteps=None,
-                          decision_iteration=None, t_d_tuples=None):
+    def get_result_darray(self, model_run_name, model_name, output_name, timesteps=None,
+                          decision_iterations=None, time_decision_tuples=None):
         """Return data for multiple timesteps and decision iterations for a given output from
         a given sector model in a specific model run.
 
@@ -1058,60 +1098,65 @@ class Store():
         Parameters
         ----------
         model_run_name : str
-        sec_model_name : str
+        model_name : str
         output_name : str
         timesteps : optional list of timesteps
-        decision_iteration : optional list of decision iterations
-        t_d_tuples : optional list of unique (timestep, decision) tuples
+        decision_iterations : optional list of decision iterations
+        time_decision_tuples : optional list of unique (timestep, decision) tuples
 
         Returns
         -------
         DataArray with expanded spec and the data requested
         """
-
-        # If a list of (t,d) tuples is supplied, disallow specifying timesteps or decision
-        # iterations
-        if t_d_tuples:
-            assert (not timesteps and not decision_iteration)
-
         available = self.available_results(model_run_name)
 
         # Build up the necessary list of tuples
-        if not timesteps and not decision_iteration and not t_d_tuples:
-            list_of_tuples = [(t, d) for t, d, sec, out in available if
-                              sec == sec_model_name and out == output_name]
+        if not timesteps and not decision_iterations and not time_decision_tuples:
+            list_of_tuples = [
+                (t, d) for t, d, m, out in available
+                if m == model_name and out == output_name
+            ]
 
-        elif timesteps and not decision_iteration and not t_d_tuples:
-            list_of_tuples = [(t, d) for t, d, sec, out in available if
-                              sec == sec_model_name and out == output_name and t in timesteps]
+        elif timesteps and not decision_iterations and not time_decision_tuples:
+            list_of_tuples = [
+                (t, d) for t, d, m, out in available
+                if m == model_name and out == output_name and t in timesteps
+            ]
 
-        elif decision_iteration and not timesteps and not t_d_tuples:
-            list_of_tuples = [(t, d) for t, d, sec, out in available if
-                              sec == sec_model_name and out == output_name and
-                              d in decision_iteration]
+        elif decision_iterations and not timesteps and not time_decision_tuples:
+            list_of_tuples = [
+                (t, d) for t, d, m, out in available
+                if m == model_name and out == output_name and d in decision_iterations
+            ]
 
-        elif t_d_tuples and not timesteps and not decision_iteration:
-            list_of_tuples = [(t, d) for t, d, sec, out in available if
-                              sec == sec_model_name and out == output_name and (
-                                  t, d) in t_d_tuples]
+        elif time_decision_tuples and not timesteps and not decision_iterations:
+            list_of_tuples = [
+                (t, d) for t, d, m, out in available
+                if m == model_name and out == output_name and (t, d) in time_decision_tuples
+            ]
 
-        elif timesteps and decision_iteration and not t_d_tuples:
-            t_d = list(itertools.product(timesteps, decision_iteration))
-            list_of_tuples = [(t, d) for t, d, sec, out in available if
-                              sec == sec_model_name and out == output_name and (t, d) in t_d]
+        elif timesteps and decision_iterations and not time_decision_tuples:
+            t_d = list(itertools.product(timesteps, decision_iterations))
+            list_of_tuples = [
+                (t, d) for t, d, m, out in available
+                if m == model_name and out == output_name and (t, d) in t_d
+            ]
 
         else:
-            assert False, "It should not have been possible to reach this line of code."
+            msg = "Expected either timesteps, or decisions, or (timestep, decision) " + \
+                  "tuples, or timesteps and decisions, or none of the above."
+            raise ValueError(msg)
 
-        assert (len(list_of_tuples) > 0), "None of the requested data is available."
+        if not list_of_tuples:
+            raise SmifDataNotFoundError("None of the requested data is available.")
 
         return self._get_result_darray_internal(
-            model_run_name, sec_model_name, output_name, sorted(list_of_tuples)
+            model_run_name, model_name, output_name, sorted(list_of_tuples)
         )
 
     def get_results(self,
                     model_run_names: list,
-                    sec_model_name: str,
+                    model_name: str,
                     output_names: list,
                     timesteps: list = None,
                     decisions: list = None,
@@ -1122,26 +1167,33 @@ class Store():
 
         Parameters
         ----------
-        model_run_names: list the requested model run names
-        sec_model_name: the requested sector model name
-        output_names: list the requested output names (output specs must all match)
-        timesteps: list the requested timesteps
-        decisions: list the requested decision iterations
-        time_decision_tuples: list a list of requested (timestep, decision) tuples
+        model_run_names: list[str]
+            the requested model run names
+        model_name: str
+            the requested sector model name
+        output_names: list[str]
+            the requested output names (output specs must all match)
+        timesteps: list[int]
+            the requested timesteps
+        decisions: list[int]
+            the requested decision iterations
+        time_decision_tuples: list[tuple]
+            a list of requested (timestep, decision) tuples
 
         Returns
         -------
-        Nested dictionary of DataArray objects, keyed on model run name and output name.
-        Returned DataArrays include one extra (timestep, decision_iteration) dimension.
+        dict
+            Nested dictionary of DataArray objects, keyed on model run name and output name.
+            Returned DataArrays include one extra (timestep, decision_iteration) dimension.
         """
 
         # List the available output names and verify requested outputs match
-        outputs = self.read_model(sec_model_name)['outputs']
+        outputs = self.read_model(model_name)['outputs']
         available_outputs = [output['name'] for output in outputs]
 
         for output_name in output_names:
             assert output_name in available_outputs, \
-                '{} is not an output of sector model {}.'.format(output_name, sec_model_name)
+                '{} is not an output of sector model {}.'.format(output_name, model_name)
 
         # The spec for each requested output must be the same. We check they have the same
         # coordinates
@@ -1153,13 +1205,13 @@ class Store():
                 raise ValueError('Different outputs must have the same coordinates')
 
         # Now actually obtain the requested results
-        results_dict = dict()
+        results_dict = dict()  # type: Dict
         for model_run_name in model_run_names:
             results_dict[model_run_name] = dict()
             for output_name in output_names:
                 results_dict[model_run_name][output_name] = self.get_result_darray(
                     model_run_name,
-                    sec_model_name,
+                    model_name,
                     output_name,
                     timesteps,
                     decisions,

@@ -1,22 +1,9 @@
 """Results provides a common interface to access results from model runs.
-
-Raises
-------
-SmifDataNotFoundError
-    If data cannot be found in the store when try to read from the store
-SmifDataMismatchError
-    Data presented to read, write and update methods is in the
-    incorrect format or of wrong dimensions to that expected
-SmifDataReadError
-    When unable to read data e.g. unable to handle file type or connect
-    to database
 """
 
-import os
+from typing import Union
 
 import pandas as pd
-from smif.data_layer.file import (CSVDataStore, FileMetadataStore,
-                                  ParquetDataStore, YamlConfigStore)
 from smif.data_layer.store import Store
 
 
@@ -25,74 +12,23 @@ class Results:
 
     Parameters
     ----------
-    details_dict: dict optional dictionary of the form {'interface': <interface>, 'dir': <dir>}
-        where <interface> is either 'local_csv' or 'local_parquet', and <dir> is the model base
-        directory
-    store: Store optional pre-created Store object
+    store: Store or dict
+        pre-created Store object or dictionary of the form {'interface': <interface>,
+        'dir': <dir>} where <interface> is either 'local_csv' or 'local_parquet', and <dir> is
+        the model base directory
     """
+    def __init__(self, store: Union[Store, dict]):
 
-    def __init__(self, details_dict: dict = None, store: Store = None):
+        if type(store) is dict:
+            self._store = Store.from_dict(store)
+        else:
+            self._store = store  # type: Store
 
-        assert bool(details_dict) != bool(store), \
-            'Results() accepts either a details dict or a store'
-
-        self._store = store
-        if store:
-            return
-
-        try:
-            interface = details_dict['interface']
-        except KeyError:
-            print('No interface provided for Results().  Assuming local_csv.')
-            interface = 'local_csv'
-
-        try:
-            directory = details_dict['dir']
-        except KeyError:
-            print('No directory provided for Results().  Assuming \'.\'.')
-            directory = '.'
-
-        # Check that the provided interface is supported
-        file_store = self._get_file_store(interface)
-        if file_store is None:
-            raise ValueError(
-                'Unsupported interface "{}". Supply local_csv or local_parquet'.format(
-                    interface))
-
-        # Check that the directory is valid
-        if not os.path.isdir(directory):
-            raise ValueError('Expected {} to be a valid directory'.format(directory))
-
-        self._store = Store(
-            config_store=YamlConfigStore(directory),
-            metadata_store=FileMetadataStore(directory),
-            data_store=file_store(directory),
-            model_base_folder=directory
-        )
-
-        # Create an empty dictionary for keeping tabs on the units of any read outputs
-        self._output_units = dict()
-
-    @staticmethod
-    def _get_file_store(interface):
-        """ Return the appropriate derived FileDataStore class, or None if the requested
-        interface is invalid.
-
-        Parameters
-        ----------
-        interface: str the requested interface
-
-        Returns
-        -------
-        The appropriate derived FileDataStore class
-        """
-        return {
-            'local_csv': CSVDataStore,
-            'local_parquet': ParquetDataStore,
-        }.get(interface, None)
+        # keep tabs on the units of any read outputs
+        self._output_units = dict()  # type: dict
 
     def list_model_runs(self):
-        """ Return a list of model run names.
+        """Return a list of model run names.
 
         Returns
         -------
@@ -101,7 +37,7 @@ class Results:
         return sorted([x['name'] for x in self._store.read_model_runs()])
 
     def available_results(self, model_run_name):
-        """ Return the results available for a given model run.
+        """Return the results available for a given model run.
 
         Parameters
         ----------
@@ -143,13 +79,13 @@ class Results:
 
     def read(self,
              model_run_names: list,
-             sec_model_names: list,
+             model_names: list,
              output_names: list,
              timesteps: list = None,
              decisions: list = None,
              time_decision_tuples: list = None,
              ):
-        """ Return results from the store as a formatted pandas data frame. There are a number
+        """Return results from the store as a formatted pandas data frame. There are a number
         of ways of requesting specific timesteps/decisions. You can specify either:
 
             a list of (timestep, decision) tuples
@@ -173,23 +109,40 @@ class Results:
 
         Parameters
         ----------
-        model_run_names: list the requested model run names
-        sec_model_names: list the requested sector model names (exactly one required)
-        output_names: list the requested output names (output specs must all match)
-        timesteps: list the requested timesteps
-        decisions: list the requested decision iterations
-        time_decision_tuples: list a list of requested (timestep, decision) tuples
+        model_run_names: list
+            the requested model run names
+        model_names: list
+            the requested sector model names (exactly one required)
+        output_names: list
+            the requested output names (output specs must all match)
+        timesteps: list
+            the requested timesteps
+        decisions: list
+            the requested decision iterations
+        time_decision_tuples: list
+            a list of requested (timestep, decision) tuples
+
+        Raises
+        ------
+        SmifDataNotFoundError
+            If data cannot be found in the store when try to read from the store
+        SmifDataMismatchError
+            Data presented to read, write and update methods is in the
+            incorrect format or of wrong dimensions to that expected
+        SmifDataReadError
+            When unable to read data e.g. unable to handle file type or connect
+            to database
 
         Returns
         -------
-        A Pandas dataframe
+        pandas.DataFrame
         """
 
-        self.validate_names(model_run_names, sec_model_names, output_names)
+        self.validate_names(model_run_names, model_names, output_names)
 
         results_dict = self._store.get_results(
             model_run_names,
-            sec_model_names[0],
+            model_names[0],
             output_names,
             timesteps,
             decisions,
@@ -244,11 +197,11 @@ class Results:
 
         Parameters
         ----------
-        output_name: the name of the output
+        output_name: str
 
         Returns
         -------
-        str the units of the output
+        str
         """
         return self._output_units[output_name]
 
