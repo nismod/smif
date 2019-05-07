@@ -42,7 +42,7 @@ class FileDataStore(DataStore):
             dirname = os.path.join(self.data_folder, folder)
             # ensure each directory exists
             if not os.path.exists(dirname):
-                msg = "Expected data folder at '{}' but it does does not exist"
+                msg = "Expected data folder at '{}' but it does not exist"
                 abs_path = os.path.abspath(dirname)
                 raise SmifDataNotFoundError(msg.format(abs_path))
             self.data_folders[folder] = dirname
