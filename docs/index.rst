@@ -40,7 +40,7 @@ Contents
    Reference <api/modules>
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    Developing `smif` <developers>
    Contributing <contributing>
