@@ -33,6 +33,7 @@ Contents
    Concepts <concepts>
    Configuration <project_configuration>
    Adding a Model <simulation_models>
+   Strategies, Interventions and Decisions <decisions>
 
 .. toctree::
    :maxdepth: 3
