@@ -5,6 +5,9 @@
 - results
 """
 from abc import ABCMeta, abstractmethod
+from typing import Dict, List
+
+from smif.data_layer.data_array import DataArray
 
 
 class DataStore(metaclass=ABCMeta):
@@ -12,7 +15,7 @@ class DataStore(metaclass=ABCMeta):
     """
     # region DataArray
     @abstractmethod
-    def read_scenario_variant_data(self, key, spec, timestep=None):
+    def read_scenario_variant_data(self, key, spec, timestep=None) -> DataArray:
         """Read data array
 
         Parameters
@@ -123,7 +126,7 @@ class DataStore(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def read_initial_conditions(self, key):
+    def read_initial_conditions(self, key) -> List[Dict]:
         """Read historical interventions for `key`
 
         Parameters
@@ -148,7 +151,7 @@ class DataStore(metaclass=ABCMeta):
 
     # region State
     @abstractmethod
-    def read_state(self, modelrun_name, timestep, decision_iteration=None):
+    def read_state(self, modelrun_name, timestep, decision_iteration=None) -> List[Dict]:
         """Read list of (name, build_year) for a given model_run, timestep,
         decision
 
@@ -164,7 +167,10 @@ class DataStore(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def write_state(self, state, modelrun_name, timestep, decision_iteration=None):
+    def write_state(self, state: List[Dict],
+                    modelrun_name: str,
+                    timestep: int,
+                    decision_iteration=None):
         """State is a list of decisions with name and build_year.
 
         State is output from the DecisionManager
@@ -228,7 +234,7 @@ class DataStore(metaclass=ABCMeta):
     # region Results
     @abstractmethod
     def read_results(self, modelrun_name, model_name, output_spec, timestep=None,
-                     decision_iteration=None):
+                     decision_iteration=None) -> DataArray:
         """Return results of a model from a model_run for a given output at a timestep and
         decision iteration
 

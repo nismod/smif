@@ -42,7 +42,7 @@ class FileDataStore(DataStore):
             dirname = os.path.join(self.data_folder, folder)
             # ensure each directory exists
             if not os.path.exists(dirname):
-                msg = "Expected data folder at '{}' but it does does not exist"
+                msg = "Expected data folder at '{}' but it does not exist"
                 abs_path = os.path.abspath(dirname)
                 raise SmifDataNotFoundError(msg.format(abs_path))
             self.data_folders[folder] = dirname
@@ -415,7 +415,11 @@ class CSVDataStore(FileDataStore):
     def _read_list_of_dicts(self, path):
         """Read file to list[dict]
         """
-        return pandas.read_csv(path).to_dict('records')
+        try:
+            data = pandas.read_csv(path).to_dict('records')
+        except pandas.errors.EmptyDataError:
+            data = []
+        return data
 
     def _write_list_of_dicts(self, path, data):
         """Write list[dict] to file
@@ -491,7 +495,10 @@ class ParquetDataStore(FileDataStore):
     def _write_list_of_dicts(self, path, data):
         """Write list[dict] to file
         """
-        pandas.DataFrame.from_records(data).to_parquet(path, engine='pyarrow')
+        if data:
+            pandas.DataFrame.from_records(data).to_parquet(path, engine='pyarrow')
+        else:
+            pandas.DataFrame(columns=['placeholder']).to_parquet(path, engine='pyarrow')
 
     def _read_ndarray(self, path):
         """Read numpy.ndarray

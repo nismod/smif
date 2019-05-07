@@ -7,6 +7,7 @@ For example, if a model needs to know its own outputs from a previous year, we c
 self-dependency using a relative timestep.
 """
 from enum import Enum
+from typing import List, Union
 
 from smif.exception import SmifTimestepResolutionError
 
@@ -31,7 +32,7 @@ class RelativeTimestep(Enum):
             return cls.ALL
         raise ValueError("Relative timestep '%s' is not recognised" % name)
 
-    def resolve_relative_to(self, timestep, timesteps):
+    def resolve_relative_to(self, timestep: int, timesteps: List[int]) -> Union[None, int]:
         """Resolve a relative timestep with respect to a given timestep and
         sequence of timesteps.
 
@@ -61,7 +62,7 @@ class RelativeTimestep(Enum):
         return relative_timestep
 
 
-def element_before(element, list_):
+def element_before(element: int, list_: List[int]) -> int:
     """Return the element before a given element in a list, or None if the
     given element is first or not in the list.
     """
