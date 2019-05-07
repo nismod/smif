@@ -30,7 +30,7 @@ Simulation Modelling Integration Framework
    :target: https://zenodo.org/badge/latestdoi/67128476
    :alt: Archive
 
-.. image:: https://img.shields.io/badge/jors-10.5334%2fjors.265-blue.svg
+.. image:: https://img.shields.io/badge/JORS-10.5334%2fjors.265-blue.svg
    :target: https://doi.org/10.5334/jors.265
    :alt: Journal of Open Research Software paper
 
@@ -265,6 +265,8 @@ Please also cite the software description paper:
 * Will Usher and Tom Russell. (2019) A Software Framework for the Integration of Infrastructure
   Simulation Models. Journal of Open Research Software, 7: 16 DOI:
   https://doi.org/10.5334/jors.265
+
+Here's an example BibTeX entry::
 
         @misc{smif_paper,
               author       = {Will Usher and Tom Russell},
