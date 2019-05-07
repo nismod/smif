@@ -17,6 +17,7 @@ SmifDataReadError
 import itertools
 import logging
 import os
+from collections import OrderedDict
 from copy import deepcopy
 from operator import itemgetter
 from typing import Dict, List, Optional
@@ -1205,9 +1206,9 @@ class Store():
                 raise ValueError('Different outputs must have the same coordinates')
 
         # Now actually obtain the requested results
-        results_dict = dict()  # type: Dict
+        results_dict = OrderedDict()  # type: OrderedDict
         for model_run_name in model_run_names:
-            results_dict[model_run_name] = dict()
+            results_dict[model_run_name] = OrderedDict()
             for output_name in output_names:
                 results_dict[model_run_name][output_name] = self.get_result_darray(
                     model_run_name,
