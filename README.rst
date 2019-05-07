@@ -270,8 +270,7 @@ Here's an example BibTeX entry::
 
         @misc{smif_paper,
               author       = {Will Usher and Tom Russell},
-              title        = {A Software Framework for the Integration of Infrastructure
-  Simulation Models},
+              title        = {A Software Framework for the Integration of Infrastructure Simulation Models},
               journal      = {Journal of Open Research Software},
               volume       = {7},
               number       = {16},
