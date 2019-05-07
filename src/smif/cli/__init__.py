@@ -204,13 +204,15 @@ def list_missing_results(args):
                 res_str = ', '.join([str(t) for t in ts])
                 print('{} {}'.format(base_str, res_str))
 
-def write_scenario_variants(config_store, scenario_name, list_of_variants):
+def prepare_scenario(args):
     """ Modifies {scenario_name}.yml scenario file to include multiple scenario variants.
         The original scenario file is first duplicated in {scenario_name}_template.yml
     """
-    scenario_file = scenario_name+'.yml'
-    full_path = os.path.join(config_store.config_folders['scenarios'], scenario_file)
-    full_path_template = os.path.join(config_store.config_folders['scenarios'], scenario_name+'_template.yml')
+    config_store = _get_store(args).config_store
+    list_of_variants = range(args.variants_range[0], args.variants_range[1]+1)
+    
+    full_path = os.path.join(config_store.config_folders['scenarios'], args.scenario_name+'.yml')
+    full_path_template = os.path.join(config_store.config_folders['scenarios'], args.scenario_name+'_template.yml')
 
     # check that template file exists
     if not os.path.isfile(full_path_template):
@@ -227,14 +229,14 @@ def write_scenario_variants(config_store, scenario_name, list_of_variants):
             else:
                 print('Please answer yes or no [y/n]')
         
-    """Copy the template {scenario_name}_template.yml to {scenario_name}.yml the
+    """Copy the template {args.scenario_name}_template.yml to {args.scenario_name}.yml the
        config/scenarios/ directory
     """
-    full_path_template = os.path.join(config_store.config_folders['scenarios'], scenario_name+'_template.yml')
+    full_path_template = os.path.join(config_store.config_folders['scenarios'], args.scenario_name+'_template.yml')
     copy_template_file = 'cp '+full_path_template+' '+full_path
     os.system(copy_template_file)
 
-    scenario = config_store.read_scenario(scenario_name)
+    scenario = config_store.read_scenario(args.scenario_name)
     # check that template scenario file does not have more than one variant
     if len(scenario['variants'])<1:
         sys.exit('Template file {} should must define a template variant'.format(full_path_template))
@@ -242,7 +244,7 @@ def write_scenario_variants(config_store, scenario_name, list_of_variants):
         warnings.warn('More than one variant found in scenario template file {}.'.format(full_path_template))
     variant_template_name = scenario['variants'][0]['name']
     # Get first variant defined in template scenario file
-    variant = config_store.read_scenario_variant(scenario_name, variant_template_name)
+    variant = config_store.read_scenario_variant(args.scenario_name, variant_template_name)
 
     root = {}
     """ root is a dict. keyed on scenario outputs. 
@@ -255,51 +257,42 @@ def write_scenario_variants(config_store, scenario_name, list_of_variants):
     first_variant = True
     for ivar in list_of_variants:
         for output in scenario['provides']:
-            variant['name'] = 'replicate_{:d}'.format(ivar)
+            variant['name'] = args.scenario_name+'_{:d}'.format(ivar)
             variant['data'][output['name']] = root[output['name']]+'{:d}'.format(ivar)+ext
         
         if(first_variant):
             first_variant = False
-            config_store.update_scenario_variant(scenario_name,
+            config_store.update_scenario_variant(args.scenario_name,
                                                     variant_template_name, variant)
         else:
-            config_store.write_scenario_variant(scenario_name, variant)
+            config_store.write_scenario_variant(args.scenario_name, variant)
 
-def write_variant_model_runs(config_store, model_run_name,
-                             scenario_name, list_of_variants):
+def prepare_model_run(args):
     
-    model_run = config_store.read_model_run(model_run_name)
-    assert(scenario_name in model_run['scenarios']), "Error: Unknown scenario"
-   
+    config_store = _get_store(args).config_store
+    mr_name = args.model_run_name
+    sc_name = args.scenario_name
+
+    model_run = config_store.read_model_run(mr_name)
+    if not(sc_name in model_run['scenarios']):
+        raise FileNotFOundError('Error: Unknown scenario')
+    path_to_scenario=os.path.join(config_store.config_folders['scenarios'], sc_name+'.yml')
+    if not(os.path.isfile(path_to_scenario)):
+           raise FileNotFoundError('Error: Could not find scenario file {}'.format(path_to_scenario))
+    scenario=config_store.read_scenario(sc_name)
     # Open batchfile
-    f_handle = open(model_run_name+'.batch', 'w')
+    f_handle = open(mr_name+'.batch', 'w')
     """ For each variant model_run, write a new model run file with corresponding
     scenario variant and update batchfile.
     """
-    for ivar in list_of_variants:
-        variant_model_run_name = model_run_name+'_{:d}'.format(ivar)
+    for variant in scenario['variants']:
+        variant_model_run_name = mr_name+'_'+variant['name']
         model_run['name'] = variant_model_run_name
-        model_run['scenarios'][scenario_name] = 'replicate_{:d}'.format(ivar)
+        model_run['scenarios'][sc_name] = variant['name']
         config_store.write_model_run(model_run)
-        f_handle.write(variant_model_run_name+'\n')
+        f_handle.write(mr_name+'_'+variant['name']+'\n')
     
     f_handle.close()
-
-def prepare_ensemble_model_runs(args):
-    
-    store = _get_store(args)
-    list_of_variants = range(args.variants_range[0], args.variants_range[1]+1)
-    
-    # args.variants_idx is a list containing the indexes of variants
-    write_scenario_variants(store.config_store, args.scenario_name, list_of_variants)
-    write_variant_model_runs(store.config_store, args.model_run, args.scenario_name,
-                             list_of_variants)
-    print(args.model_run)
-    print(args.scenario_name)
-    print(list_of_variants[0])
-    print(list_of_variants[-1])
-    
-
 
 def run_model_runs(args):
     """Run the model runs as requested. Check if results exist and asks
@@ -459,16 +452,25 @@ def parse_arguments():
     )
 
     # PREPARE
-    parser_prepare = subparsers.add_parser(
-        'prepare', help='Prepare ensemble model run', parents=[parent_parser])
-    parser_prepare.set_defaults(func=prepare_ensemble_model_runs)
-    parser_prepare.add_argument(
-        'model_run', help='Name of the model run')
-    parser_prepare.add_argument(
+    parser_prepare_scenario = subparsers.add_parser(
+        'prepare-scenario', help='Prepare scenario configuration file with multiple variants',
+        parents=[parent_parser])
+    parser_prepare_scenario.set_defaults(func=prepare_scenario)
+    parser_prepare_scenario.add_argument(
         'scenario_name', help='Name of the scenario')
-    parser_prepare.add_argument(
+    parser_prepare_scenario.add_argument(
         'variants_range', nargs=2, type=int,
         help='Two integers delimiting the range of variants')
+        # PREPARE
+    parser_prepare_model_run = subparsers.add_parser(
+        'prepare-run', help='Prepare model runs based on scenario variants',
+        parents=[parent_parser])
+    parser_prepare_model_run.set_defaults(func=prepare_model_run)
+    parser_prepare_model_run.add_argument(
+        'scenario_name', help='Name of the scenario')
+    parser_prepare_model_run.add_argument(
+        'model_run_name', help='Name of the template model run')
+
 
     # APP
     parser_app = subparsers.add_parser(
