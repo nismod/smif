@@ -210,7 +210,8 @@ def prepare_scenario(args):
     """
     config_store = _get_store(args).config_store
     list_of_variants = range(args.variants_range[0], args.variants_range[1]+1)
-    
+
+    # path to scenario file
     full_path = os.path.join(config_store.config_folders['scenarios'],
                              args.scenario_name+'.yml')
     full_path_template = os.path.join(config_store.config_folders['scenarios'],
@@ -282,15 +283,15 @@ def prepare_model_run(args):
     if not(os.path.isfile(path_to_scenario)):
            raise FileNotFoundError("Error: Could not find "
                                    "scenario file {}".format(path_to_scenario))
+    
+    # Read scenario
     scenario=config_store.read_scenario(sc_name)
-    # Open batchfile
-    f_handle = open(mr_name+'.batch', 'w')
-    """ For each variant model_run, write a new model run file with corresponding
-    scenario variant and update batchfile.
-    """
+    # Define default lower and upper of variant range
     var_start = 0
     var_end = len(scenario['variants'])
 
+    # Check if optional cli arguments specify range of variants
+    # They are compared to None because they can be 0
     if args.start!=None:
         var_start = args.start;
         if var_start<0:
@@ -308,16 +309,19 @@ def prepare_model_run(args):
         if var_end<var_start:
             raise ValueError("Upper bound of variant range must be >= lower" 
                              " bound of variant range")
-    
+
+    # Open batchfile
+    f_handle = open(mr_name+'.batch', 'w')
+    # For each variant model_run, write a new model run file with corresponding
+    # scenario variant and update batchfile.
     for variant in scenario['variants'][var_start:var_end+1]:
         variant_model_run_name = mr_name+'_'+variant['name']
         model_run['name'] = variant_model_run_name
         model_run['scenarios'][sc_name] = variant['name']
 
-        """Check if model run definition already exist and erase if permission
-        to overwrite. Needed because YamlConfigStore.write_model_run() throws an error
-        of model run file already exists.
-        """
+        # Check if model run definition already exist and erase if permission
+        # to overwrite. Needed because YamlConfigStore.write_model_run() throws an error
+        # of model run file already exists.
         full_path = os.path.join(config_store.config_folders['model_runs'],
                                  model_run['name']+'.yml')
         if os.path.isfile(full_path):
@@ -332,10 +336,11 @@ def prepare_model_run(args):
                     sys.exit('Abort.')
                 else:
                     print('Please answer yes or no [y/n]')
-                
+        # Write model run file and update batchfile.        
         config_store.write_model_run(model_run)
         f_handle.write(mr_name+'_'+variant['name']+'\n')
-    
+        
+    # Close batchfile
     f_handle.close()
 
 def run_model_runs(args):
