@@ -1,5 +1,7 @@
 """Test all DataStore implementations
 """
+from copy import deepcopy
+
 import numpy as np
 from pytest import fixture, mark, param, raises
 from smif.data_layer.data_array import DataArray
@@ -37,7 +39,7 @@ class TestDataArray():
     """Read and write DataArray
     """
     def test_read_write_data_array(self, handler, scenario):
-        data = np.array([0, 1], dtype=float)
+        data = np.array([0, 1], dtype='float')
         spec = Spec.from_dict(scenario['provides'][0])
 
         da = DataArray(spec, data)
@@ -46,6 +48,29 @@ class TestDataArray():
         actual = handler.read_scenario_variant_data('mortality.csv', spec, 2010)
 
         assert actual == da
+        np.testing.assert_array_equal(actual.as_ndarray(), da.as_ndarray())
+
+    def test_read_write_data_array_all(self, handler, scenario):
+        spec = Spec.from_dict(deepcopy(scenario['provides'][0]))
+
+        spec_with_t = scenario['provides'][0]
+        spec_with_t['dims'].insert(0, 'timestep')
+        spec_with_t['coords']['timestep'] = [2010, 2015]
+        spec_with_t = Spec.from_dict(spec_with_t)
+        da = DataArray(spec_with_t, np.array([[0, 1], [2, 3]], dtype='float'))
+
+        handler.write_scenario_variant_data('mortality.csv', da)
+        actual = handler.read_scenario_variant_data('mortality.csv', spec_with_t)
+        expected = np.array([[0, 1], [2, 3]], dtype='float')
+        np.testing.assert_array_equal(actual.as_ndarray(), expected)
+
+        da_2010 = handler.read_scenario_variant_data('mortality.csv', spec, 2010)
+        expected = np.array([0, 1], dtype='float')
+        np.testing.assert_array_equal(da_2010.as_ndarray(), expected)
+
+        da_2015 = handler.read_scenario_variant_data('mortality.csv', spec, 2015)
+        expected = np.array([2, 3], dtype='float')
+        np.testing.assert_array_equal(da_2015.as_ndarray(), expected)
 
     def test_read_zero_d_from_timeseries(self, handler):
         """Read a single value
