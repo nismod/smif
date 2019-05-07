@@ -5,12 +5,13 @@ cross-coordination and there are some convenience methods implemented at this la
 """
 import numpy as np
 import numpy.testing
-from pytest import fixture
+from pytest import fixture, raises
 from smif.data_layer import Store
 from smif.data_layer.data_array import DataArray
 from smif.data_layer.memory_interface import (MemoryConfigStore,
                                               MemoryDataStore,
                                               MemoryMetadataStore)
+from smif.exception import SmifDataNotFoundError
 from smif.metadata import Spec
 
 
@@ -391,3 +392,58 @@ class TestStoreData():
         # outputs, and results with valid spec, etc. Some of this functionality exists in
         # fixtures provided in `conftest.py`.
         pass
+
+
+class TestWrongRaises:
+
+    def test_narrative_variant(self, store, sample_dimensions,
+                               get_sos_model, get_sector_model,
+                               energy_supply_sector_model,
+                               sample_narrative_data):
+        # Setup
+        for dim in sample_dimensions:
+            store.write_dimension(dim)
+        store.write_sos_model(get_sos_model)
+        store.write_model(get_sector_model)
+        store.write_model(energy_supply_sector_model)
+        # pick out single sample
+        key = (
+            'energy',
+            'technology',
+            'high_tech_dsm',
+            'smart_meter_savings'
+        )
+        sos_model_name, narrative_name, variant_name, param_name = key
+
+        with raises(SmifDataNotFoundError) as ex:
+            store.read_narrative_variant_data(
+                sos_model_name, narrative_name, 'bla', param_name)
+
+        expected = "Variant name 'bla' does not exist in narrative 'technology'"
+
+        assert expected in str(ex)
+
+    def test_narrative_name(self, store, sample_dimensions, get_sos_model,
+                            get_sector_model, energy_supply_sector_model,
+                            sample_narrative_data):
+        # Setup
+        for dim in sample_dimensions:
+            store.write_dimension(dim)
+        store.write_sos_model(get_sos_model)
+        store.write_model(get_sector_model)
+        store.write_model(energy_supply_sector_model)
+        # pick out single sample
+        key = (
+            'energy',
+            'technology',
+            'high_tech_dsm',
+            'smart_meter_savings'
+        )
+        sos_model_name, narrative_name, variant_name, param_name = key
+
+        with raises(SmifDataNotFoundError) as ex:
+            store.read_narrative_variant_data(
+                sos_model_name, 'bla', variant_name, param_name)
+
+        expected = "Narrative name 'bla' does not exist in sos_model 'energy'"
+        assert expected in str(ex)
