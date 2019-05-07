@@ -30,6 +30,10 @@ Simulation Modelling Integration Framework
    :target: https://zenodo.org/badge/latestdoi/67128476
    :alt: Archive
 
+.. image:: https://img.shields.io/badge/jors-10.5334%2fjors.265-blue.svg
+   :target: https://doi.org/10.5334/jors.265
+   :alt: Journal of Open Research Software paper
+
 .. image:: https://readthedocs.org/projects/smif/badge/?version=latest
    :target: https://smif.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
@@ -242,18 +246,38 @@ Citation
 
 If you use **smif** for research, please cite the software directly:
 
-* Will Usher, Tom Russell, & Roald Schoenmakers. (2018). nismod/smif
+* Will Usher, Tom Russell, Roald Schoenmakers & Craig Robson. (2019). nismod/smif
   vX.Y.Z (Version vX.Y.Z). Zenodo. http://doi.org/10.5281/zenodo.1309336
 
 Here's an example BibTeX entry::
 
-        @misc{smif,
-              author       = {Will Usher and Tom Russell and Roald Schoenmakers},
+        @misc{smif_software,
+              author       = {Will Usher and Tom Russell and Roald Schoenmakers and Craig Robson},
               title        = {nismod/smif vX.Y.Z},
               month        = Aug,
               year         = 2018,
               doi          = {10.5281/zenodo.1309336},
               url          = {https://doi.org/10.5281/zenodo.1309336}
+        }
+
+Please also cite the software description paper:
+
+* Will Usher and Tom Russell. (2019) A Software Framework for the Integration of Infrastructure
+  Simulation Models. Journal of Open Research Software, 7: 16 DOI:
+  https://doi.org/10.5334/jors.265
+
+        @misc{smif_paper,
+              author       = {Will Usher and Tom Russell},
+              title        = {A Software Framework for the Integration of Infrastructure
+  Simulation Models},
+              journal      = {Journal of Open Research Software},
+              volume       = {7},
+              number       = {16},
+              pages        = {1--5},
+              month        = May,
+              year         = {2019},
+              doi          = {10.5334/jors.265},
+              url          = {https://doi.org/10.5334/jors.265}
         }
 
 
