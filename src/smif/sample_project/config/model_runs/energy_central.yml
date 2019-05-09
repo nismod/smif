@@ -7,7 +7,6 @@ timesteps:
 - 2020
 sos_model: energy
 scenarios:
-  weather_at_home: weather_at_home_dummy
   population: population_med
   water_sector_energy_demand: central
 narratives: {}

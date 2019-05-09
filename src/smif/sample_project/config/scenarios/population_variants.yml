@@ -1,0 +1,21 @@
+name: population_variants
+description: Growth in UK population
+provides:
+  - name: population
+    description: ''
+    dims:
+      - country
+    dtype: int
+    unit: people
+  - name: population_density
+    description: ''
+    dims:
+      - country
+    dtype: float
+    unit: people/km²
+variants:
+  - name: population_variant_template
+    description: A template for a variant of the pop. scenario
+    data:
+      population: population_.csv
+      population_density: population_density_.csv
