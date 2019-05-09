@@ -206,54 +206,29 @@ def list_missing_results(args):
 
 def prepare_scenario(args):
     """ Create {scenario_name}.yml from {scenario_name}_template.yml 
-        scenario file to include multiple scenario variants.
+    scenario file to include multiple scenario variants.
     """
-    config_store = _get_store(args).config_store
+    # Read template scenario using the Store class
+    store = _get_store(args)
     list_of_variants = range(args.variants_range[0], args.variants_range[1]+1)
-
-    # path to scenario file
-    full_path = os.path.join(config_store.config_folders['scenarios'],
-                             args.scenario_name+'.yml')
-    full_path_template = os.path.join(config_store.config_folders['scenarios'],
-                                      args.scenario_name+'_template.yml')
-
-    # check that template file exists
-    if not os.path.isfile(full_path_template):
-        raise FileNotFoundError('Could not found template file {}.'.format(full_path_template))
-    # check if scenario file already exists and ask permission from user for overwriting it
-    if os.path.isfile(full_path):
-        print("File {} has been found and will be overwritten."
-              "Continue ? [y/n]".format(full_path))
-        yes_or_no = input()
-        while(True):
-            if yes_or_no=='yes' or yes_or_no=='y':
-                break
-            elif yes_or_no=='no' or yes_or_no=='n':
-                sys.exit('Abort.')
-            else:
-                print('Please answer yes or no [y/n]')
-        
-    """Copy the template {args.scenario_name}_template.yml to {args.scenario_name}.yml the
-       config/scenarios/ directory
-    """
-    copy_template_file = 'cp '+full_path_template+' '+full_path
-    os.system(copy_template_file)
-
-    scenario = config_store.read_scenario(args.scenario_name)
-    # check that template scenario file does not have more than one variant
+    scenario = store.read_scenario(args.scenario_name)
+    
+    # Check that template scenario file does not define more than one variant
     if len(scenario['variants'])<1:
-        sys.exit('Template file {} must define a template variant'.format(full_path_template))
+        sys.exit("Template scenario file {} must define a template variant"
+                 .format(full_path_template))
     elif len(scenario['variants'])>1:
-        warnings.warn("More than one variant found in scenario "
+        raise SmifDataError ("More than one variant found in scenario "
                       "template file {}.".format(full_path_template))
+    
+    # Read variant defined in template scenario file
     variant_template_name = scenario['variants'][0]['name']
-    # Get first variant defined in template scenario file
-    variant = config_store.read_scenario_variant(args.scenario_name, variant_template_name)
+    variant = store.read_scenario_variant(args.scenario_name, variant_template_name)
 
+    # Read template names of scenario variant data files
     root = {}
-    """ root is a dict. keyed on scenario outputs. 
-        Entries contain the root of the variants filenames
-    """
+    # root is a dict. keyed on scenario outputs.
+    # Entries contain the root of the variants filenames
     for output in scenario['provides']:
         root[output['name']], ext = os.path.splitext(variant['data'][output['name']])
 
@@ -261,31 +236,25 @@ def prepare_scenario(args):
     first_variant = True
     for ivar in list_of_variants:
         for output in scenario['provides']:
-            variant['name'] = args.scenario_name+'_{:d}'.format(ivar)
-            variant['data'][output['name']] = root[output['name']]+'{:d}'.format(ivar)+ext
+            variant['name'] = args.scenario_name+'_{:03d}'.format(ivar)
+            variant['data'][output['name']] = root[output['name']]+'{:03d}'.format(ivar)+ext
         if(first_variant):
             first_variant = False
-            config_store.update_scenario_variant(args.scenario_name,
+            store.update_scenario_variant(args.scenario_name,
                                                     variant_template_name, variant)
         else:
-            config_store.write_scenario_variant(args.scenario_name, variant)
+            store.write_scenario_variant(args.scenario_name, variant)
 
 def prepare_model_run(args):
-    config_store = _get_store(args).config_store
-    mr_name = args.model_run_name
-    sc_name = args.scenario_name
-
-    model_run = config_store.read_model_run(mr_name)
-    if not(sc_name in model_run['scenarios']):
-        raise FileNotFOundError('Error: Unknown scenario')
-    path_to_scenario=os.path.join(config_store.config_folders['scenarios'],
-                                  sc_name+'.yml')
-    if not(os.path.isfile(path_to_scenario)):
-           raise FileNotFoundError("Error: Could not find "
-                                   "scenario file {}".format(path_to_scenario))
+    """ 
+    Generate multiple model runs according to a model run file referencing a scenario 
+    with multiple variants.
+    """
+    # Read model run and scenario using the Store class
+    store = _get_store(args)
+    model_run = store.read_model_run(args.model_run_name)
+    scenario = store.read_scenario(args.scenario_name)
     
-    # Read scenario
-    scenario=config_store.read_scenario(sc_name)
     # Define default lower and upper of variant range
     var_start = 0
     var_end = len(scenario['variants'])
@@ -311,34 +280,16 @@ def prepare_model_run(args):
                              " bound of variant range")
 
     # Open batchfile
-    f_handle = open(mr_name+'.batch', 'w')
+    f_handle = open(args.model_run_name+'.batch', 'w')
     # For each variant model_run, write a new model run file with corresponding
     # scenario variant and update batchfile.
     for variant in scenario['variants'][var_start:var_end+1]:
-        variant_model_run_name = mr_name+'_'+variant['name']
+        variant_model_run_name = args.model_run_name+'_'+variant['name']
         model_run['name'] = variant_model_run_name
-        model_run['scenarios'][sc_name] = variant['name']
+        model_run['scenarios'][args.scenario_name] = variant['name']
 
-        # Check if model run definition already exist and erase if permission
-        # to overwrite. Needed because YamlConfigStore.write_model_run() throws an error
-        # of model run file already exists.
-        full_path = os.path.join(config_store.config_folders['model_runs'],
-                                 model_run['name']+'.yml')
-        if os.path.isfile(full_path):
-            print("File {} has been found and will be overwritten."
-                  "Continue ? [y/n]".format(full_path))
-            yes_or_no = input()
-            while(True):
-                if yes_or_no=='yes' or yes_or_no=='y':
-                    os.system('rm '+full_path)     
-                    break
-                elif yes_or_no=='no' or yes_or_no=='n':
-                    sys.exit('Abort.')
-                else:
-                    print('Please answer yes or no [y/n]')
-        # Write model run file and update batchfile.        
-        config_store.write_model_run(model_run)
-        f_handle.write(mr_name+'_'+variant['name']+'\n')
+        store.write_model_run(model_run)
+        f_handle.write(args.model_run_name+'_'+variant['name']+'\n')
         
     # Close batchfile
     f_handle.close()
