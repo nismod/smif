@@ -203,6 +203,35 @@ def list_missing_results(args):
                 res_str = ', '.join([str(t) for t in ts])
                 print('{} {}'.format(base_str, res_str))
 
+def prepare_convert(args):
+    csv_store = Store(
+        config_store=YamlConfigStore(args.directory),
+        metadata_store=FileMetadataStore(args.directory),
+        data_store=CSVDataStore(args.directory),
+        model_base_folder=(args.directory)
+    )
+
+    binary_store = Store(
+        config_store=YamlConfigStore(args.directory),
+        metadata_store=FileMetadataStore(args.directory),
+        data_store=ParquetDataStore(args.directory),
+        model_base_folder=(args.directory)
+    )
+    if args.source_fmt=='csv':
+        # data_array = csv_store.read_scenario_variant_data(scenario_name,
+        #                                                   variant_name, variable)
+        # binary_store.write_scenario_variant_data(scenario_name,
+        #                                          variant_name, data_array)
+        pass
+    elif args.source_fmt=='bin':
+        # data_array = csv_store.read_scenario_variant_data(scenario_name,
+        #                                                   variant_name, variable)
+        # binary_store.write_scenario_variant_data(scenario_name,
+        #                                          variant_name, data_array)
+        pass
+    else:
+        raise ValueError("Source format must be 'csv' or 'bin'.")
+
 
 def run_model_runs(args):
     """Run the model runs as requested. Check if results exist and asks
@@ -359,6 +388,18 @@ def parse_arguments():
         'model_run',
         help="Name of the model run to list missing results"
     )
+
+    # PREPARE
+    parser_convert = subparsers.add_parser(
+        'prepare-convert', help='Convert data from one format to another',
+        parents=[parent_parser])
+    parser_convert.set_defaults(func=prepare_convert)
+    parser_convert.add_argument(
+        'source_fmt', choices=['csv', 'bin'], help='Format of the source data')
+    parser_convert.add_argument(
+        'target_fmt', choices=['csv', 'bin'], help='Format of the target data'
+    )
+        
 
     # APP
     parser_app = subparsers.add_parser(
