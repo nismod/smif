@@ -204,34 +204,31 @@ def list_missing_results(args):
                 print('{} {}'.format(base_str, res_str))
 
 def prepare_convert(args):
-    csv_store = Store(
-        config_store=YamlConfigStore(args.directory),
-        metadata_store=FileMetadataStore(args.directory),
-        data_store=CSVDataStore(args.directory),
-        model_base_folder=(args.directory)
-    )
-
-    binary_store = Store(
-        config_store=YamlConfigStore(args.directory),
-        metadata_store=FileMetadataStore(args.directory),
-        data_store=ParquetDataStore(args.directory),
-        model_base_folder=(args.directory)
-    )
-    if args.source_fmt=='csv':
-        # data_array = csv_store.read_scenario_variant_data(scenario_name,
-        #                                                   variant_name, variable)
-        # binary_store.write_scenario_variant_data(scenario_name,
-        #                                          variant_name, data_array)
-        pass
-    elif args.source_fmt=='bin':
-        # data_array = csv_store.read_scenario_variant_data(scenario_name,
-        #                                                   variant_name, variable)
-        # binary_store.write_scenario_variant_data(scenario_name,
-        #                                          variant_name, data_array)
-        pass
+    src_store = _get_store(args)
+    if isinstance(src_store.data_store, CSVDataStore):
+        tgt_store = Store(
+            config_store=YamlConfigStore(args.directory),
+            metadata_store=FileMetadataStore(args.directory),
+            data_store=ParquetDataStore(args.directory),
+            model_base_folder=(args.directory)
+        )
     else:
-        raise ValueError("Source format must be 'csv' or 'bin'.")
+        tgt_store = Store(
+            config_store=YamlConfigStore(args.directory),
+            metadata_store=FileMetadataStore(args.directory),
+            data_store=CSVDataStore(args.directory),
+            model_base_folder=(args.directory)
+        )
 
+    # Read model run
+    model_run = src_store.read_model_run(args.model_run)
+    # Write scenario data to target data format
+    for scenario_name in model_run['scenarios']:
+        for variant in src_store.read_scenario_variants(scenario_name):
+            for variable in variant['data']:
+                data_array = src_store.read_scenario_variant_data(scenario_name,
+                                                                  variant['name'], variable)
+                tgt_store.write_scenario_variant_data(scenario_name, variant, data_array)
 
 def run_model_runs(args):
     """Run the model runs as requested. Check if results exist and asks
@@ -395,11 +392,7 @@ def parse_arguments():
         parents=[parent_parser])
     parser_convert.set_defaults(func=prepare_convert)
     parser_convert.add_argument(
-        'source_fmt', choices=['csv', 'bin'], help='Format of the source data')
-    parser_convert.add_argument(
-        'target_fmt', choices=['csv', 'bin'], help='Format of the target data'
-    )
-        
+        'model_run', help='Name of the model run')
 
     # APP
     parser_app = subparsers.add_parser(
