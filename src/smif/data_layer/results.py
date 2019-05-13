@@ -36,6 +36,19 @@ class Results:
         """
         return sorted([x['name'] for x in self._store.read_model_runs()])
 
+    def list_outputs(self, sector_model_name: str):
+        """Return a list of model run names.
+
+        Parameters
+        ----------
+        sector_model_name: str the requested sector model
+
+        Returns
+        -------
+        List of outputs for the given sector model
+        """
+        return sorted([x['name'] for x in self._store.read_model(sector_model_name)['outputs']])
+
     def available_results(self, model_run_name):
         """Return the results available for a given model run.
 

@@ -169,6 +169,9 @@ class TestNoResults:
         results = Results(store=empty_store)
         assert results.list_model_runs() == []
 
+    def test_list_outputs(self, results_no_results):
+        assert results_no_results.list_outputs('a_model') == ['sample_output']
+
     def test_available_results(self, results_no_results):
         available = results_no_results.available_results('model_run_1')
 
