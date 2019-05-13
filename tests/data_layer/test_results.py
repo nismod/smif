@@ -172,6 +172,10 @@ class TestNoResults:
     def test_list_outputs(self, results_no_results):
         assert results_no_results.list_outputs('a_model') == ['sample_output']
 
+    def test_list_sector_models(self, results_no_results):
+        assert results_no_results.list_sector_models('model_run_1') == ['a_model', 'b_model']
+        assert results_no_results.list_sector_models('model_run_2') == ['a_model', 'b_model']
+
     def test_available_results(self, results_no_results):
         available = results_no_results.available_results('model_run_1')
 

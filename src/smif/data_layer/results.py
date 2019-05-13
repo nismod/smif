@@ -17,6 +17,7 @@ class Results:
         'dir': <dir>} where <interface> is either 'local_csv' or 'local_parquet', and <dir> is
         the model base directory
     """
+
     def __init__(self, store: Union[Store, dict]):
 
         if type(store) is dict:
@@ -35,6 +36,21 @@ class Results:
         List of model run names
         """
         return sorted([x['name'] for x in self._store.read_model_runs()])
+
+    def list_sector_models(self, model_run_name: str):
+        """Return a list of sector models for given model run.
+
+        Parameters
+        ----------
+        model_run_name: str the requested model run
+
+        Returns
+        -------
+        List of sector models for the given model run
+        """
+        return sorted(
+            self._store.read_sos_model(self._store.read_model_run(model_run_name)['sos_model'])['sector_models']
+        )
 
     def list_outputs(self, sector_model_name: str):
         """Return a list of model run names.
