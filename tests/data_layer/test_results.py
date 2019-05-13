@@ -176,6 +176,22 @@ class TestNoResults:
         assert results_no_results.list_sector_models('model_run_1') == ['a_model', 'b_model']
         assert results_no_results.list_sector_models('model_run_2') == ['a_model', 'b_model']
 
+    def test_list_scenarios(self, results_no_results):
+        store = results_no_results._store
+        store.write_model_run({
+            'name': 'model_run_with_scenarios',
+            'timesteps': [2010, 2015, 2010],
+            'sos_model': 'energy',
+            'scenarios': {
+                'a_scenario': 'a_variant',
+                'b_scenario': 'b_variant',
+            }
+        })
+
+        scenarios_dict = results_no_results.list_scenarios('model_run_with_scenarios')
+        assert scenarios_dict['a_scenario'] == 'a_variant'
+        assert scenarios_dict['b_scenario'] == 'b_variant'
+
     def test_available_results(self, results_no_results):
         available = results_no_results.available_results('model_run_1')
 

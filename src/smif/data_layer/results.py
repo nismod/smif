@@ -52,6 +52,19 @@ class Results:
             self._store.read_sos_model(self._store.read_model_run(model_run_name)['sos_model'])['sector_models']
         )
 
+    def list_scenarios(self, model_run_name: str):
+        """Return a dictionary of scenarios for given model run.
+
+        Parameters
+        ----------
+        model_run_name: str the requested model run
+
+        Returns
+        -------
+        Dictionary of (scenario name, variant) for the given model run.
+        """
+        return dict(self._store.read_model_run(model_run_name)['scenarios'])
+
     def list_outputs(self, sector_model_name: str):
         """Return a list of model run names.
 
