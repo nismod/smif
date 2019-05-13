@@ -65,6 +65,19 @@ class Results:
         """
         return dict(self._store.read_model_run(model_run_name)['scenarios'])
 
+    def list_scenario_outputs(self, scenario_name: str):
+        """Return a list of outputs of a given scenario.
+
+        Parameters
+        ----------
+        scenario_name: str the requested scenario
+
+        Returns
+        -------
+        List of outputs for the requested scenario
+        """
+        return sorted([x['name'] for x in self._store.read_scenario(scenario_name)['provides']])
+
     def list_outputs(self, sector_model_name: str):
         """Return a list of model run names.
 

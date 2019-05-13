@@ -192,6 +192,15 @@ class TestNoResults:
         assert scenarios_dict['a_scenario'] == 'a_variant'
         assert scenarios_dict['b_scenario'] == 'b_variant'
 
+    def test_list_scenario_outputs(self, results_no_results):
+        store = results_no_results._store
+        store.write_scenario({
+            'name': 'a_scenario',
+            'provides': [{'name': 'a_provides'}, {'name': 'b_provides'}]
+        })
+
+        assert results_no_results.list_scenario_outputs('a_scenario') == ['a_provides', 'b_provides']
+
     def test_available_results(self, results_no_results):
         available = results_no_results.available_results('model_run_1')
 
