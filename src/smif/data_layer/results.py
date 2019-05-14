@@ -251,7 +251,7 @@ class Results:
         return formatted_frame[cols]
 
     def read_scenario_data(self, scenario_name: str, variant_name: str, variable_name: str,
-                           timesteps: list = None) -> pd.DataFrame:
+                           timesteps: list) -> pd.DataFrame:
         """Return scenario variant data from the store as a formatted pandas data frame.
 
         Parameters
