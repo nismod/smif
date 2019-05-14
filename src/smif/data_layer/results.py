@@ -262,7 +262,7 @@ class Results:
             the requested scenario variant name
         variable_name: str
             the requested output variable name that the requested scenario provides
-        timesteps: list = None
+        timesteps: list
             the requested timesteps
 
         Raises
