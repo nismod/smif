@@ -2,6 +2,87 @@
 Changelog
 =========
 
+Version 1.1
+===========
+
+Features:
+
+- DecisionModule now handles the state of the system of systems
+- correctly; refactored pre-spec planning out of DecisionModule
+- Results_Handle provides read-only access to state
+- Can read and write empty state to and from store without errors
+- Added documentation on how to use pre-specified planning
+- Find out model runs which have results available
+- Identify missing results
+- Programmatically access results
+
+
+Version 1.0.8
+=============
+
+Features:
+
+- Add a port argument to cli for smif app
+
+
+Version 1.0.7
+=============
+
+Fixes:
+
+- Fix ambiguous smif cli verbosity arguments
+
+
+Version 1.0.6
+=============
+
+Fixes:
+
+- smif app bugfix
+
+
+Version 1.0.5
+=============
+
+Minor updates:
+
+- Convert custom units with UnitAdaptor
+- Cache coefficients by dimension pairs for greater reuse
+- Handle and test for duplicate data rows on read
+- Improve error message if file data is missing timestep
+- Improve DataArray.from_df validation and messages
+- Use gzip compression for smaller parquet files
+- Faster comparison of dim names using python set
+
+Fixes:
+
+- Debug messages with non-str interval names in IntervalAdaptor
+- Store dimensions as CSV, special-case convention for intervals
+- Handle raw Exception from xarray v0.10
+- Ensure DataHandle.get_data returns DataArray named as the input spec
+
+
+Version 1.0.4
+=============
+
+Fixes:
+
+- built-in adaptors calling ndim on DataArray
+
+
+Version 1.0.3
+=============
+
+Minor updates:
+
+- Update npm packages
+
+Fixes:
+
+- Fix missing method on datahandle for read and write coefficients
+- Catch and reraise index error with more information when reading narratives
+
+
 Version 1.0.2
 =============
 
