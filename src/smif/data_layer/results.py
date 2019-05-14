@@ -77,14 +77,15 @@ class Results:
 
         return results
 
-    def read(self,
-             model_run_names: list,
-             model_names: list,
-             output_names: list,
-             timesteps: list = None,
-             decisions: list = None,
-             time_decision_tuples: list = None,
-             ):
+    def read_results(
+            self,
+            model_run_names: list,
+            model_names: list,
+            output_names: list,
+            timesteps: list = None,
+            decisions: list = None,
+            time_decision_tuples: list = None,
+    ):
         """Return results from the store as a formatted pandas data frame. There are a number
         of ways of requesting specific timesteps/decisions. You can specify either:
 
