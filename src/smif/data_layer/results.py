@@ -17,6 +17,7 @@ class Results:
         'dir': <dir>} where <interface> is either 'local_csv' or 'local_parquet', and <dir> is
         the model base directory
     """
+
     def __init__(self, store: Union[Store, dict]):
 
         if type(store) is dict:
@@ -36,6 +37,60 @@ class Results:
         """
         return sorted([x['name'] for x in self._store.read_model_runs()])
 
+    def list_sector_models(self, model_run_name: str):
+        """Return a list of sector models for given model run.
+
+        Parameters
+        ----------
+        model_run_name: str the requested model run
+
+        Returns
+        -------
+        List of sector models for the given model run
+        """
+        return sorted(
+            self._store.read_sos_model(self._store.read_model_run(model_run_name)['sos_model'])['sector_models']
+        )
+
+    def list_scenarios(self, model_run_name: str):
+        """Return a dictionary of scenarios for given model run.
+
+        Parameters
+        ----------
+        model_run_name: str the requested model run
+
+        Returns
+        -------
+        Dictionary of (scenario name, variant) for the given model run.
+        """
+        return dict(self._store.read_model_run(model_run_name)['scenarios'])
+
+    def list_scenario_outputs(self, scenario_name: str):
+        """Return a list of outputs of a given scenario.
+
+        Parameters
+        ----------
+        scenario_name: str the requested scenario
+
+        Returns
+        -------
+        List of outputs for the requested scenario
+        """
+        return sorted([x['name'] for x in self._store.read_scenario(scenario_name)['provides']])
+
+    def list_outputs(self, sector_model_name: str):
+        """Return a list of model run names.
+
+        Parameters
+        ----------
+        sector_model_name: str the requested sector model
+
+        Returns
+        -------
+        List of outputs for the given sector model
+        """
+        return sorted([x['name'] for x in self._store.read_model(sector_model_name)['outputs']])
+
     def available_results(self, model_run_name):
         """Return the results available for a given model run.
 
@@ -49,11 +104,13 @@ class Results:
         """
 
         available = self._store.available_results(model_run_name)
+        model_run = self._store.read_model_run(model_run_name)
 
         results = {
             'model_run': model_run_name,
-            'sos_model': self._store.read_model_run(model_run_name)['sos_model'],
+            'sos_model': model_run['sos_model'],
             'sector_models': dict(),
+            'scenarios': dict(model_run['scenarios'])
         }
 
         model_names = {sec for _t, _d, sec, _out in available}
