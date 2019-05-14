@@ -250,6 +250,52 @@ class Results:
 
         return formatted_frame[cols]
 
+    def read_scenario_data(self, scenario_name: str, variant_name: str, variable_name: str,
+                           timesteps: list = None) -> pd.DataFrame:
+        """Return scenario variant data from the store as a formatted pandas data frame.
+
+        Parameters
+        ----------
+        scenario_name: str
+            the requested scenario name
+        variant_name: str
+            the requested scenario variant name
+        variable_name: str
+            the requested output variable name that the requested scenario provides
+        timesteps: list = None
+            the requested timesteps. If omitted, data for all timesteps is provided.
+
+        Raises
+        ------
+        SmifDataNotFoundError
+            If data cannot be found in the store when try to read from the store
+        SmifDataMismatchError
+            Data presented to read, write and update methods is in the
+            incorrect format or of wrong dimensions to that expected
+        SmifDataReadError
+            When unable to read data e.g. unable to handle file type or connect
+            to database
+
+        Returns
+        -------
+        pandas.DataFrame
+        """
+
+        # Query the store and return as pandas data frame sorted with ascending timestep
+        scenario_data_frame = self._store.read_scenario_variant_data_multiple_timesteps(
+            scenario_name=scenario_name,
+            variant_name=variant_name,
+            variable=variable_name,
+            timesteps=timesteps
+        ).as_df().sort_values('timestep').reset_index()
+
+        # Reorder the columns with timestep left-most
+        cols = scenario_data_frame.columns.tolist()
+        assert 'timestep' in cols
+        cols.insert(0, cols.pop(cols.index('timestep')))
+
+        return scenario_data_frame[cols]
+
     def get_units(self, output_name: str):
         """ Return the units of a given output.
 

@@ -331,3 +331,37 @@ class TestSomeResults:
         )
 
         pd.testing.assert_frame_equal(results_data, expected)
+
+
+class TestReadScenarios:
+
+    def test_read_scenario_variant_data(self, results_no_results, model_run, sample_dimensions, scenario,
+                                        sample_scenario_data):
+
+        store = results_no_results._store
+
+        # Setup ###############################################################################
+        for dim in sample_dimensions:
+            store.write_dimension(dim)
+        store.write_scenario(scenario)
+        # Pick out single sample
+        key = next(iter(sample_scenario_data))
+        scenario_name, variant_name, variable = key
+        scenario_variant_data = sample_scenario_data[key]
+        # Write
+        store.write_scenario_variant_data(scenario_name, variant_name, scenario_variant_data)
+        # End setup ###########################################################################
+
+        scenario_data_frame = results_no_results.read_scenario_data(
+            scenario_name, variant_name, variable, [2015, 2016]
+        )
+
+        expected = pd.DataFrame(
+            OrderedDict([
+                ('timestep', [2015, 2015, 2016, 2016]),
+                ('lad', ['a', 'b', 'a', 'b']),
+                ('mortality', scenario_variant_data.data.flatten()),
+            ])
+        )
+
+        pd.testing.assert_frame_equal(scenario_data_frame, expected)
