@@ -217,11 +217,18 @@ class TestStoreData():
         store.write_scenario_variant_data(
             scenario_name, variant_name, scenario_variant_data
         )
-        # read
+
+        # Read 2015
         actual = store.read_scenario_variant_data(
             scenario_name, variant_name, variable, 2015
         )
         assert (actual.data == scenario_variant_data.data[0]).all()
+
+        # Read 2016
+        actual = store.read_scenario_variant_data(
+            scenario_name, variant_name, variable, 2016
+        )
+        assert (actual.data == scenario_variant_data.data[1]).all()
 
     def test_narrative_variant_data(self, store, sample_dimensions, get_sos_model,
                                     get_sector_model, energy_supply_sector_model,

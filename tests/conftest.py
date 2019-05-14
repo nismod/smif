@@ -953,7 +953,7 @@ def scenario_with_timestep(sample_dimensions):
                 'name': 'mortality',
                 'dims': ['timestep', 'lad'],
                 'coords': {
-                    'timestep': [2015],
+                    'timestep': [2015, 2016],
                     'lad': sample_dimensions[0]['elements']
                 },
                 'dtype': 'float',
