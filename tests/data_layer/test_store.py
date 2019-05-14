@@ -199,6 +199,12 @@ class TestStoreMetadata():
 class TestStoreData():
     def test_scenario_variant_data(self, store, sample_dimensions, scenario,
                                    sample_scenario_data):
+        # The sample_scenario_data fixture provides data with a spec including timestep
+        # dimension containing a single coordinate of 2015. Note the asymmetry in the write
+        # and read methods here: writing requires the full DataArray object with the full
+        # spec including timestep, but the reading requires a specific timestep to be supplied.
+        # The data read back in, therefore, has lower dimensionality.
+
         # setup
         for dim in sample_dimensions:
             store.write_dimension(dim)
@@ -213,9 +219,9 @@ class TestStoreData():
         )
         # read
         actual = store.read_scenario_variant_data(
-            scenario_name, variant_name, variable
+            scenario_name, variant_name, variable, 2015
         )
-        assert actual == scenario_variant_data
+        assert (actual.data == scenario_variant_data.data[0]).all()
 
     def test_narrative_variant_data(self, store, sample_dimensions, get_sos_model,
                                     get_sector_model, energy_supply_sector_model,

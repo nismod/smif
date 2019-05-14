@@ -526,8 +526,8 @@ class Store():
     #
 
     # region Scenario Variant Data
-    def read_scenario_variant_data(
-            self, scenario_name, variant_name, variable, timestep=None) -> DataArray:
+    def read_scenario_variant_data(self, scenario_name: str, variant_name: str, variable: str,
+                                   timestep: int) -> DataArray:
         """Read scenario data file
 
         Parameters
@@ -535,7 +535,7 @@ class Store():
         scenario_name : str
         variant_name : str
         variable : str
-        timestep : int (optional)
+        timestep : int
             If None, read data for all timesteps
 
         Returns
