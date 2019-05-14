@@ -907,8 +907,8 @@ class Store():
         spec_dict = _pick_from_list(scenario['provides'], variable)
         
         # Now append timestep dimension, see store.get_result_darray_internal()
-        spec_dict['dims'].append('timesteps')
-        spec_dict['coords']['timesteps'] = timesteps
+        spec_dict['dims'].append('timestep')
+        spec_dict['coords']['timestep'] = timesteps
         
         spec = Spec.from_dict(spec_dict)
                               
