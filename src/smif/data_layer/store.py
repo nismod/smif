@@ -883,6 +883,46 @@ class Store():
         self.data_store.write_results(
             data_array, model_run_name, model_name, timestep, decision_iteration)
 
+    def read_scenario_variant_data_multiple_timesteps(self, scenario_name, variant_name,
+                                                      variable, timesteps):
+        """Read scenario variant for prescribed list of timesteps.
+           Returns a dataArray object with extra dimension for the timesteps
+
+        Parameters
+        ----------
+        scenario_name : str
+        variant_name: str
+        variable : int, optional
+        timesteps : list of ints
+
+        Returns
+        data_array : ~smif.data_layer.data_array.DataArray
+        """
+        # Get spec as a dict. for variable
+        # see store.read_scenario_variant_data
+        variant = self.read_scenario_variant(scenario_name, variant_name)
+        key = self._key_from_data(variant['data'][variable], scenario_name, variant_name,
+                                  variable)
+        scenario = self.read_scenario(scenario_name)
+        spec_dict = _pick_from_list(scenario['provides'], variable)
+        
+        # Now append timestep dimension, see store.get_result_darray_internal()
+        spec_dict['dims'].append('timesteps')
+        spec_dict['coords']['timesteps'] = timesteps
+        
+        spec = Spec.from_dict(spec_dict)
+                              
+        # Read the results for each timestep tuple and stack them
+        list_of_numpy_arrays = []
+        for t in timesteps:
+            d_array = self.read_scenario_variant_data(scenario_name, variant_name, variable, t)
+            list_of_numpy_arrays.append(d_array.data)
+
+        stacked_data = np.vstack(list_of_numpy_arrays)
+        data = np.transpose(stacked_data)
+        
+        return DataArray(spec, np.reshape(data, spec.shape))
+        
     def available_results(self, model_run_name):
         """List available results from a model run
 
