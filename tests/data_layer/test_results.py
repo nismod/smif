@@ -27,6 +27,14 @@ def results_no_results(empty_store):
         'coords': {'sample_dim': [{'name': 'a'}, {'name': 'b'}]},
         'unit': 'm'
     }
+    scenarios_1 = {
+        'a_scenario': 'a_variant_1',
+        'b_scenario': 'b_variant_1',
+    }
+    scenarios_2 = {
+        'a_scenario': 'a_variant_2',
+        'b_scenario': 'b_variant_2',
+    }
     empty_store.write_model({
         'name': 'a_model',
         'description': "Sample model",
@@ -63,7 +71,7 @@ def results_no_results(empty_store):
         'description': 'Sample model run',
         'timesteps': [2010, 2015, 2020, 2025, 2030],
         'sos_model': 'a_sos_model',
-        'scenarios': {},
+        'scenarios': scenarios_1,
         'strategies': [],
         'narratives': {}
     })
@@ -72,7 +80,7 @@ def results_no_results(empty_store):
         'description': 'Sample model run',
         'timesteps': [2010, 2015, 2020, 2025, 2030],
         'sos_model': 'a_sos_model',
-        'scenarios': {},
+        'scenarios': scenarios_2,
         'strategies': [],
         'narratives': {}
     })
@@ -177,20 +185,13 @@ class TestNoResults:
         assert results_no_results.list_sector_models('model_run_2') == ['a_model', 'b_model']
 
     def test_list_scenarios(self, results_no_results):
-        store = results_no_results._store
-        store.write_model_run({
-            'name': 'model_run_with_scenarios',
-            'timesteps': [2010, 2015, 2010],
-            'sos_model': 'energy',
-            'scenarios': {
-                'a_scenario': 'a_variant',
-                'b_scenario': 'b_variant',
-            }
-        })
+        scenarios_dict = results_no_results.list_scenarios('model_run_1')
+        assert scenarios_dict['a_scenario'] == 'a_variant_1'
+        assert scenarios_dict['b_scenario'] == 'b_variant_1'
 
-        scenarios_dict = results_no_results.list_scenarios('model_run_with_scenarios')
-        assert scenarios_dict['a_scenario'] == 'a_variant'
-        assert scenarios_dict['b_scenario'] == 'b_variant'
+        scenarios_dict = results_no_results.list_scenarios('model_run_2')
+        assert scenarios_dict['a_scenario'] == 'a_variant_2'
+        assert scenarios_dict['b_scenario'] == 'b_variant_2'
 
     def test_list_scenario_outputs(self, results_no_results):
         store = results_no_results._store
@@ -207,6 +208,8 @@ class TestNoResults:
         assert available['model_run'] == 'model_run_1'
         assert available['sos_model'] == 'a_sos_model'
         assert available['sector_models'] == {}
+        assert available['scenarios']['a_scenario'] == 'a_variant_1'
+        assert available['scenarios']['b_scenario'] == 'b_variant_1'
 
 
 class TestSomeResults:
@@ -217,6 +220,8 @@ class TestSomeResults:
 
         assert available['model_run'] == 'model_run_1'
         assert available['sos_model'] == 'a_sos_model'
+        assert available['scenarios']['a_scenario'] == 'a_variant_1'
+        assert available['scenarios']['b_scenario'] == 'b_variant_1'
 
         sec_models = available['sector_models']
         assert sorted(sec_models.keys()) == ['a_model', 'b_model']

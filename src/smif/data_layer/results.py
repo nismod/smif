@@ -104,11 +104,13 @@ class Results:
         """
 
         available = self._store.available_results(model_run_name)
+        model_run = self._store.read_model_run(model_run_name)
 
         results = {
             'model_run': model_run_name,
-            'sos_model': self._store.read_model_run(model_run_name)['sos_model'],
+            'sos_model': model_run['sos_model'],
             'sector_models': dict(),
+            'scenarios': dict(model_run['scenarios'])
         }
 
         model_names = {sec for _t, _d, sec, _out in available}
