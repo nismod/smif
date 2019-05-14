@@ -263,7 +263,7 @@ class Results:
         variable_name: str
             the requested output variable name that the requested scenario provides
         timesteps: list = None
-            the requested timesteps. If omitted, data for all timesteps is provided.
+            the requested timesteps
 
         Raises
         ------
