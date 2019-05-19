@@ -6,6 +6,7 @@ cross-coordination and there are some convenience methods implemented at this la
 import numpy as np
 import numpy.testing
 from pytest import fixture, raises
+
 from smif.data_layer import Store
 from smif.data_layer.data_array import DataArray
 from smif.data_layer.memory_interface import (MemoryConfigStore,
@@ -197,15 +198,10 @@ class TestStoreMetadata():
 
 
 class TestStoreData():
-    def test_scenario_variant_data(self, store, sample_dimensions, scenario,
-                                   sample_scenario_data):
-        # The sample_scenario_data fixture provides data with a spec including timestep
-        # dimension containing a single coordinate of 2015. Note the asymmetry in the write
-        # and read methods here: writing requires the full DataArray object with the full
-        # spec including timestep, but the reading requires a specific timestep to be supplied.
-        # The data read back in, therefore, has lower dimensionality.
 
-        # setup
+    @fixture(scope='function')
+    def setup(self, store, sample_dimensions, scenario,
+              sample_scenario_data):
         for dim in sample_dimensions:
             store.write_dimension(dim)
         store.write_scenario(scenario)
@@ -217,6 +213,18 @@ class TestStoreData():
         store.write_scenario_variant_data(
             scenario_name, variant_name, scenario_variant_data
         )
+        return key, scenario_variant_data
+
+    def test_scenario_variant_data(self, store,
+                                   setup):
+        # The sample_scenario_data fixture provides data with a spec including timestep
+        # dimension containing a single coordinate of 2015. Note the asymmetry in the write
+        # and read methods here: writing requires the full DataArray object with the full
+        # spec including timestep, but the reading requires a specific timestep to be supplied.
+        # The data read back in, therefore, has lower dimensionality.
+
+        key, scenario_variant_data = setup
+        scenario_name, variant_name, variable = key
 
         # Read 2015
         actual = store.read_scenario_variant_data(
@@ -229,6 +237,31 @@ class TestStoreData():
             scenario_name, variant_name, variable, 2016
         )
         assert (actual.data == scenario_variant_data.data[1]).all()
+
+    def test_scenario_variant_data_mult_one_year(self, store, setup):
+        key, scenario_variant_data = setup
+        scenario_name, variant_name, variable = key
+
+        actual = store.read_scenario_variant_data_multiple_timesteps(
+            scenario_name, variant_name, variable, [2016]
+        )
+
+        print(actual.as_df())
+        print(scenario_variant_data.as_df())
+
+        assert (actual.data == [scenario_variant_data.data[1]]).all()
+
+    def test_scenario_variant_data_mult_mult_years(self, store, setup):
+
+        key, scenario_variant_data = setup
+        scenario_name, variant_name, variable = key
+
+        actual = store.read_scenario_variant_data_multiple_timesteps(
+            scenario_name, variant_name, variable, [2015, 2016]
+        )
+        print(actual.as_df())
+        print(scenario_variant_data.as_df())
+        assert (actual.data == scenario_variant_data.data).all()
 
     def test_narrative_variant_data(self, store, sample_dimensions, get_sos_model,
                                     get_sector_model, energy_supply_sector_model,
