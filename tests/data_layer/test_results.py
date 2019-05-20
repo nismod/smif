@@ -26,7 +26,7 @@ def results_no_results(empty_store):
     })
     sample_output = {
         'name': 'sample_output',
-        'dtype': 'float',
+        'dtype': 'int',
         'dims': ['sample_dim', 'sample_dim_colour'],
         'coords': {
             'sample_dim': [{'name': 'a'}, {'name': 'b'}],
@@ -99,7 +99,7 @@ def results_no_results(empty_store):
 def results_with_results(results_no_results):
     sample_output = {
         'name': 'sample_output',
-        'dtype': 'float',
+        'dtype': 'int',
         'dims': ['sample_dim', 'sample_dim_colour'],
         'coords': {
             'sample_dim': [{'name': 'a'}, {'name': 'b'}],
@@ -109,7 +109,7 @@ def results_with_results(results_no_results):
     }
 
     spec = Spec.from_dict(sample_output)
-    data = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.dtype(int))
+    data = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int32)
     sample_results = DataArray(spec, data)
 
     results_no_results._store.write_results(sample_results, 'model_run_1', 'a_model', 2010, 0)
@@ -312,7 +312,7 @@ class TestSomeResults:
                 ('decision', [0] * 12 + [1] * 6 + [2] * 6 + [0] * 6 + [1] * 6 + [2] * 6),
                 ('sample_dim', ['a', 'a', 'a', 'b', 'b', 'b'] * 7),
                 ('sample_dim_colour', ['red', 'green', 'blue'] * 14),
-                ('sample_output', [1, 2, 3, 4, 5, 6] * 7),
+                ('sample_output', np.asarray([1, 2, 3, 4, 5, 6] * 7, dtype=np.int32)),
             ])
         )
 
@@ -333,7 +333,7 @@ class TestSomeResults:
                 ('decision', 0),
                 ('sample_dim', ['a', 'a', 'a', 'b', 'b', 'b'] * 10),
                 ('sample_dim_colour', ['red', 'green', 'blue'] * 20),
-                ('sample_output', [1, 2, 3, 4, 5, 6] * 10),
+                ('sample_output', np.asarray([1, 2, 3, 4, 5, 6] * 10, dtype=np.int32)),
             ])
         )
 
