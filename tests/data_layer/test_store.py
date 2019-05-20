@@ -246,9 +246,6 @@ class TestStoreData():
             scenario_name, variant_name, variable, [2016]
         )
 
-        print(actual.as_df())
-        print(scenario_variant_data.as_df())
-
         assert (actual.data == [scenario_variant_data.data[1]]).all()
 
     def test_scenario_variant_data_mult_mult_years(self, store, setup):
@@ -259,8 +256,7 @@ class TestStoreData():
         actual = store.read_scenario_variant_data_multiple_timesteps(
             scenario_name, variant_name, variable, [2015, 2016]
         )
-        print(actual.as_df())
-        print(scenario_variant_data.as_df())
+
         assert (actual.data == scenario_variant_data.data).all()
 
     def test_narrative_variant_data(self, store, sample_dimensions, get_sos_model,
