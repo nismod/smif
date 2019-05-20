@@ -23,6 +23,7 @@ from operator import itemgetter
 from typing import Dict, List, Optional
 
 import numpy as np  # type: ignore
+
 from smif.data_layer import DataArray
 from smif.data_layer.abstract_data_store import DataStore
 from smif.data_layer.abstract_metadata_store import MetadataStore
@@ -536,7 +537,6 @@ class Store():
         variant_name : str
         variable : str
         timestep : int
-            If None, read data for all timesteps
 
         Returns
         -------
@@ -907,13 +907,13 @@ class Store():
         # see store.read_scenario_variant_data
         scenario = self.read_scenario(scenario_name)
         spec_dict = _pick_from_list(scenario['provides'], variable)
-        
+
         # Now append timestep dimension, see store.get_result_darray_internal()
-        spec_dict['dims'].append('timestep')
+        spec_dict['dims'] = ['timestep'] + spec_dict['dims']
         spec_dict['coords']['timestep'] = timesteps
-        
+
         spec = Spec.from_dict(spec_dict)
-                              
+
         # Read the results for each timestep tuple and stack them
         list_of_numpy_arrays = []
         for t in timesteps:
@@ -921,10 +921,10 @@ class Store():
             list_of_numpy_arrays.append(d_array.data)
 
         stacked_data = np.vstack(list_of_numpy_arrays)
-        data = np.transpose(stacked_data)
-        
+        data = stacked_data
+
         return DataArray(spec, np.reshape(data, spec.shape))
-        
+
     def available_results(self, model_run_name):
         """List available results from a model run
 
