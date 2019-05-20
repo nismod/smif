@@ -109,7 +109,7 @@ def results_with_results(results_no_results):
     }
 
     spec = Spec.from_dict(sample_output)
-    data = np.array([[1, 2, 3], [4, 5, 6]], dtype=int)
+    data = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.dtype(int))
     sample_results = DataArray(spec, data)
 
     results_no_results._store.write_results(sample_results, 'model_run_1', 'a_model', 2010, 0)
