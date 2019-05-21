@@ -282,6 +282,36 @@ class Store():
         scenario_name : str
         """
         self.config_store.delete_scenario(scenario_name)
+
+    def prepare_scenario(self, scenario_name, list_of_variants):
+        scenario = self.read_scenario(scenario_name)
+        # Check that template scenario file does not define more than one variant
+        if not scenario['variants'] or len(scenario['variants'])>1:
+            raise SmifDataError("Template scenario file {} must define one"
+            "unique template variant".format(full_path_template))
+    
+        # Read variant defined in template scenario file
+        variant_template_name = scenario['variants'][0]['name']
+        variant = self.read_scenario_variant(scenario_name, variant_template_name)
+
+        # Read template names of scenario variant data files
+        root = {}
+        # root is a dict. keyed on scenario outputs.
+        # Entries contain the root of the variants filenames
+        for output in scenario['provides']:
+            root[output['name']], ext = os.path.splitext(variant['data'][output['name']])
+        # Now modify scenario file
+        first_variant = True
+        for ivar in list_of_variants:
+            for output in scenario['provides']:
+                variant['name'] = scenario_name+'_{:03d}'.format(ivar)
+                variant['data'][output['name']] = root[output['name']]+'{:03d}'.format(ivar)+ext
+            if(first_variant):
+                first_variant = False
+                self.update_scenario_variant(scenario_name,
+                                             variant_template_name, variant)
+            else:
+                self.write_scenario_variant(scenario_name, variant)
     # endregion
 
     # region Scenario Variants

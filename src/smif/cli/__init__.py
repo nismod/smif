@@ -211,39 +211,8 @@ def prepare_scenario(args):
     # Read template scenario using the Store class
     store = _get_store(args)
     list_of_variants = range(args.variants_range[0], args.variants_range[1]+1)
-    scenario = store.read_scenario(args.scenario_name)
-    
-    # Check that template scenario file does not define more than one variant
-    if len(scenario['variants'])<1:
-        sys.exit("Template scenario file {} must define a template variant"
-                 .format(full_path_template))
-    elif len(scenario['variants'])>1:
-        raise SmifDataError ("More than one variant found in scenario "
-                      "template file {}.".format(full_path_template))
-    
-    # Read variant defined in template scenario file
-    variant_template_name = scenario['variants'][0]['name']
-    variant = store.read_scenario_variant(args.scenario_name, variant_template_name)
 
-    # Read template names of scenario variant data files
-    root = {}
-    # root is a dict. keyed on scenario outputs.
-    # Entries contain the root of the variants filenames
-    for output in scenario['provides']:
-        root[output['name']], ext = os.path.splitext(variant['data'][output['name']])
-
-    # Now modify scenario file
-    first_variant = True
-    for ivar in list_of_variants:
-        for output in scenario['provides']:
-            variant['name'] = args.scenario_name+'_{:03d}'.format(ivar)
-            variant['data'][output['name']] = root[output['name']]+'{:03d}'.format(ivar)+ext
-        if(first_variant):
-            first_variant = False
-            store.update_scenario_variant(args.scenario_name,
-                                                    variant_template_name, variant)
-        else:
-            store.write_scenario_variant(args.scenario_name, variant)
+    store.prepare_scenario(args.scenario_name, list_of_variants)
 
 def prepare_model_run(args):
     """ 
