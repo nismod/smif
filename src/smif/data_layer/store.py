@@ -19,6 +19,7 @@ from copy import deepcopy
 from logging import getLogger
 from operator import itemgetter
 from typing import Dict, List, Optional
+from os.path import splitext
 
 import numpy as np  # type: ignore
 from smif.data_layer import DataArray
@@ -27,7 +28,7 @@ from smif.data_layer.abstract_metadata_store import MetadataStore
 from smif.data_layer.file import CSVDataStore, ParquetDataStore
 from smif.data_layer.validate import (validate_sos_model_config,
                                       validate_sos_model_format)
-from smif.exception import SmifDataNotFoundError, SmifDataInputError
+from smif.exception import SmifDataError, SmifDataNotFoundError
 from smif.metadata.spec import Spec
 
 
@@ -287,8 +288,8 @@ class Store():
         scenario = self.read_scenario(scenario_name)
         # Check that template scenario file does not define more than one variant
         if not scenario['variants'] or len(scenario['variants'])>1:
-            raise SmifDataInputError("Template scenario file {} must define one"
-            "unique template variant".format(full_path_template))
+            raise SmifDataError("Template scenario file must define one"
+            "unique template variant.")
     
         # Read variant defined in template scenario file
         variant_template_name = scenario['variants'][0]['name']
@@ -299,7 +300,7 @@ class Store():
         # root is a dict. keyed on scenario outputs.
         # Entries contain the root of the variants filenames
         for output in scenario['provides']:
-            root[output['name']], ext = os.path.splitext(variant['data'][output['name']])
+            root[output['name']], ext = splitext(variant['data'][output['name']])
         # Now modify scenario file
         first_variant = True
         for ivar in list_of_variants:
