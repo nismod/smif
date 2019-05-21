@@ -289,7 +289,7 @@ class Store():
         # Check that template scenario file does not define more than one variant
         if not scenario['variants'] or len(scenario['variants'])>1:
             raise SmifDataError("Template scenario file must define one"
-            "unique template variant.")
+            " unique template variant.")
     
         # Read variant defined in template scenario file
         variant_template_name = scenario['variants'][0]['name']
