@@ -187,7 +187,40 @@ def test_fixture_missing_results(tmp_sample_project):
     assert(out_str.count('no missing results') == 2)
     assert(out_str.count('results missing for:') == 0)
 
+def test_fixture_prepare_model_run(tmp_sample_project):
+    """Test cli for preparing model runs from template 
+    referencing scenario with 1 or more variants
+    """
+    config_dir = tmp_sample_project
+    pop_variants = ['low', 'med', 'high']
+    nb_variants = len(pop_variants)
+    
+    clear_model_runs(config_dir)
+    
+    output = subprocess.run(["smif", "prepare-run", "population", "energy_central",
+                            "-d", config_dir],
+                            stdout=subprocess.PIPE)
+    for suffix in pop_variants:
+        filename = 'energy_central_population_'+suffix+'.yml'
+        assert os.path.isfile(os.path.join(config_dir,'config/model_runs',filename))
 
+    variant_range = range(0,nb_variants)
+    for s, e in product(variant_range, variant_range):
+        clear_model_runs(config_dir)
+        output = subprocess.run(["smif", "prepare-run", "population", "energy_central",
+                                 "-s", str(s), "-e", str(e), "-d", config_dir],
+                                stdout=subprocess.PIPE)
+        for suffix in pop_variants[s:e+1]:
+            filename = 'energy_central_population_'+suffix+'.yml'
+            assert os.path.isfile(os.path.join(config_dir,'config/model_runs',filename))
+        for suffix in pop_variants[0:s]:
+            filename = 'energy_central_population_'+suffix+'.yml'
+            assert not os.path.isfile(os.path.join(config_dir,'config/model_runs',filename))
+        if e < variant_range[-1]:
+            for suffix in pop_variants[e+1:]:
+                filename = 'energy_central_population_'+suffix+'.yml'
+                assert not os.path.isfile(os.path.join(config_dir,'config/model_runs',filename))
+                
 def test_setup_project_folder():
     """Test contents of the setup project folder
     """
