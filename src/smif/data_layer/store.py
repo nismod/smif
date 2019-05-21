@@ -27,7 +27,7 @@ from smif.data_layer.abstract_metadata_store import MetadataStore
 from smif.data_layer.file import CSVDataStore, ParquetDataStore
 from smif.data_layer.validate import (validate_sos_model_config,
                                       validate_sos_model_format)
-from smif.exception import SmifDataNotFoundError
+from smif.exception import SmifDataNotFoundError, SmifDataInputError
 from smif.metadata.spec import Spec
 
 
@@ -287,7 +287,7 @@ class Store():
         scenario = self.read_scenario(scenario_name)
         # Check that template scenario file does not define more than one variant
         if not scenario['variants'] or len(scenario['variants'])>1:
-            raise SmifDataError("Template scenario file {} must define one"
+            raise SmifDataInputError("Template scenario file {} must define one"
             "unique template variant".format(full_path_template))
     
         # Read variant defined in template scenario file
