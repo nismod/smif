@@ -921,9 +921,8 @@ class Store():
             list_of_numpy_arrays.append(d_array.data)
 
         stacked_data = np.vstack(list_of_numpy_arrays)
-        data = stacked_data
 
-        return DataArray(spec, np.reshape(data, spec.shape))
+        return DataArray(spec, np.reshape(stacked_data, spec.shape))
 
     def available_results(self, model_run_name):
         """List available results from a model run
@@ -1107,17 +1106,16 @@ class Store():
             list_of_numpy_arrays.append(d_array.data)
 
         stacked_data = np.vstack(list_of_numpy_arrays)
-        data = np.transpose(stacked_data)
 
         # Add new dimensions to the data spec
         output_dict = output_spec.as_dict()
-        output_dict['dims'].append('timestep_decision')
+        output_dict['dims'] = ['timestep_decision'] + output_dict['dims']
         output_dict['coords']['timestep_decision'] = time_decision_tuples
 
         output_spec = Spec.from_dict(output_dict)
 
         # Create a new DataArray from the modified spec and stacked data
-        return DataArray(output_spec, np.reshape(data, output_spec.shape))
+        return DataArray(output_spec, np.reshape(stacked_data, output_spec.shape))
 
     def get_result_darray(self, model_run_name, model_name, output_name, timesteps=None,
                           decision_iterations=None, time_decision_tuples=None):
