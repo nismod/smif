@@ -195,16 +195,19 @@ class TestStoreConfig():
         new_variant = store.read_scenario_variant(scenario['name'], 'low')
         #
         assert new_variant['name'] == 'mortality_001'
+        assert new_variant['description'] == 'mortality variant number 001'
         assert new_variant['data']['mortality'] == 'mortality_low001.csv'
 
         assert updated_scenario['variants'][1]['name'] == 'mortality_002'
         new_variant = store.read_scenario_variant(scenario['name'], 'mortality_002')
         assert new_variant['name'] == 'mortality_002'
+        assert new_variant['description'] == 'mortality variant number 002'
         assert new_variant['data']['mortality'] == 'mortality_low002.csv'
 
         assert updated_scenario['variants'][2]['name'] == 'mortality_003'
         new_variant = store.read_scenario_variant(scenario['name'], 'mortality_003')
         assert new_variant['name'] == 'mortality_003'
+        assert new_variant['description'] == 'mortality variant number 003'
         assert new_variant['data']['mortality'] == 'mortality_low003.csv'
 
     def test_prepare_model_runs(self, store, model_run, sample_scenarios, sample_dimensions):

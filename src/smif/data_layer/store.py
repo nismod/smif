@@ -320,6 +320,7 @@ class Store():
             for output in scenario['provides']:
                 variant_cpy['name'] = scenario_name+'_{:03d}'.format(ivar)
                 variant_cpy['data'][output['name']] = root[output['name']]+'{:03d}'.format(ivar)+ext
+                variant_cpy['description']='{} variant number {:03d}'.format(scenario_name, ivar)
             if(first_variant):
                 first_variant = False
                 self.update_scenario_variant(scenario_name,
