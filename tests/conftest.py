@@ -935,6 +935,54 @@ def scenario(sample_dimensions):
             }
         ]
     })
+@fixture
+def scenario_2_variants(sample_dimensions):
+
+    return deepcopy({
+        'name': 'mortality_2_variants',
+        'description': 'The annual mortality rate in UK population',
+        'provides': [
+            {
+                'name': 'mortality',
+                'dims': ['lad'],
+                'coords': {'lad': sample_dimensions[0]['elements']},
+                'dtype': 'float',
+            }
+        ],
+        'variants': [
+            {
+                'name': 'low',
+                'description': 'Mortality (Low)',
+                'data': {
+                    'mortality': 'mortality_low.csv',
+                },
+            },
+            {
+                'name': 'high',
+                'description': 'Mortality (High)',
+                'data': {
+                    'mortality': 'mortality_high.csv',
+                },
+            }
+        ]
+    })
+@fixture
+def scenario_no_variant(sample_dimensions):
+
+    return deepcopy({
+        'name': 'mortality_no_variants',
+        'description': 'The annual mortality rate in UK population',
+        'provides': [
+            {
+                'name': 'mortality',
+                'dims': ['lad'],
+                'coords': {'lad': sample_dimensions[0]['elements']},
+                'dtype': 'float',
+            }
+        ],
+        'variants': [
+        ]
+    })
 
 
 @fixture

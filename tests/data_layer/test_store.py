@@ -5,13 +5,14 @@ cross-coordination and there are some convenience methods implemented at this la
 """
 import numpy as np
 import numpy.testing
-from pytest import fixture
+from pytest import fixture, raises
 from smif.data_layer import Store
 from smif.data_layer.data_array import DataArray
 from smif.data_layer.memory_interface import (MemoryConfigStore,
                                               MemoryDataStore,
                                               MemoryMetadataStore)
 from smif.metadata import Spec
+from smif.exception import SmifDataError
 
 
 @fixture
@@ -159,6 +160,52 @@ class TestStoreConfig():
         # delete
         store.delete_scenario_variant(scenario_name, old_variant['name'])
         assert store.read_scenario_variants(scenario_name) == [new_variant]
+
+    def test_prepare_scenario(self, store, scenario, scenario_2_variants,
+                              scenario_no_variant, sample_dimensions):
+        for dim in sample_dimensions:
+            store.write_dimension(dim)
+        # Insert template_scenario dict in underlying
+        # MemoryConfigStore
+        store.write_scenario(scenario)
+        store.write_scenario(scenario_2_variants)
+        store.write_scenario(scenario_no_variant)
+
+        list_of_variants = range(1,4)
+
+        # Must raise exception if scenario defines > 1 variants
+        with raises(SmifDataError) as ex:
+            store.prepare_scenario(scenario_2_variants['name'], list_of_variants)
+        assert "must define one unique template variant" in str(ex)
+
+        # Must raise exception if scenario defines 0 variants
+        with raises(SmifDataError) as ex:
+            store.prepare_scenario(scenario_no_variant['name'], list_of_variants)
+        assert "must define one unique template variant" in str(ex)
+
+        store.prepare_scenario(scenario['name'], list_of_variants)
+
+        updated_scenario = store.read_scenario(scenario['name'])
+
+        assert len(updated_scenario['variants']) == 3
+        assert updated_scenario['variants'][0]['name'] == 'mortality_001'
+        # The first variant is still indexed by 'low' in the underlying
+        # MemoryConfigStore in the _scenarios['mortality'][variants]
+        # dict.
+        new_variant = store.read_scenario_variant(scenario['name'], 'low')
+        #
+        assert new_variant['name'] = 'mortality_001'
+        assert new_variant['data']['mortality'] == 'mortality_low001.csv'
+
+        assert updated_scenario['variants'][1]['name'] == 'mortality_002'
+        new_variant = store.read_scenario_variant(scenario['name'], 'mortality_002')
+        assert new_variant['name'] = 'mortality_002'
+        assert new_variant['data']['mortality'] == 'mortality_low002.csv'
+
+        assert updated_scenario['variants'][2]['name'] == 'mortality_003'
+        new_variant = store.read_scenario_variant(scenario['name'], 'mortality_003')
+        assert new_variant['name'] = 'mortality_003'
+        assert new_variant['data']['mortality'] == 'mortality_low003.csv'
 
     def test_narratives(self, store, get_sos_model):
         store.write_sos_model(get_sos_model)

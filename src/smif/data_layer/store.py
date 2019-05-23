@@ -304,15 +304,20 @@ class Store():
         # Now modify scenario file
         first_variant = True
         for ivar in list_of_variants:
+            # Copying the variant dict is required when underlying config_store
+            # is an instance of MemoryConfigStore, which attribute _scenarios holds
+            # a reference to the variant object passed to update or
+            # write_scenario_variant
+            variant_cpy = deepcopy(variant)
             for output in scenario['provides']:
-                variant['name'] = scenario_name+'_{:03d}'.format(ivar)
-                variant['data'][output['name']] = root[output['name']]+'{:03d}'.format(ivar)+ext
+                variant_cpy['name'] = scenario_name+'_{:03d}'.format(ivar)
+                variant_cpy['data'][output['name']] = root[output['name']]+'{:03d}'.format(ivar)+ext
             if(first_variant):
                 first_variant = False
                 self.update_scenario_variant(scenario_name,
-                                             variant_template_name, variant)
+                                             variant_template_name, variant_cpy)
             else:
-                self.write_scenario_variant(scenario_name, variant)
+                self.write_scenario_variant(scenario_name, variant_cpy)
     # endregion
 
     # region Scenario Variants
