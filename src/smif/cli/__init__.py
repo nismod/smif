@@ -205,8 +205,9 @@ def list_missing_results(args):
                 print('{} {}'.format(base_str, res_str))
 
 def prepare_scenario(args):
-    """ Create {scenario_name}.yml from {scenario_name}_template.yml 
-    scenario file to include multiple scenario variants.
+    """ Update scenario configuration file to include multiple scenario
+        variants.
+        The initial scenario configuration file is overwritten.
     """
     # Read template scenario using the Store class
     store = _get_store(args)

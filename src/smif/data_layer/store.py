@@ -285,6 +285,14 @@ class Store():
         self.config_store.delete_scenario(scenario_name)
 
     def prepare_scenario(self, scenario_name, list_of_variants):
+        """ Modify {scenario_name} config file to include multiple
+        scenario variants.
+
+        Parameters
+        ----------
+        scenario_name: str
+        list_of_variants: list[int] - indices of scenario variants
+        """
         scenario = self.read_scenario(scenario_name)
         # Check that template scenario file does not define more than one variant
         if not scenario['variants'] or len(scenario['variants'])>1:
@@ -323,8 +331,14 @@ class Store():
                            first_var, last_var):
         """Write multiple model run config files corresponding to multiple
         scenario variants of {scenario_name}, based on template {model_run_name}
-
            Write batchfile containing each of the generated model runs
+
+        Parameters
+        ----------
+        model_run_name: str
+        scenario_name: str
+        first_var: int - between 0 and number of variants-1
+        last_var: int - between first_var and number of variants-1
         """
 
         model_run = self.read_model_run(model_run_name)
