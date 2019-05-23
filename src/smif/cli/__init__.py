@@ -214,19 +214,17 @@ def prepare_scenario(args):
 
     store.prepare_scenario(args.scenario_name, list_of_variants)
 
-def prepare_model_run(args):
+def prepare_model_runs(args):
     """ 
     Generate multiple model runs according to a model run file referencing a scenario 
     with multiple variants.
     """
     # Read model run and scenario using the Store class
     store = _get_store(args)
-    model_run = store.read_model_run(args.model_run_name)
-    scenario = store.read_scenario(args.scenario_name)
-    
+    nb_variants = len(store.read_scenario_variants(args.scenario_name))
     # Define default lower and upper of variant range
     var_start = 0
-    var_end = len(scenario['variants'])
+    var_end = nb_variants
 
     # Check if optional cli arguments specify range of variants
     # They are compared to None because they can be 0
@@ -234,34 +232,22 @@ def prepare_model_run(args):
         var_start = args.start;
         if var_start<0:
             raise ValueError('Lower bound of variant range must be >=0')
-        if var_start>len(scenario['variants']):
+        if var_start>nb_variants:
             raise ValueError("Lower bound of variant range greater"
                              " than number of variants")
     if args.end!=None:
         var_end = args.end
         if var_end<0:
             raise ValueError('Upper bound of variant range must be >=0')
-        if var_end>len(scenario['variants'])-1:
+        if var_end>nb_variants-1:
             raise ValueError("Upper bound of variant range cannot be greater"
-                             " than {:d}".format(len(scenario['variants'])-1))
+                             " than {:d}".format(nb_variants-1))
         if var_end<var_start:
             raise ValueError("Upper bound of variant range must be >= lower" 
                              " bound of variant range")
 
-    # Open batchfile
-    f_handle = open(args.model_run_name+'.batch', 'w')
-    # For each variant model_run, write a new model run file with corresponding
-    # scenario variant and update batchfile.
-    for variant in scenario['variants'][var_start:var_end+1]:
-        variant_model_run_name = args.model_run_name+'_'+variant['name']
-        model_run['name'] = variant_model_run_name
-        model_run['scenarios'][args.scenario_name] = variant['name']
-
-        store.write_model_run(model_run)
-        f_handle.write(args.model_run_name+'_'+variant['name']+'\n')
-        
-    # Close batchfile
-    f_handle.close()
+    store.prepare_model_runs(args.model_run_name, args.scenario_name,
+                             var_start, var_end)
 
 def run_model_runs(args):
     """Run the model runs as requested. Check if results exist and asks
@@ -431,17 +417,17 @@ def parse_arguments():
         'variants_range', nargs=2, type=int,
         help='Two integers delimiting the range of variants')
         # PREPARE
-    parser_prepare_model_run = subparsers.add_parser(
+    parser_prepare_model_runs = subparsers.add_parser(
         'prepare-run', help='Prepare model runs based on scenario variants',
         parents=[parent_parser])
-    parser_prepare_model_run.set_defaults(func=prepare_model_run)
-    parser_prepare_model_run.add_argument(
+    parser_prepare_model_runs.set_defaults(func=prepare_model_runs)
+    parser_prepare_model_runs.add_argument(
         'scenario_name', help='Name of the scenario')
-    parser_prepare_model_run.add_argument(
+    parser_prepare_model_runs.add_argument(
         'model_run_name', help='Name of the template model run')
-    parser_prepare_model_run.add_argument(
+    parser_prepare_model_runs.add_argument(
         '-s', '--start', type=int, help='Lower bound of the range of variants')
-    parser_prepare_model_run.add_argument(
+    parser_prepare_model_runs.add_argument(
         '-e', '--end', type=int, help='Upper bound of the range of variants')
 
     # APP

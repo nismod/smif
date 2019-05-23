@@ -318,6 +318,32 @@ class Store():
                                              variant_template_name, variant_cpy)
             else:
                 self.write_scenario_variant(scenario_name, variant_cpy)
+
+    def prepare_model_runs(self, model_run_name, scenario_name,
+                           first_var, last_var):
+        """Write multiple model run config files corresponding to multiple
+        scenario variants of {scenario_name}, based on template {model_run_name}
+
+           Write batchfile containing each of the generated model runs
+        """
+
+        model_run = self.read_model_run(model_run_name)
+        scenario = self.read_scenario(scenario_name)
+        # Open batchfile
+        f_handle = open(model_run_name+'.batch', 'w')
+        # For each variant model_run, write a new model run file with corresponding
+        # scenario variant and update batchfile
+        for variant in scenario['variants'][first_var:last_var+1]:
+            variant_model_run_name = model_run_name+'_'+variant['name']
+            model_run_copy = deepcopy(model_run)
+            model_run_copy['name'] = variant_model_run_name
+            model_run_copy['scenarios'][scenario_name] = variant['name']
+
+            self.write_model_run(model_run_copy)
+            f_handle.write(model_run_name+'_'+variant['name']+'\n')
+
+        # Close batchfile
+        f_handle.close()
     # endregion
 
     # region Scenario Variants
