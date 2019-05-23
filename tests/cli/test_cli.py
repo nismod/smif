@@ -6,7 +6,7 @@ import subprocess
 import sys
 from tempfile import TemporaryDirectory
 from unittest.mock import call, patch
-
+from itertools import product
 import smif
 from pytest import fixture
 from smif.cli import confirm, parse_arguments, setup_project_folder
@@ -187,7 +187,7 @@ def test_fixture_missing_results(tmp_sample_project):
     assert(out_str.count('no missing results') == 2)
     assert(out_str.count('results missing for:') == 0)
 
-def test_fixture_prepare_model_run(tmp_sample_project):
+def test_fixture_prepare_model_runs(tmp_sample_project):
     """Test cli for preparing model runs from template 
     referencing scenario with 1 or more variants
     """
@@ -221,6 +221,15 @@ def test_fixture_prepare_model_run(tmp_sample_project):
                 filename = 'energy_central_population_'+suffix+'.yml'
                 assert not os.path.isfile(os.path.join(config_dir,'config/model_runs',filename))
                 
+def clear_model_runs(config_dir):
+    """ Helper function for test function
+        test_fixture_prepare_model_runs
+    """
+    for suffix in ['low', 'med', 'high']:
+        filename = 'energy_central_population_'+suffix+'.yml'
+        if os.path.isfile(os.path.join(config_dir,'config/model_runs',filename)):
+            os.remove(os.path.join(config_dir,'config/model_runs',filename))
+
 def test_setup_project_folder():
     """Test contents of the setup project folder
     """

@@ -194,24 +194,48 @@ class TestStoreConfig():
         # dict.
         new_variant = store.read_scenario_variant(scenario['name'], 'low')
         #
-        assert new_variant['name'] = 'mortality_001'
+        assert new_variant['name'] == 'mortality_001'
         assert new_variant['data']['mortality'] == 'mortality_low001.csv'
 
         assert updated_scenario['variants'][1]['name'] == 'mortality_002'
         new_variant = store.read_scenario_variant(scenario['name'], 'mortality_002')
-        assert new_variant['name'] = 'mortality_002'
+        assert new_variant['name'] == 'mortality_002'
         assert new_variant['data']['mortality'] == 'mortality_low002.csv'
 
         assert updated_scenario['variants'][2]['name'] == 'mortality_003'
         new_variant = store.read_scenario_variant(scenario['name'], 'mortality_003')
-        assert new_variant['name'] = 'mortality_003'
+        assert new_variant['name'] == 'mortality_003'
         assert new_variant['data']['mortality'] == 'mortality_low003.csv'
+
+    def test_prepare_model_runs(self, store, model_run, sample_scenarios, sample_dimensions):
+        for dim in sample_dimensions:
+            store.write_dimension(dim)
+        scenario = sample_scenarios[0]
+        store.write_model_run(model_run)
+        store.write_scenario(scenario)
+
+        # Generate 2 model runs for variants Low and High
+        store.prepare_model_runs(model_run['name'], scenario['name'], 0, 1)
+        list_of_mr = store.read_model_runs()
+        assert len(list_of_mr) == 3
+        assert list_of_mr[0] == model_run
+        assert list_of_mr[1]['name'] == model_run['name']+'_'+scenario['variants'][0]['name']
+        assert list_of_mr[2]['name'] == model_run['name']+'_'+scenario['variants'][1]['name']
+        store.delete_model_run(list_of_mr[1]['name'])
+        store.delete_model_run(list_of_mr[2]['name'])
+        # Generate only one model run for variant Low
+        store.prepare_model_runs(model_run['name'], scenario['name'], 0, 0)
+        list_of_mr = store.read_model_runs()
+        assert len(list_of_mr) == 2
+        assert list_of_mr[0] == model_run
+        assert list_of_mr[1]['name'] == model_run['name']+'_'+scenario['variants'][0]['name']
 
     def test_narratives(self, store, get_sos_model):
         store.write_sos_model(get_sos_model)
         expected = get_sos_model['narratives'][0]
         # read one
         assert store.read_narrative(get_sos_model['name'], expected['name']) == expected
+
 
     def test_strategies(self, store, strategies):
         model_run_name = 'test_modelrun'
