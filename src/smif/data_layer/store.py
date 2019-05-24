@@ -41,6 +41,7 @@ class Store():
     metadata_store: ~smif.data_layer.abstract_metadata_store.MetadataStore
     data_store: ~smif.data_layer.abstract_data_store.DataStore
     """
+
     def __init__(self, config_store, metadata_store: MetadataStore,
                  data_store: DataStore, model_base_folder="."):
         self.logger = getLogger(__name__)
@@ -104,6 +105,7 @@ class Store():
         model_run_name : str
         """
         self.config_store.delete_model_run(model_run_name)
+
     # endregion
 
     # region System-of-systems models
@@ -161,6 +163,7 @@ class Store():
         sos_model_name : str
         """
         self.config_store.delete_sos_model(sos_model_name)
+
     # endregion
 
     # region Models
@@ -222,6 +225,7 @@ class Store():
         model_name : str
         """
         self.config_store.delete_model(model_name)
+
     # endregion
 
     # region Scenarios
@@ -295,10 +299,10 @@ class Store():
         """
         scenario = self.read_scenario(scenario_name)
         # Check that template scenario file does not define more than one variant
-        if not scenario['variants'] or len(scenario['variants'])>1:
+        if not scenario['variants'] or len(scenario['variants']) > 1:
             raise SmifDataError("Template scenario file must define one"
-            " unique template variant.")
-    
+                                " unique template variant.")
+
         # Read variant defined in template scenario file
         variant_template_name = scenario['variants'][0]['name']
         variant = self.read_scenario_variant(scenario_name, variant_template_name)
@@ -318,10 +322,12 @@ class Store():
             # write_scenario_variant
             variant_cpy = deepcopy(variant)
             for output in scenario['provides']:
-                variant_cpy['name'] = scenario_name+'_{:03d}'.format(ivar)
-                variant_cpy['data'][output['name']] = root[output['name']]+'{:03d}'.format(ivar)+ext
-                variant_cpy['description']='{} variant number {:03d}'.format(scenario_name, ivar)
-            if(first_variant):
+                variant_cpy['name'] = scenario_name + '_{:03d}'.format(ivar)
+                variant_cpy['data'][output['name']] = root[output['name']] + '{:03d}'.format(
+                    ivar) + ext
+                variant_cpy['description'] = '{} variant number {:03d}'.format(scenario_name,
+                                                                               ivar)
+            if (first_variant):
                 first_variant = False
                 self.update_scenario_variant(scenario_name,
                                              variant_template_name, variant_cpy)
@@ -345,20 +351,21 @@ class Store():
         model_run = self.read_model_run(model_run_name)
         scenario = self.read_scenario(scenario_name)
         # Open batchfile
-        f_handle = open(model_run_name+'.batch', 'w')
+        f_handle = open(model_run_name + '.batch', 'w')
         # For each variant model_run, write a new model run file with corresponding
         # scenario variant and update batchfile
-        for variant in scenario['variants'][first_var:last_var+1]:
-            variant_model_run_name = model_run_name+'_'+variant['name']
+        for variant in scenario['variants'][first_var:last_var + 1]:
+            variant_model_run_name = model_run_name + '_' + variant['name']
             model_run_copy = deepcopy(model_run)
             model_run_copy['name'] = variant_model_run_name
             model_run_copy['scenarios'][scenario_name] = variant['name']
 
             self.write_model_run(model_run_copy)
-            f_handle.write(model_run_name+'_'+variant['name']+'\n')
+            f_handle.write(model_run_name + '_' + variant['name'] + '\n')
 
         # Close batchfile
         f_handle.close()
+
     # endregion
 
     # region Scenario Variants
@@ -420,6 +427,7 @@ class Store():
         variant_name : str
         """
         self.config_store.delete_scenario_variant(scenario_name, variant_name)
+
     # endregion
 
     # region Narratives
@@ -432,6 +440,7 @@ class Store():
         narrative_name : str
         """
         return self.config_store.read_narrative(sos_model_name, narrative_name)
+
     # endregion
 
     # region Strategies
@@ -462,6 +471,7 @@ class Store():
         strategies : list[dict]
         """
         self.config_store.write_strategies(model_run_name, strategies)
+
     # endregion
 
     #
@@ -488,6 +498,7 @@ class Store():
             Pint-compatible unit definitions
         """
         self.metadata_store.write_unit_definitions(definitions)
+
     # endregion
 
     # region Dimensions
@@ -555,6 +566,7 @@ class Store():
                         for dim in spec['dims']
                     }
         return item
+
     # endregion
 
     #
@@ -601,6 +613,7 @@ class Store():
         key = self._key_from_data(variant['data'][data.spec.name], scenario_name, variant_name,
                                   data.spec.name)
         self.data_store.write_scenario_variant_data(key, data, timestep)
+
     # endregion
 
     # region Narrative Data
@@ -707,6 +720,7 @@ class Store():
             path = 'default__{}__{}.csv'.format(model_name, parameter_name)
         key = self._key_from_data(path, model_name, parameter_name)
         self.data_store.write_model_parameter_default(key, data)
+
     # endregion
 
     # region Interventions
@@ -789,6 +803,7 @@ class Store():
                 self.read_initial_conditions(sector_model_name)
             )
         return historical_interventions
+
     # endregion
 
     # region State
@@ -821,6 +836,7 @@ class Store():
         decision_iteration : int, optional
         """
         self.data_store.write_state(state, model_run_name, timestep, decision_iteration)
+
     # endregion
 
     # region Conversion coefficients
@@ -868,6 +884,7 @@ class Store():
         To be called from :class:`~smif.convert.adaptor.Adaptor` implementations.
         """
         self.data_store.write_coefficients(source_dim, destination_dim, data)
+
     # endregion
 
     # region Results

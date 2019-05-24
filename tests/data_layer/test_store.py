@@ -97,8 +97,8 @@ class TestStoreConfig():
         # read all
         assert store.read_models(skip_coords=True) == [get_sector_model_no_coords]
         # read one
-        assert store.read_model(get_sector_model['name'], skip_coords=True) == \
-            get_sector_model_no_coords
+        assert store.read_model(get_sector_model['name'],
+                                skip_coords=True) == get_sector_model_no_coords
         # update
         store.update_model(get_sector_model['name'], get_sector_model)
         # delete
@@ -130,8 +130,7 @@ class TestStoreConfig():
         # read all
         assert store.read_scenarios(skip_coords=True) == [scenario_no_coords]
         # read one
-        assert store.read_scenario(scenario['name'], skip_coords=True) == \
-            scenario_no_coords
+        assert store.read_scenario(scenario['name'], skip_coords=True) == scenario_no_coords
         # update
         store.update_scenario(scenario['name'], scenario)
         # delete
@@ -172,7 +171,7 @@ class TestStoreConfig():
         store.write_scenario(scenario_2_variants)
         store.write_scenario(scenario_no_variant)
 
-        list_of_variants = range(1,4)
+        list_of_variants = range(1, 4)
 
         # Must raise exception if scenario defines > 1 variants
         with raises(SmifDataError) as ex:
@@ -223,8 +222,10 @@ class TestStoreConfig():
         list_of_mr = store.read_model_runs()
         assert len(list_of_mr) == 3
         assert list_of_mr[0] == model_run
-        assert list_of_mr[1]['name'] == model_run['name']+'_'+scenario['variants'][0]['name']
-        assert list_of_mr[2]['name'] == model_run['name']+'_'+scenario['variants'][1]['name']
+        assert list_of_mr[1]['name'] == model_run['name'] + '_' + scenario['variants'][0][
+            'name']
+        assert list_of_mr[2]['name'] == model_run['name'] + '_' + scenario['variants'][1][
+            'name']
         store.delete_model_run(list_of_mr[1]['name'])
         store.delete_model_run(list_of_mr[2]['name'])
         # Generate only one model run for variant Low
@@ -232,7 +233,8 @@ class TestStoreConfig():
         list_of_mr = store.read_model_runs()
         assert len(list_of_mr) == 2
         assert list_of_mr[0] == model_run
-        assert list_of_mr[1]['name'] == model_run['name']+'_'+scenario['variants'][0]['name']
+        assert list_of_mr[1]['name'] == model_run['name'] + '_' + scenario['variants'][0][
+            'name']
 
         # Tidy up batch file
         os.remove('{}.batch'.format(model_run['name']))
@@ -386,8 +388,9 @@ class TestStoreData():
         spec = sample_results.spec
         assert store.read_results('model_run_name', 'model_name', spec, 0) == sample_results
         # check
-        assert store.available_results('model_run_name') == \
-            [(0, None, 'model_name', spec.name)]
+        assert store.available_results('model_run_name') == [
+            (0, None, 'model_name', spec.name)
+        ]
 
     def test_warm_start(self, store, sample_results):
         assert store.prepare_warm_start('test_model_run') is None
@@ -410,7 +413,7 @@ class TestStoreData():
         correct_results.add((2015, 0, 'model_name', output_name))
         correct_results.add((2020, 0, 'model_name', output_name))
 
-        assert(store.canonical_available_results('model_run_name') == correct_results)
+        assert (store.canonical_available_results('model_run_name') == correct_results)
 
     def test_canonical_expected_results(
             self, store, sample_dimensions, get_sos_model, get_sector_model,
@@ -429,7 +432,7 @@ class TestStoreData():
         correct_results.add((2020, 0, 'energy_demand', 'gas_demand'))
         correct_results.add((2025, 0, 'energy_demand', 'gas_demand'))
 
-        assert(store.canonical_expected_results(model_run['name']) == correct_results)
+        assert (store.canonical_expected_results(model_run['name']) == correct_results)
 
     def test_canonical_missing_results(
             self, store, sample_dimensions, get_sos_model, get_sector_model,
@@ -449,7 +452,7 @@ class TestStoreData():
         missing_results.add((2020, 0, 'energy_demand', 'gas_demand'))
         missing_results.add((2025, 0, 'energy_demand', 'gas_demand'))
 
-        assert(store.canonical_missing_results(model_run['name']) == missing_results)
+        assert (store.canonical_missing_results(model_run['name']) == missing_results)
 
         spec = Spec(name='gas_demand', dtype='float')
         data = np.array(1, dtype=float)
@@ -458,4 +461,4 @@ class TestStoreData():
         store.write_results(fake_data, model_run['name'], 'energy_demand', 2015, 0)
         missing_results.remove((2015, 0, 'energy_demand', 'gas_demand'))
 
-        assert(store.canonical_missing_results(model_run['name']) == missing_results)
+        assert (store.canonical_missing_results(model_run['name']) == missing_results)
