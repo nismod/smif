@@ -7,11 +7,13 @@ import os
 import numpy as np
 import numpy.testing
 from pytest import fixture, raises
+
 from smif.data_layer import Store
 from smif.data_layer.data_array import DataArray
 from smif.data_layer.memory_interface import (MemoryConfigStore,
                                               MemoryDataStore,
                                               MemoryMetadataStore)
+from smif.exception import SmifDataNotFoundError
 from smif.metadata import Spec
 from smif.exception import SmifDataError
 
@@ -275,9 +277,10 @@ class TestStoreMetadata():
 
 
 class TestStoreData():
-    def test_scenario_variant_data(self, store, sample_dimensions, scenario,
-                                   sample_scenario_data):
-        # setup
+
+    @fixture(scope='function')
+    def setup(self, store, sample_dimensions, scenario,
+              sample_scenario_data):
         for dim in sample_dimensions:
             store.write_dimension(dim)
         store.write_scenario(scenario)
@@ -289,11 +292,51 @@ class TestStoreData():
         store.write_scenario_variant_data(
             scenario_name, variant_name, scenario_variant_data
         )
-        # read
+        return key, scenario_variant_data
+
+    def test_scenario_variant_data(self, store,
+                                   setup):
+        # The sample_scenario_data fixture provides data with a spec including timestep
+        # dimension containing a single coordinate of 2015. Note the asymmetry in the write
+        # and read methods here: writing requires the full DataArray object with the full
+        # spec including timestep, but the reading requires a specific timestep to be supplied.
+        # The data read back in, therefore, has lower dimensionality.
+
+        key, scenario_variant_data = setup
+        scenario_name, variant_name, variable = key
+
+        # Read 2015
         actual = store.read_scenario_variant_data(
-            scenario_name, variant_name, variable
+            scenario_name, variant_name, variable, 2015
         )
-        assert actual == scenario_variant_data
+        assert (actual.data == scenario_variant_data.data[0]).all()
+
+        # Read 2016
+        actual = store.read_scenario_variant_data(
+            scenario_name, variant_name, variable, 2016
+        )
+        assert (actual.data == scenario_variant_data.data[1]).all()
+
+    def test_scenario_variant_data_mult_one_year(self, store, setup):
+        key, scenario_variant_data = setup
+        scenario_name, variant_name, variable = key
+
+        actual = store.read_scenario_variant_data_multiple_timesteps(
+            scenario_name, variant_name, variable, [2016]
+        )
+
+        assert (actual.data == [scenario_variant_data.data[1]]).all()
+
+    def test_scenario_variant_data_mult_mult_years(self, store, setup):
+
+        key, scenario_variant_data = setup
+        scenario_name, variant_name, variable = key
+
+        actual = store.read_scenario_variant_data_multiple_timesteps(
+            scenario_name, variant_name, variable, [2015, 2016]
+        )
+
+        assert (actual.data == scenario_variant_data.data).all()
 
     def test_narrative_variant_data(self, store, sample_dimensions, get_sos_model,
                                     get_sector_model, energy_supply_sector_model,
@@ -462,3 +505,67 @@ class TestStoreData():
         missing_results.remove((2015, 0, 'energy_demand', 'gas_demand'))
 
         assert (store.canonical_missing_results(model_run['name']) == missing_results)
+
+    def test_get_results(self):
+        # This is difficult to test without fixtures defining an entire canonical project.
+        # See smif issue #304 (https://github.com/nismod/smif/issues/304).
+        # Todo: mock a store with known results that can be obtained with get_results(...)
+        # This requires a model run with sector model, and a sector model with valid inputs and
+        # outputs, and results with valid spec, etc. Some of this functionality exists in
+        # fixtures provided in `conftest.py`.
+        pass
+
+
+class TestWrongRaises:
+
+    def test_narrative_variant(self, store, sample_dimensions,
+                               get_sos_model, get_sector_model,
+                               energy_supply_sector_model,
+                               sample_narrative_data):
+        # Setup
+        for dim in sample_dimensions:
+            store.write_dimension(dim)
+        store.write_sos_model(get_sos_model)
+        store.write_model(get_sector_model)
+        store.write_model(energy_supply_sector_model)
+        # pick out single sample
+        key = (
+            'energy',
+            'technology',
+            'high_tech_dsm',
+            'smart_meter_savings'
+        )
+        sos_model_name, narrative_name, variant_name, param_name = key
+
+        with raises(SmifDataNotFoundError) as ex:
+            store.read_narrative_variant_data(
+                sos_model_name, narrative_name, 'bla', param_name)
+
+        expected = "Variant name 'bla' does not exist in narrative 'technology'"
+
+        assert expected in str(ex)
+
+    def test_narrative_name(self, store, sample_dimensions, get_sos_model,
+                            get_sector_model, energy_supply_sector_model,
+                            sample_narrative_data):
+        # Setup
+        for dim in sample_dimensions:
+            store.write_dimension(dim)
+        store.write_sos_model(get_sos_model)
+        store.write_model(get_sector_model)
+        store.write_model(energy_supply_sector_model)
+        # pick out single sample
+        key = (
+            'energy',
+            'technology',
+            'high_tech_dsm',
+            'smart_meter_savings'
+        )
+        sos_model_name, narrative_name, variant_name, param_name = key
+
+        with raises(SmifDataNotFoundError) as ex:
+            store.read_narrative_variant_data(
+                sos_model_name, 'bla', variant_name, param_name)
+
+        expected = "Narrative name 'bla' does not exist in sos_model 'energy'"
+        assert expected in str(ex)

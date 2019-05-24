@@ -33,6 +33,7 @@ Contents
    Concepts <concepts>
    Configuration <project_configuration>
    Adding a Model <simulation_models>
+   Strategies, Interventions and Decisions <decisions>
 
 .. toctree::
    :maxdepth: 3
@@ -40,7 +41,7 @@ Contents
    Reference <api/modules>
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    Developing `smif` <developers>
    Contributing <contributing>

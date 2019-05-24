@@ -306,14 +306,13 @@ def _run_server(args):
         data_interface=_get_store(args),
         scheduler=ModelRunScheduler()
     )
-    port = 5000
 
     print("    Opening smif app\n")
     print("    Copy/paste this URL into your web browser to connect:")
-    print("        http://localhost:" + str(port) + "\n")
+    print("        http://localhost:" + str(args.port) + "\n")
     # add flush to ensure that text is printed before server thread starts
     print("    Close your browser then type Control-C here to quit.", flush=True)
-    app.run(host='0.0.0.0', port=port, threaded=True)
+    app.run(host='0.0.0.0', port=args.port, threaded=True)
 
 
 def run_app(args):
@@ -438,6 +437,10 @@ def parse_arguments():
     parser_app = subparsers.add_parser(
         'app', help='Open smif app', parents=[parent_parser])
     parser_app.set_defaults(func=run_app)
+    parser_app.add_argument('-p', '--port',
+                            type=int,
+                            default=5000,
+                            help="The port over which to serve the app")
 
     # RUN
     parser_run = subparsers.add_parser(

@@ -609,11 +609,11 @@ def sample_scenarios():
 
 
 @fixture
-def sample_scenario_data(scenario, get_sector_model, energy_supply_sector_model,
+def sample_scenario_data(scenario_with_timestep, get_sector_model, energy_supply_sector_model,
                          water_supply_sector_model):
     scenario_data = {}
 
-    for scenario in [scenario]:
+    for scenario in [scenario_with_timestep]:
         for variant in scenario['variants']:
             for data_key, data_value in variant['data'].items():
                 spec = Spec.from_dict(
@@ -981,6 +981,40 @@ def scenario_no_variant(sample_dimensions):
             }
         ],
         'variants': [
+        ]
+    })
+
+
+@fixture
+def scenario_with_timestep(sample_dimensions):
+    """This fixture should only be used if you need to write scenario variant data for the
+    purpose of a test.  See, for instance, test_scenario_variant_data in the test_store.py.
+    In this case, the timestep dimension (that is always present for scenario variant data)
+    is explicitly provided for ease of writing out complete scenario variant data.
+    """
+
+    return deepcopy({
+        'name': 'mortality',
+        'description': 'The annual mortality rate in UK population',
+        'provides': [
+            {
+                'name': 'mortality',
+                'dims': ['timestep', 'lad'],
+                'coords': {
+                    'timestep': [2015, 2016],
+                    'lad': sample_dimensions[0]['elements']
+                },
+                'dtype': 'float',
+            }
+        ],
+        'variants': [
+            {
+                'name': 'low',
+                'description': 'Mortality (Low)',
+                'data': {
+                    'mortality': 'mortality_low.csv',
+                },
+            }
         ]
     })
 
