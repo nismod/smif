@@ -3,6 +3,7 @@
 Many methods simply proxy to config/metadata/data store implementations, but there is some
 cross-coordination and there are some convenience methods implemented at this layer.
 """
+import os
 import numpy as np
 import numpy.testing
 from pytest import fixture, raises
@@ -233,12 +234,14 @@ class TestStoreConfig():
         assert list_of_mr[0] == model_run
         assert list_of_mr[1]['name'] == model_run['name']+'_'+scenario['variants'][0]['name']
 
+        # Tidy up batch file
+        os.remove('{}.batch'.format(model_run['name']))
+
     def test_narratives(self, store, get_sos_model):
         store.write_sos_model(get_sos_model)
         expected = get_sos_model['narratives'][0]
         # read one
         assert store.read_narrative(get_sos_model['name'], expected['name']) == expected
-
 
     def test_strategies(self, store, strategies):
         model_run_name = 'test_modelrun'
