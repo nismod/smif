@@ -5,7 +5,7 @@ from argparse import ArgumentParser
 from smif.data_layer.file import (CSVDataStore, FileMetadataStore,
                                   ParquetDataStore, YamlConfigStore)
 
-arguments = ['prepare-convert', 'energy_central']
+arguments = ['prepare-convert', 'energy_water_cp_cr']
 
 parser = cli.parse_arguments()
 args = parser.parse_args(arguments)

@@ -102,6 +102,7 @@ class FileDataStore(DataStore):
 
     def write_narrative_variant_data(self, key, data, timestep=None):
         path = os.path.join(self.data_folders['narratives'], key)
+        path = self._set_file_extension(path)
         self._write_data_array(path, data, timestep)
 
     def read_model_parameter_default(self, key, spec):
@@ -113,6 +114,7 @@ class FileDataStore(DataStore):
 
     def write_model_parameter_default(self, key, data):
         path = os.path.join(self.data_folders['parameters'], key)
+        path = self._set_file_extension(path)
         self._write_data_array(path, data)
     # endregion
 
@@ -161,6 +163,11 @@ class FileDataStore(DataStore):
         path = os.path.join(self.data_folders['strategies'], strategy['filename'])
         return self._read_list_of_dicts(path)
 
+    def write_strategy_interventions(self, strategy, data):
+        path = os.path.join(self.data_folders['strategies'], strategy['filename'])
+        path = self._set_file_extension(path)
+        return self._write_list_of_dicts(path, data)
+
     def read_initial_conditions(self, keys):
         conditions = []
         for key in keys:
@@ -171,6 +178,7 @@ class FileDataStore(DataStore):
 
     def write_initial_conditions(self, key, initial_conditions):
         path = os.path.join(self.data_folders['initial_conditions'], key)
+        path = self._set_file_extension(path)
         self._write_list_of_dicts(path, initial_conditions)
     # endregion
 
@@ -558,7 +566,7 @@ def _unnest_keys(intervention):
     unnested = {}
     for key, value in intervention.items():
         if isinstance(value, dict):
-            for sub_key, sub_value in value:
+            for sub_key, sub_value in value.items():
                 unnested["{}_{}".format(key, sub_key)] = sub_value
         else:
             unnested[key] = value

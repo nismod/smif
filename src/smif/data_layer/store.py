@@ -718,6 +718,14 @@ class Store():
         """
         return self.data_store.read_strategy_interventions(strategy)
 
+    def write_strategy_interventions(self, strategy, data):
+        """
+        Parameters
+        ----------
+        list[dicts]
+        """
+        self.data_store.write_strategy_interventions(strategy, data)
+
     def read_initial_conditions(self, model_name) -> List[Dict]:
         """Read historical interventions for `model_name`
 

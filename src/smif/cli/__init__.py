@@ -222,13 +222,48 @@ def prepare_convert(args):
 
     # Read model run
     model_run = src_store.read_model_run(args.model_run)
-    # Write scenario data to target data format
+
+    # Convert strategies interventions for model run
+    strategies = src_store.read_strategies(model_run['name'])
+    for strategy in strategies:
+        data = src_store.read_strategy_interventions(strategy)
+        tgt_store.write_strategy_interventions(strategy, data)
+
+    # Convert scenario data for model run
     for scenario_name in model_run['scenarios']:
         for variant in src_store.read_scenario_variants(scenario_name):
             for variable in variant['data']:
-                data_array = src_store.read_scenario_variant_data(scenario_name,
-                                                                  variant['name'], variable)
-                tgt_store.write_scenario_variant_data(scenario_name, variant, data_array)
+                data_array = src_store.read_scenario_variant_data_multiple_timesteps(scenario_name, variant['name'], variable, model_run['timesteps'])
+                tgt_store.write_scenario_variant_data(scenario_name, variant['name'], data_array)
+
+    # Read sos model for model run
+    sos_model = src_store.read_sos_model(model_run['sos_model'])
+
+    # Convert narrative data for sos model
+    for narrative in sos_model['narratives']:
+        for variant in narrative['variants']:
+            for param in variant['data']:
+                data_array = src_store.read_narrative_variant_data(sos_model['name'],
+                                                                   narrative['name'],
+                                                                   variant['name'],
+                                                                   param)
+                tgt_store.write_narrative_variant_data(sos_model['name'], narrative['name'],
+                                                       variant['name'], data_array)
+
+    # Convert initial conditions, default parameter and interventions data
+    # for sector models in sos model
+    for sector_model_name in sos_model['sector_models']:
+        initial_conditions = src_store.read_initial_conditions(sector_model_name)
+        tgt_store.write_initial_conditions(sector_model_name, initial_conditions)
+
+        sector_model = src_store.read_model(sector_model_name)
+        for parameter in sector_model['parameters']:
+            data_array = src_store.read_model_parameter_default(sector_model_name,
+                                                                parameter['name'])
+            tgt_store.write_model_parameter_default(sector_model_name, parameter['name'],
+                                                    data_array)
+        interventions = src_store.read_interventions(sector_model)
+        tgt_store.write_interventions(sector_model, interventions)
 
 def run_model_runs(args):
     """Run the model runs as requested. Check if results exist and asks
