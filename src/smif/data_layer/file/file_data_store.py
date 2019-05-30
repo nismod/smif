@@ -77,11 +77,6 @@ class FileDataStore(DataStore):
     def _write_ndarray(self, path, data, header=None):
         """Write numpy.ndarray
         """
-
-    @abstractmethod
-    def _set_file_extension(self, path):
-        """Append correct file extension to path
-        """
     # endregion
 
     # region Data Array
@@ -93,7 +88,6 @@ class FileDataStore(DataStore):
 
     def write_scenario_variant_data(self, key, data, timestep=None):
         path = os.path.join(self.data_folders['scenarios'], key)
-        path = self._set_file_extension(path)
         self._write_data_array(path, data, timestep)
 
     def read_narrative_variant_data(self, key, spec, timestep=None):
@@ -453,12 +447,6 @@ class CSVDataStore(FileDataStore):
         """
         np.savetxt(path, data, header=header)
 
-    def _set_file_extension(self, path):
-        """Append correct file extension to path
-        """
-        name, extension = os.path.splitext(path)
-        return name+'.csv'
-
 
 class ParquetDataStore(FileDataStore):
     """Binary file data store
@@ -532,12 +520,6 @@ class ParquetDataStore(FileDataStore):
         """Write numpy.ndarray
         """
         np.save(path, data)
-
-    def _set_file_extension(self, path):
-        """Append correct file extension to path
-        """
-        name, extension = os.path.splitext(path)
-        return name+'.parquet'
 
 
 def _nest_keys(intervention):
