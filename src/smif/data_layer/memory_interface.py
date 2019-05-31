@@ -115,7 +115,7 @@ class MemoryConfigStore(ConfigStore):
     def read_interventions_index(self, model_name, index_name):
         if model_name not in self._index:
             raise SmifDataNotFoundError("model '%s' not found" % (model_name))
-        if index_name not in self._index[index_name]:
+        if index_name not in self._index[model_name]:
             raise SmifDataNotFoundError("index '%s' not found" % (index_name))
         return self._index[model_name][index_name]
 
