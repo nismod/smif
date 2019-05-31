@@ -724,7 +724,8 @@ class Store():
         model = self.read_model(model_name)
         if string_id in model['interventions']:
             int_file = self.config_store.read_interventions_index(model_name, string_id)
-            return self.data_store.read_interventions([int_file])
+            root, ext = os.path.splitext(int_file)
+            return self.data_store.read_interventions([int_file]), root
 
     def read_strategy_interventions(self, strategy):
         """Read interventions as defined in a model run strategy

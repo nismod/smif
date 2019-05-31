@@ -303,11 +303,12 @@ class TestStoreData():
         store.write_model(get_sector_model)
         # write
         store.write_interventions_file(get_sector_model['name'], 'intervention_file_id',
-                                       'path', interventions)
-        result_interventions = store.read_interventions_file(get_sector_model['name'],
-                                                             'intervention_file_id')
+                                       'path.ext', interventions)
+        result, root = store.read_interventions_file(get_sector_model['name'],
+                                                     'intervention_file_id')
 
-        assert result_interventions == interventions
+        assert result == interventions
+        assert root == 'path'
 
     def test_initial_conditions(self, store, sample_dimensions, initial_conditions,
                                 get_sos_model, get_sector_model, energy_supply_sector_model,
