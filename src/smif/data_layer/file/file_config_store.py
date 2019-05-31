@@ -217,6 +217,11 @@ class YamlConfigStore(ConfigStore):
         _assert_file_exists(self.config_folders, 'sector_model', model_name)
         os.remove(
             os.path.join(self.config_folders['sector_models'], model_name + '.yml'))
+
+    def read_interventions_index(self, model_name, index_name):
+        index = _read_yaml_file(self.config_folders['sector_models'], 'interventions_file_index')
+        return index[model_name][index_name]
+
     # endregion
 
     # region Scenarios
