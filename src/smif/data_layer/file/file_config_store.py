@@ -222,6 +222,11 @@ class YamlConfigStore(ConfigStore):
         index = _read_yaml_file(self.config_folders['sector_models'], 'interventions_file_index')
         return index[model_name][index_name]
 
+    def update_interventions_index(self, model_name, index_name, int_file):
+        index = _read_yaml_file(self.config_folders['sector_models'], 'interventions_file_index')
+        index[model_name][index_name] = int_file
+        _write_yaml_file(self.config_folders['sector_models'], 'interventions_file_index', index)
+
     # endregion
 
     # region Scenarios

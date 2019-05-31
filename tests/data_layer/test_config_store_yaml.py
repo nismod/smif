@@ -364,6 +364,16 @@ class TestSectorModel:
         filename = config_handler.read_interventions_index(model_name, index_name)
         assert filename == expected_filename
 
+    def test_sector_model_update_interventions_index(self, config_handler,
+                                                     interventions_index_file):
+        model_name = 'model_2'
+        index_name = 'model_2_id_3'
+        expected_filename = 'path5'
+
+        config_handler.update_interventions_index(model_name, index_name, expected_filename)
+        filename = config_handler.read_interventions_index(model_name, index_name)
+        assert filename == expected_filename
+
 
 class TestScenarios:
     """Scenario data should be readable, metadata is currently editable. May move to make it
