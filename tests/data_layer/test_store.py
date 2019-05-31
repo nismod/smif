@@ -295,6 +295,20 @@ class TestStoreData():
 
         assert model['interventions'] == ['intervention_file_id']
 
+    def test_read_interventions_file(self, store, sample_dimensions, get_sector_model,
+                                      interventions):
+        # setup
+        for dim in sample_dimensions:
+            store.write_dimension(dim)
+        store.write_model(get_sector_model)
+        # write
+        store.write_interventions_file(get_sector_model['name'], 'intervention_file_id',
+                                       'path', interventions)
+        result_interventions = store.read_interventions_file(get_sector_model['name'],
+                                                             'intervention_file_id')
+
+        assert result_interventions == interventions
+
     def test_initial_conditions(self, store, sample_dimensions, initial_conditions,
                                 get_sos_model, get_sector_model, energy_supply_sector_model,
                                 minimal_model_run):

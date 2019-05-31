@@ -720,6 +720,12 @@ class Store():
         self.config_store.update_interventions_index(model_name, string_id, int_file)
         self.data_store.write_interventions(int_file, interventions)
 
+    def read_interventions_file(self, model_name, string_id):
+        model = self.read_model(model_name)
+        if string_id in model['interventions']:
+            int_file = self.config_store.read_interventions_index(model_name, string_id)
+            return self.data_store.read_interventions([int_file])
+
     def read_strategy_interventions(self, strategy):
         """Read interventions as defined in a model run strategy
         """
