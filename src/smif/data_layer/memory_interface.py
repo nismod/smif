@@ -112,14 +112,14 @@ class MemoryConfigStore(ConfigStore):
         except KeyError:
             raise SmifDataNotFoundError("model '%s' not found" % (model_name))
 
-    def read_interventions_index(self, model_name, index_name):
+    def read_interventions_index(self, model_name, index_name, ext):
         if model_name not in self._index:
             raise SmifDataNotFoundError("model '%s' not found" % (model_name))
         if index_name not in self._index[model_name]:
             raise SmifDataNotFoundError("index '%s' not found" % (index_name))
         return self._index[model_name][index_name]
 
-    def update_interventions_index(self, model_name, index_name, int_file):
+    def update_interventions_index(self, model_name, index_name, int_file, ext):
         if model_name not in self._index:
             self._index[model_name] = {}
         self._index[model_name][index_name] = int_file
@@ -270,6 +270,7 @@ class MemoryDataStore(DataStore):
         self._model_parameter_defaults = OrderedDict()
         self._coefficients = OrderedDict()
         self._results = OrderedDict()
+        self.ext = None
 
     # region Data Array
     def read_scenario_variant_data(self, key, spec, timestep=None):
