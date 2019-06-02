@@ -218,15 +218,28 @@ class YamlConfigStore(ConfigStore):
         os.remove(
             os.path.join(self.config_folders['sector_models'], model_name + '.yml'))
 
-    def read_interventions_index(self, model_name, index_name):
-        index = _read_yaml_file(self.config_folders['sector_models'], 'interventions_file_index')
-        return index[model_name][index_name]
+    def read_interventions_index(self, model_name, index_name, ext):
+        int_file_index = 'interventions_file_index_'+ext
+        filename = None
+        index_dict = _read_yaml_file(self.config_folders['sector_models'], int_file_index)
+        if model_name not in index_dict:
+            raise SmifDataNotFoundError("model '%s' not found" % (model_name))
+        if index_name not in index_dict[model_name]:
+            raise SmifDataNotFoundError("index '%s' not found" % (index_name))
+        return index_dict[model_name][index_name]
 
-    def update_interventions_index(self, model_name, index_name, int_file):
-        index = _read_yaml_file(self.config_folders['sector_models'], 'interventions_file_index')
-        index[model_name][index_name] = int_file
-        _write_yaml_file(self.config_folders['sector_models'], 'interventions_file_index', index)
+    def update_interventions_index(self, model_name, index_name, int_file, ext):
+        int_file_index = 'interventions_file_index_'+ext
+        path = os.path.join(self.config_folders['sector_models'], int_file_index+'.yml')
+        if os.path.isfile(path):
+            index = _read_yaml_file(self.config_folders['sector_models'], int_file_index)
+            if model_name not in index:
+                index.insert(0, model_name, '')
+            index[model_name].insert(0, index_name, int_file)
+        else:
+            index = {model_name: {index_name: int_file}}
 
+        _write_yaml_file(self.config_folders['sector_models'], int_file_index, index)
     # endregion
 
     # region Scenarios
