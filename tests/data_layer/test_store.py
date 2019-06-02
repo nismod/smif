@@ -282,30 +282,31 @@ class TestStoreData():
         # read
         assert store.read_interventions(get_sector_model['name']) == interventions
 
-    def test_write_interventions_file(self, store, sample_dimensions, get_sector_model,
-                                      interventions):
+    def test_write_interventions_file_with_index(self, store, sample_dimensions,
+                                                 get_sector_model, interventions):
         # setup
         for dim in sample_dimensions:
             store.write_dimension(dim)
         store.write_model(get_sector_model)
         # write
-        store.write_interventions_file(get_sector_model['name'], 'intervention_file_id',
-                                       'path', interventions)
+        store.write_interventions_file_with_index(get_sector_model['name'],
+                                                  'intervention_file_id', 'path', interventions)
         model = store.read_model(get_sector_model['name'])
 
         assert model['interventions'] == ['intervention_file_id']
 
-    def test_read_interventions_file(self, store, sample_dimensions, get_sector_model,
-                                      interventions):
+    def test_read_interventions_file_with_index(self, store, sample_dimensions,
+                                                get_sector_model, interventions):
         # setup
         for dim in sample_dimensions:
             store.write_dimension(dim)
         store.write_model(get_sector_model)
         # write
-        store.write_interventions_file(get_sector_model['name'], 'intervention_file_id',
-                                       'path.ext', interventions)
-        result, root = store.read_interventions_file(get_sector_model['name'],
-                                                     'intervention_file_id')
+        store.write_interventions_file_with_index(get_sector_model['name'],
+                                                  'intervention_file_id', 'path.ext',
+                                                  interventions)
+        result, root = store.read_interventions_file_with_index(get_sector_model['name'],
+                                                                'intervention_file_id')
 
         assert result == interventions
         assert root == 'path'
