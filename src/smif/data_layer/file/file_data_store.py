@@ -81,21 +81,21 @@ class FileDataStore(DataStore):
 
     # region Data Array
     def read_scenario_variant_data(self, key, spec, timestep=None):
-        path = os.path.join(self.data_folders['scenarios'], key)
+        path = os.path.join(self.data_folders['scenarios'], key+'.{}'.format(self.ext))
         data = self._read_data_array(path, spec, timestep)
         data.validate_as_full()
         return data
 
     def write_scenario_variant_data(self, key, data, timestep=None):
-        path = os.path.join(self.data_folders['scenarios'], key)
+        path = os.path.join(self.data_folders['scenarios'], key+'.{}'.format(self.ext))
         self._write_data_array(path, data, timestep)
 
     def read_narrative_variant_data(self, key, spec, timestep=None):
-        path = os.path.join(self.data_folders['narratives'], key)
+        path = os.path.join(self.data_folders['narratives'], key+'.{}'.format(self.ext))
         return self._read_data_array(path, spec, timestep)
 
     def write_narrative_variant_data(self, key, data, timestep=None):
-        path = os.path.join(self.data_folders['narratives'], key)
+        path = os.path.join(self.data_folders['narratives'], key+'.{}'.format(self.ext))
         self._write_data_array(path, data, timestep)
 
     def read_model_parameter_default(self, key, spec):
@@ -114,7 +114,7 @@ class FileDataStore(DataStore):
     def read_interventions(self, keys):
         all_interventions = []
         for key in keys:
-            path = os.path.join(self.data_folders['interventions'], key)
+            path = os.path.join(self.data_folders['interventions'], key+'.{}'.format(self.ext))
             interventions = self._read_list_of_dicts(path)
             all_interventions.extend(interventions)
 
@@ -148,15 +148,17 @@ class FileDataStore(DataStore):
             _unnest_keys(intervention)
             for intervention in interventions.values()
         ]
-        path = os.path.join(self.data_folders['interventions'], key)
+        path = os.path.join(self.data_folders['interventions'], key+'.{}'.format(self.ext))
         self._write_list_of_dicts(path, data)
 
     def read_strategy_interventions(self, strategy):
-        path = os.path.join(self.data_folders['strategies'], strategy['filename'])
+        path = os.path.join(self.data_folders['strategies'],
+                            strategy['filename']+'.{}'.format(self.ext))
         return self._read_list_of_dicts(path)
 
     def write_strategy_interventions(self, strategy, data):
-        path = os.path.join(self.data_folders['strategies'], strategy['filename'])
+        path = os.path.join(self.data_folders['strategies'],
+                            strategy['filename']+'.{}'.format(self.ext))
         return self._write_list_of_dicts(path, data)
 
     def read_initial_conditions(self, keys):

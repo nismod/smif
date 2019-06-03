@@ -729,6 +729,22 @@ class Store():
             root, ext = os.path.splitext(int_file)
             return self.data_store.read_interventions([int_file]), root
 
+    def write_interventions_file(self, model_name, string_id, interventions):
+        model = self.read_model(model_name)
+        if string_id in model['interventions']:
+            self.data_store.write_interventions(string_id, interventions)
+        else:
+            raise SmifDataNotFoundError("Intervention {} not found for"
+                                        " sector model {}.".format(string_id, model_name))
+
+    def read_interventions_file(self, model_name, string_id):
+        model = self.read_model(model_name)
+        if string_id in model['interventions']:
+            return self.data_store.read_interventions([string_id])
+        else:
+            raise SmifDataNotFoundError("Intervention {} not found for"
+                                        " sector model {}.".format(string_id, model_name))
+
     def read_strategy_interventions(self, strategy):
         """Read interventions as defined in a model run strategy
         """
