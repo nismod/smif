@@ -311,6 +311,20 @@ class TestStoreData():
         assert result == interventions
         assert root == 'path'
 
+    def test_read_write_interventions_file(self, store, sample_dimensions,
+                                           get_sector_model, interventions):
+        # setup
+        for dim in sample_dimensions:
+            store.write_dimension(dim)
+        get_sector_model['interventions'] = ['path']
+        store.write_model(get_sector_model)
+        # write
+        store.write_interventions_file(get_sector_model['name'],
+                                       'path', interventions)
+        result = store.read_interventions_file(get_sector_model['name'], 'path')
+
+        assert result == interventions
+
     def test_initial_conditions(self, store, sample_dimensions, initial_conditions,
                                 get_sos_model, get_sector_model, energy_supply_sector_model,
                                 minimal_model_run):
@@ -328,6 +342,20 @@ class TestStoreData():
         # read all for a model run
         actual = store.read_all_initial_conditions(minimal_model_run['name'])
         assert actual == initial_conditions
+
+    def test_read_write_initial_conditions_file(self, store, sample_dimensions,
+                                                    get_sector_model, initial_conditions):
+        # setup
+        for dim in sample_dimensions:
+            store.write_dimension(dim)
+        get_sector_model['initial_conditions'] = ['path']
+        store.write_model(get_sector_model)
+        # write
+        store.write_initial_conditions_file(get_sector_model['name'],
+                                            'path', initial_conditions)
+        result = store.read_initial_conditions_file(get_sector_model['name'], 'path')
+
+        assert result == initial_conditions
 
     def test_state(self, store, state):
         # write
