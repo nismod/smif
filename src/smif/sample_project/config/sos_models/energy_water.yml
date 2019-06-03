@@ -19,9 +19,9 @@ narratives:
     - name: high_tech_dsm
       description: High penetration of SMART technology on the demand side
       data:
-        smart_meter_savings: high_tech_dsm.csv
-        clever_water_meter_savings: high_tech_dsm.csv
-        per_capita_water_demand: high_tech_dsm.csv
+        smart_meter_savings: high_tech_dsm
+        clever_water_meter_savings: high_tech_dsm
+        per_capita_water_demand: high_tech_dsm
 sector_models: # Select 1 or more of the sector models
 - water_supply
 - energy_demand
