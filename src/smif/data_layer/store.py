@@ -426,6 +426,7 @@ class Store():
         strategies : list[dict]
         """
         self.config_store.write_strategies(model_run_name, strategies)
+
     # endregion
 
     #
@@ -785,6 +786,22 @@ class Store():
         self.update_model(model_name, model)
         self.data_store.write_initial_conditions(model['initial_conditions'][0],
                                                  initial_conditions)
+
+    def write_initial_conditions_file(self, model_name, string_id, initial_conditions):
+        model = self.read_model(model_name)
+        if string_id in model['initial_conditions']:
+            self.data_store.write_initial_conditions(string_id, initial_conditions)
+        else:
+            raise SmifDataNotFoundError("Initial condition {} not found for"
+                                        " sector model {}.".format(string_id, model_name))
+
+    def read_initial_conditions_file(self, model_name, string_id):
+        model = self.read_model(model_name)
+        if string_id in model['initial_conditions']:
+            return self.data_store.read_initial_conditions([string_id])
+        else:
+            raise SmifDataNotFoundError("Initial conditions {} not found for"
+                                        " sector model {}.".format(string_id, model_name))
 
     def read_all_initial_conditions(self, model_run_name) -> List[Dict]:
         """A list of all historical interventions

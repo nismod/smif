@@ -100,13 +100,13 @@ class FileDataStore(DataStore):
 
     def read_model_parameter_default(self, key, spec):
         self.logger.debug("Trying to read model parameter default from key {}".format(key))
-        path = os.path.join(self.data_folders['parameters'], key)
+        path = os.path.join(self.data_folders['parameters'], key+'.{}'.format(self.ext))
         data = self._read_data_array(path, spec)
         data.validate_as_full()
         return data
 
     def write_model_parameter_default(self, key, data):
-        path = os.path.join(self.data_folders['parameters'], key)
+        path = os.path.join(self.data_folders['parameters'], key+'.{}'.format(self.ext))
         self._write_data_array(path, data)
     # endregion
 
@@ -164,13 +164,13 @@ class FileDataStore(DataStore):
     def read_initial_conditions(self, keys):
         conditions = []
         for key in keys:
-            path = os.path.join(self.data_folder, 'initial_conditions', key)
+            path = os.path.join(self.data_folder, 'initial_conditions', key+'.{}'.format(self.ext))
             data = self._read_list_of_dicts(path)
             conditions.extend(data)
         return conditions
 
     def write_initial_conditions(self, key, initial_conditions):
-        path = os.path.join(self.data_folders['initial_conditions'], key)
+        path = os.path.join(self.data_folders['initial_conditions'], key+'.{}'.format(self.ext))
         self._write_list_of_dicts(path, initial_conditions)
     # endregion
 
