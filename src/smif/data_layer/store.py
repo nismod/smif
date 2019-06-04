@@ -753,22 +753,6 @@ class Store():
         self.update_model(model_name, model)
         self.data_store.write_interventions(model['interventions'][0], interventions)
 
-    def write_interventions_file_with_index(self, model_name, string_id, int_file, interventions):
-        model = self.read_model(model_name)
-        model['interventions'] = [string_id]
-        self.update_model(model_name, model)
-        self.config_store.update_interventions_index(model_name, string_id, int_file,
-                                                     self.data_store.ext)
-        self.data_store.write_interventions(int_file, interventions)
-
-    def read_interventions_file_with_index(self, model_name, string_id):
-        model = self.read_model(model_name)
-        if string_id in model['interventions']:
-            int_file = self.config_store.read_interventions_index(model_name, string_id,
-                                                                  self.data_store.ext)
-            root, ext = os.path.splitext(int_file)
-            return self.data_store.read_interventions([int_file]), root
-
     def write_interventions_file(self, model_name, string_id, interventions):
         model = self.read_model(model_name)
         if string_id in model['interventions']:
