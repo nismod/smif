@@ -344,9 +344,9 @@ class MemoryDataStore(DataStore):
     def read_interventions(self, keys):
         all_interventions = {}
         interventions = [list(self._interventions[key].values()) for key in keys][0]
-
+        
         for entry in interventions:
-            name = entry.pop('name')
+            name = entry.get('name')
             if name in all_interventions:
                 msg = "An entry for intervention {} already exists"
                 raise ValueError(msg.format(name))
