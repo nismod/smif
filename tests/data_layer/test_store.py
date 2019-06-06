@@ -191,10 +191,7 @@ class TestStoreConfig():
 
         assert len(updated_scenario['variants']) == 3
         assert updated_scenario['variants'][0]['name'] == 'mortality_001'
-        # The first variant is still indexed by 'low' in the underlying
-        # MemoryConfigStore in the _scenarios['mortality'][variants]
-        # dict.
-        new_variant = store.read_scenario_variant(scenario['name'], 'low')
+        new_variant = store.read_scenario_variant(scenario['name'], 'mortality_001')
         #
         assert new_variant['name'] == 'mortality_001'
         assert new_variant['description'] == 'mortality variant number 001'

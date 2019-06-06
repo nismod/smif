@@ -347,34 +347,30 @@ class Store():
 
         # Read variant defined in template scenario file
         variant_template_name = scenario['variants'][0]['name']
-        variant = self.read_scenario_variant(scenario_name, variant_template_name)
+        base_variant = self.read_scenario_variant(scenario_name, variant_template_name)
+        self.delete_scenario_variant(scenario_name, variant_template_name)
 
         # Read template names of scenario variant data files
-        root = {}
+        output_filenames = {} # output_name => (base, ext)
         # root is a dict. keyed on scenario outputs.
         # Entries contain the root of the variants filenames
         for output in scenario['provides']:
-            root[output['name']], ext = splitext(variant['data'][output['name']])
+            output_name = output['name']
+            base, ext = splitext(base_variant['data'][output_name])
+            output_filenames[output_name] = base, ext
         # Now modify scenario file
-        first_variant = True
-        for ivar in list_of_variants:
+        for variant_number in list_of_variants:
             # Copying the variant dict is required when underlying config_store
             # is an instance of MemoryConfigStore, which attribute _scenarios holds
             # a reference to the variant object passed to update or
             # write_scenario_variant
-            variant_cpy = deepcopy(variant)
-            for output in scenario['provides']:
-                variant_cpy['name'] = scenario_name + '_{:03d}'.format(ivar)
-                variant_cpy['data'][output['name']] = root[output['name']] + '{:03d}'.format(
-                    ivar) + ext
-                variant_cpy['description'] = '{} variant number {:03d}'.format(scenario_name,
-                                                                               ivar)
-            if (first_variant):
-                first_variant = False
-                self.update_scenario_variant(scenario_name,
-                                             variant_template_name, variant_cpy)
-            else:
-                self.write_scenario_variant(scenario_name, variant_cpy)
+            variant = deepcopy(base_variant)
+            variant['name'] = '{}_{:03d}'.format(scenario_name, variant_number)
+            variant['description'] = '{} variant number {:03d}'.format(
+                scenario_name, variant_number)
+            for output_name, (base, ext) in output_filenames.items():
+                variant['data'][output_name] = '{}{:03d}{}'.format(base, variant_number, ext)
+            self.write_scenario_variant(scenario_name, variant)
 
     def prepare_model_runs(self, model_run_name, scenario_name,
                            first_var, last_var):
