@@ -388,6 +388,10 @@ class Store():
 
         model_run = self.read_model_run(model_run_name)
         scenario = self.read_scenario(scenario_name)
+        
+        # read strategies from config store (Store.read_strategies pulls together data on
+        # interventions as well, which we don't need here)
+        config_strategies = self.config_store.read_strategies(model_run_name)
         # Open batchfile
         f_handle = open(model_run_name + '.batch', 'w')
         # For each variant model_run, write a new model run file with corresponding
@@ -399,6 +403,7 @@ class Store():
             model_run_copy['scenarios'][scenario_name] = variant['name']
 
             self.write_model_run(model_run_copy)
+            self.config_store.write_strategies(variant_model_run_name, config_strategies)
             f_handle.write(model_run_name + '_' + variant['name'] + '\n')
 
         # Close batchfile

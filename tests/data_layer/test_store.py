@@ -214,6 +214,7 @@ class TestStoreConfig():
             store.write_dimension(dim)
         scenario = sample_scenarios[0]
         store.write_model_run(model_run)
+        store.write_strategies(model_run['name'], model_run['strategies'])
         store.write_scenario(scenario)
 
         # Generate 2 model runs for variants Low and High
