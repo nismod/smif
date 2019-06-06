@@ -552,12 +552,14 @@ class TestDataHandleState():
         actual = data_handle.get_current_interventions()
         expected = {
             'water_asset_a':
-                {'build_year': 2010,
+                {'name': 'water_asset_a',
+                 'build_year': 2010,
                  'capacity': 50,
                  'location': None,
                  'sector': ''},
             'water_asset_b':
-                {'build_year': 2015,
+                {'name': 'water_asset_b',
+                 'build_year': 2015,
                  'capacity': 150,
                  'location': None,
                  'sector': ''}
@@ -581,6 +583,7 @@ class TestDataHandleState():
         data_handle = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
         actual = data_handle.get_current_interventions()
         expected = {'water_asset_a': {
+            'name': 'water_asset_a',
             'build_year': 2010,
             'capacity': 50,
             'location': None,
