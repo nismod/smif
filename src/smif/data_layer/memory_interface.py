@@ -407,7 +407,7 @@ def _variant_list_to_dict(config):
         list_ = config['variants']
     except KeyError:
         list_ = []
-    config['variants'] = {variant['name']: variant for variant in list_}
+    config['variants'] = OrderedDict([(variant['name'], variant) for variant in list_])
     return config
 
 

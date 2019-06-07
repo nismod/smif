@@ -204,6 +204,54 @@ def list_missing_results(args):
                 print('{} {}'.format(base_str, res_str))
 
 
+def prepare_scenario(args):
+    """ Update scenario configuration file to include multiple scenario
+        variants.
+        The initial scenario configuration file is overwritten.
+    """
+    # Read template scenario using the Store class
+    store = _get_store(args)
+    list_of_variants = range(args.variants_range[0], args.variants_range[1] + 1)
+
+    store.prepare_scenario(args.scenario_name, list_of_variants)
+
+
+def prepare_model_runs(args):
+    """
+    Generate multiple model runs according to a model run file referencing a scenario
+    with multiple variants.
+    """
+    # Read model run and scenario using the Store class
+    store = _get_store(args)
+    nb_variants = len(store.read_scenario_variants(args.scenario_name))
+    # Define default lower and upper of variant range
+    var_start = 0
+    var_end = nb_variants
+
+    # Check if optional cli arguments specify range of variants
+    # They are compared to None because they can be 0
+    if args.start is not None:
+        var_start = args.start
+        if var_start < 0:
+            raise ValueError('Lower bound of variant range must be >=0')
+        if var_start > nb_variants:
+            raise ValueError("Lower bound of variant range greater"
+                             " than number of variants")
+    if args.end is not None:
+        var_end = args.end
+        if var_end < 0:
+            raise ValueError('Upper bound of variant range must be >=0')
+        if var_end > nb_variants - 1:
+            raise ValueError("Upper bound of variant range cannot be greater"
+                             " than {:d}".format(nb_variants - 1))
+        if var_end < var_start:
+            raise ValueError("Upper bound of variant range must be >= lower"
+                             " bound of variant range")
+
+    store.prepare_model_runs(args.model_run_name, args.scenario_name,
+                             var_start, var_end)
+
+
 def run_model_runs(args):
     """Run the model runs as requested. Check if results exist and asks
     user for permission to overwrite
@@ -289,6 +337,7 @@ def run_app(args):
                 hook_sigint()
                 return 1  # don't chain to the next handler
             return 0  # chain to the next handler
+
         win32api.SetConsoleCtrlHandler(handler, 1)
 
     # Create backend server process
@@ -319,7 +368,7 @@ def parse_arguments():
     parent_parser.add_argument('-v', '--verbose',
                                action='count',
                                help='show messages: -v to see messages reporting on ' +
-                               'progress, -vv to see debug messages.')
+                                    'progress, -vv to see debug messages.')
     parent_parser.add_argument('-i', '--interface',
                                default='local_csv',
                                choices=['local_csv', 'local_binary'],
@@ -359,6 +408,30 @@ def parse_arguments():
         'model_run',
         help="Name of the model run to list missing results"
     )
+
+    # PREPARE
+    parser_prepare_scenario = subparsers.add_parser(
+        'prepare-scenario', help='Prepare scenario configuration file with multiple variants',
+        parents=[parent_parser])
+    parser_prepare_scenario.set_defaults(func=prepare_scenario)
+    parser_prepare_scenario.add_argument(
+        'scenario_name', help='Name of the scenario')
+    parser_prepare_scenario.add_argument(
+        'variants_range', nargs=2, type=int,
+        help='Two integers delimiting the range of variants')
+    # PREPARE
+    parser_prepare_model_runs = subparsers.add_parser(
+        'prepare-run', help='Prepare model runs based on scenario variants',
+        parents=[parent_parser])
+    parser_prepare_model_runs.set_defaults(func=prepare_model_runs)
+    parser_prepare_model_runs.add_argument(
+        'scenario_name', help='Name of the scenario')
+    parser_prepare_model_runs.add_argument(
+        'model_run_name', help='Name of the template model run')
+    parser_prepare_model_runs.add_argument(
+        '-s', '--start', type=int, help='Lower bound of the range of variants')
+    parser_prepare_model_runs.add_argument(
+        '-e', '--end', type=int, help='Upper bound of the range of variants')
 
     # APP
     parser_app = subparsers.add_parser(

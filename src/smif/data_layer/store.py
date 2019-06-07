@@ -21,6 +21,7 @@ from collections import OrderedDict
 from copy import deepcopy
 from operator import itemgetter
 from typing import Dict, List, Optional
+from os.path import splitext
 
 import numpy as np  # type: ignore
 
@@ -31,7 +32,7 @@ from smif.data_layer.file import (CSVDataStore, FileMetadataStore,
                                   ParquetDataStore, YamlConfigStore)
 from smif.data_layer.validate import (validate_sos_model_config,
                                       validate_sos_model_format)
-from smif.exception import SmifDataNotFoundError
+from smif.exception import SmifDataError, SmifDataNotFoundError
 from smif.metadata.spec import Spec
 
 
@@ -45,6 +46,7 @@ class Store():
     metadata_store: ~smif.data_layer.abstract_metadata_store.MetadataStore
     data_store: ~smif.data_layer.abstract_data_store.DataStore
     """
+
     def __init__(self, config_store, metadata_store: MetadataStore,
                  data_store: DataStore, model_base_folder="."):
         self.logger = logging.getLogger(__name__)
@@ -145,6 +147,7 @@ class Store():
         model_run_name : str
         """
         self.config_store.delete_model_run(model_run_name)
+
     # endregion
 
     # region System-of-systems models
@@ -202,6 +205,7 @@ class Store():
         sos_model_name : str
         """
         self.config_store.delete_sos_model(sos_model_name)
+
     # endregion
 
     # region Models
@@ -263,6 +267,7 @@ class Store():
         model_name : str
         """
         self.config_store.delete_model(model_name)
+
     # endregion
 
     # region Scenarios
@@ -324,6 +329,86 @@ class Store():
         scenario_name : str
         """
         self.config_store.delete_scenario(scenario_name)
+
+    def prepare_scenario(self, scenario_name, list_of_variants):
+        """ Modify {scenario_name} config file to include multiple
+        scenario variants.
+
+        Parameters
+        ----------
+        scenario_name: str
+        list_of_variants: list[int] - indices of scenario variants
+        """
+        scenario = self.read_scenario(scenario_name)
+        # Check that template scenario file does not define more than one variant
+        if not scenario['variants'] or len(scenario['variants']) > 1:
+            raise SmifDataError("Template scenario file must define one"
+                                " unique template variant.")
+
+        # Read variant defined in template scenario file
+        variant_template_name = scenario['variants'][0]['name']
+        base_variant = self.read_scenario_variant(scenario_name, variant_template_name)
+        self.delete_scenario_variant(scenario_name, variant_template_name)
+
+        # Read template names of scenario variant data files
+        output_filenames = {} # output_name => (base, ext)
+        # root is a dict. keyed on scenario outputs.
+        # Entries contain the root of the variants filenames
+        for output in scenario['provides']:
+            output_name = output['name']
+            base, ext = splitext(base_variant['data'][output_name])
+            output_filenames[output_name] = base, ext
+        # Now modify scenario file
+        for variant_number in list_of_variants:
+            # Copying the variant dict is required when underlying config_store
+            # is an instance of MemoryConfigStore, which attribute _scenarios holds
+            # a reference to the variant object passed to update or
+            # write_scenario_variant
+            variant = deepcopy(base_variant)
+            variant['name'] = '{}_{:03d}'.format(scenario_name, variant_number)
+            variant['description'] = '{} variant number {:03d}'.format(
+                scenario_name, variant_number)
+            for output_name, (base, ext) in output_filenames.items():
+                variant['data'][output_name] = '{}{:03d}{}'.format(base, variant_number, ext)
+            self.write_scenario_variant(scenario_name, variant)
+
+    def prepare_model_runs(self, model_run_name, scenario_name,
+                           first_var, last_var):
+        """Write multiple model run config files corresponding to multiple
+        scenario variants of {scenario_name}, based on template {model_run_name}
+           Write batchfile containing each of the generated model runs
+
+        Parameters
+        ----------
+        model_run_name: str
+        scenario_name: str
+        first_var: int - between 0 and number of variants-1
+        last_var: int - between first_var and number of variants-1
+        """
+
+        model_run = self.read_model_run(model_run_name)
+        scenario = self.read_scenario(scenario_name)
+        
+        # read strategies from config store (Store.read_strategies pulls together data on
+        # interventions as well, which we don't need here)
+        config_strategies = self.config_store.read_strategies(model_run_name)
+        # Open batchfile
+        f_handle = open(model_run_name + '.batch', 'w')
+        # For each variant model_run, write a new model run file with corresponding
+        # scenario variant and update batchfile
+        for variant in scenario['variants'][first_var:last_var + 1]:
+            variant_model_run_name = model_run_name + '_' + variant['name']
+            model_run_copy = deepcopy(model_run)
+            model_run_copy['name'] = variant_model_run_name
+            model_run_copy['scenarios'][scenario_name] = variant['name']
+
+            self.write_model_run(model_run_copy)
+            self.config_store.write_strategies(variant_model_run_name, config_strategies)
+            f_handle.write(model_run_name + '_' + variant['name'] + '\n')
+
+        # Close batchfile
+        f_handle.close()
+
     # endregion
 
     # region Scenario Variants
@@ -385,6 +470,7 @@ class Store():
         variant_name : str
         """
         self.config_store.delete_scenario_variant(scenario_name, variant_name)
+
     # endregion
 
     # region Narratives
@@ -397,6 +483,7 @@ class Store():
         narrative_name : str
         """
         return self.config_store.read_narrative(sos_model_name, narrative_name)
+
     # endregion
 
     # region Strategies
@@ -427,6 +514,7 @@ class Store():
         strategies : list[dict]
         """
         self.config_store.write_strategies(model_run_name, strategies)
+
     # endregion
 
     #
@@ -453,6 +541,7 @@ class Store():
             Pint-compatible unit definitions
         """
         self.metadata_store.write_unit_definitions(definitions)
+
     # endregion
 
     # region Dimensions
@@ -520,6 +609,7 @@ class Store():
                         for dim in spec['dims']
                     }
         return item
+
     # endregion
 
     #
@@ -565,6 +655,7 @@ class Store():
         key = self._key_from_data(variant['data'][data.spec.name], scenario_name, variant_name,
                                   data.spec.name)
         self.data_store.write_scenario_variant_data(key, data, timestep)
+
     # endregion
 
     # region Narrative Data
@@ -681,6 +772,7 @@ class Store():
             path = 'default__{}__{}.csv'.format(model_name, parameter_name)
         key = self._key_from_data(path, model_name, parameter_name)
         self.data_store.write_model_parameter_default(key, data)
+
     # endregion
 
     # region Interventions
@@ -763,6 +855,7 @@ class Store():
                 self.read_initial_conditions(sector_model_name)
             )
         return historical_interventions
+
     # endregion
 
     # region State
@@ -795,6 +888,7 @@ class Store():
         decision_iteration : int, optional
         """
         self.data_store.write_state(state, model_run_name, timestep, decision_iteration)
+
     # endregion
 
     # region Conversion coefficients
@@ -842,6 +936,7 @@ class Store():
         To be called from :class:`~smif.convert.adaptor.Adaptor` implementations.
         """
         self.data_store.write_coefficients(source_dim, destination_dim, data)
+
     # endregion
 
     # region Results

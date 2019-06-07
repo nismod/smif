@@ -1,8 +1,6 @@
 import datetime
 import logging
 import logging.config
-import re
-import sys
 from collections import OrderedDict
 
 

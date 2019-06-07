@@ -41,7 +41,6 @@ def empty_store():
 
 @fixture
 def setup_empty_folder_structure(tmpdir_factory):
-
     folder_list = ['models', 'results', 'config', 'data']
 
     config_folders = [
@@ -159,7 +158,7 @@ def planned_interventions():
         },
         {
             'name': 'water_asset_b',
-            'capacity':  {'value': 6, 'unit': 'Ml'},
+            'capacity': {'value': 6, 'unit': 'Ml'},
             'description': 'Existing water treatment plants',
             'location': {'lat': 51.74556, 'lon': -1.240528}
         },
@@ -816,7 +815,7 @@ def hourly():
     return [
         {
             'name': n,
-            'interval': [['PT{}H'.format(n), 'PT{}H'.format(n+1)]]
+            'interval': [['PT{}H'.format(n), 'PT{}H'.format(n + 1)]]
         }
         for n in range(8)  # should be 8760
     ]
@@ -913,7 +912,6 @@ def conversion_coefficients():
 
 @fixture
 def scenario(sample_dimensions):
-
     return deepcopy({
         'name': 'mortality',
         'description': 'The annual mortality rate in UK population',
@@ -933,6 +931,56 @@ def scenario(sample_dimensions):
                     'mortality': 'mortality_low.csv',
                 },
             }
+        ]
+    })
+
+
+@fixture
+def scenario_2_variants(sample_dimensions):
+    return deepcopy({
+        'name': 'mortality_2_variants',
+        'description': 'The annual mortality rate in UK population',
+        'provides': [
+            {
+                'name': 'mortality',
+                'dims': ['lad'],
+                'coords': {'lad': sample_dimensions[0]['elements']},
+                'dtype': 'float',
+            }
+        ],
+        'variants': [
+            {
+                'name': 'low',
+                'description': 'Mortality (Low)',
+                'data': {
+                    'mortality': 'mortality_low.csv',
+                },
+            },
+            {
+                'name': 'high',
+                'description': 'Mortality (High)',
+                'data': {
+                    'mortality': 'mortality_high.csv',
+                },
+            }
+        ]
+    })
+
+
+@fixture
+def scenario_no_variant(sample_dimensions):
+    return deepcopy({
+        'name': 'mortality_no_variants',
+        'description': 'The annual mortality rate in UK population',
+        'provides': [
+            {
+                'name': 'mortality',
+                'dims': ['lad'],
+                'coords': {'lad': sample_dimensions[0]['elements']},
+                'dtype': 'float',
+            }
+        ],
+        'variants': [
         ]
     })
 
