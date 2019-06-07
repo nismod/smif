@@ -6,6 +6,7 @@ import subprocess
 import sys
 from tempfile import TemporaryDirectory
 from unittest.mock import call, patch
+from time import sleep
 
 import smif
 from pytest import fixture
@@ -203,6 +204,51 @@ def test_setup_project_folder():
 
             assert os.path.exists(folder_path)
 
+def test_prepare_convert(tmp_sample_project):
+    project_folder = tmp_sample_project
+    print(project_folder)
+    # clean up
+    # r=root, d=directories, f = files
+    path = os.path.join(project_folder, 'data')
+    for r, d, f in os.walk(path):
+        for filename in f:
+            if '.parquet' in filename:
+                os.remove(os.path.join(r, filename))
+
+    list_of_files = {
+        'initial_conditions': [],
+        'interventions': ['energy_supply', 'energy_supply_alt'],
+        'narratives': [],
+        'parameters': ['defaults'],
+        'scenarios': ['population_density_low', 'population_density_med',
+                       'population_density_high', 'population_low', 'population_med',
+                       'population_high'],
+        'strategies': ['build_nuke'],
+        }
+
+    output = subprocess.run(["smif", "prepare-convert", "energy_central",
+                             "-d", project_folder, "-i", "local_csv"],
+                            stdout=subprocess.PIPE)
+    # assert that correct files have been generated
+    for folder in list_of_files.keys():
+        for filename in list_of_files[folder]:
+            path = os.path.join(project_folder, 'data', folder, filename)
+            path = "{}.parquet".format(path)
+            assert os.path.isfile(path)
+
+    sleep(2)
+
+    # Now call prepare-convert with the --noclobber option
+    # all previously generated parquet files should not be modified
+    output = subprocess.run(["smif", "prepare-convert", "energy_central", "--noclobber",
+                             "-d", project_folder, "-i", "local_csv"],
+                            stdout=subprocess.PIPE)
+    # assert that files have not been modified
+    for folder in list_of_files.keys():
+        for filename in list_of_files[folder]:
+            path = os.path.join(project_folder, 'data', folder, filename)
+            path = "{}.parquet".format(path)
+            assert (os.path.getmtime(path) > 2)
 
 @patch('builtins.input', return_value='y')
 def test_confirm_yes(input):
