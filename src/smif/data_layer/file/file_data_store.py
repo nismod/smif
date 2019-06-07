@@ -117,7 +117,7 @@ class FileDataStore(DataStore):
         path = os.path.join(self.data_folders['parameters'], key+'.{}'.format(self.ext))
         self._write_data_array(path, data)
 
-    def model_parameter_default_exists(self, key):
+    def model_parameter_default_data_exists(self, key):
         path = os.path.join(self.data_folders['parameters'], key+'.{}'.format(self.ext))
         return os.path.isfile(path)
 

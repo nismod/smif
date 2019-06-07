@@ -226,3 +226,52 @@ class TestResults():
 
         with raises(SmifDataNotFoundError):
             handler.read_results(modelrun_name, model_name, output_spec, 2020)
+
+class TestDataExists():
+    """Check that model run data exists
+    """
+    def test_strategy_data_exists(self, handler, strategies):
+        for strategy in strategies:
+            if strategy['type'] == 'pre-specified-planning':
+                strategy['filename'] = 'strategy'
+                handler.write_strategy_interventions(strategy, strategy['interventions'])
+
+                assert handler.strategy_data_exists(strategy)
+
+    def test_scenario_variant_data_exists(self, handler, sample_scenario_data):
+        key = next(iter(sample_scenario_data))
+        scenario_name, variant_name, variable = key
+        scenario_variant_data = sample_scenario_data[key]
+        handler.write_scenario_variant_data('scenario_variant_data', scenario_variant_data)
+
+        assert handler.scenario_variant_data_exists('scenario_variant_data')
+
+    def test_narrative_variant_data_exists(self, handler, sample_narrative_data):
+        # pick out single sample
+        key = (
+            'energy',
+            'technology',
+            'high_tech_dsm',
+            'smart_meter_savings'
+        )
+        sos_model_name, narrative_name, variant_name, param_name = key
+        narrative_variant_data = sample_narrative_data[key]
+        handler.write_narrative_variant_data('narrative_variant_data', narrative_variant_data)
+
+        assert handler.narrative_variant_data_exists('narrative_variant_data')
+
+    def test_model_parameter_default_data_exists(self, handler, get_multidimensional_param):
+        param_data = get_multidimensional_param
+        handler.write_model_parameter_default('parameter_default', param_data)
+
+        assert handler.model_parameter_default_data_exists('parameter_default')
+
+    def test_interventions_data_exists(self, handler, interventions):
+        handler.write_interventions('interventions', interventions)
+
+        assert handler.interventions_data_exists('interventions')
+
+    def test_initial_conditions_data_exists(self, handler, initial_conditions):
+        handler.write_initial_conditions('initial_conditions', initial_conditions)
+
+        assert handler.initial_conditions_data_exists('initial_conditions')
