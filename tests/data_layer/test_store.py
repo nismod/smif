@@ -233,7 +233,7 @@ class TestStoreData():
         )
 
         assert store.read_scenario_variant_data(scenario_name, variant_name, variable,
-                                                2015, assert_Exists=True)
+                                                2015, assert_exists=True)
         # Read 2015
         actual = store.read_scenario_variant_data(
             scenario_name, variant_name, variable, 2015

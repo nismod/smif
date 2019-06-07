@@ -635,11 +635,11 @@ class Store():
                     sector_model = self.read_model(model_name)
                     spec_dict = _pick_from_list(sector_model['parameters'], parameter_name)
                     break
-                # find spec
-                if spec_dict is None:
-                    raise SmifDataNotFoundError("Parameter {} not found in any of {}".format(
-                        parameter_name, sos_model['sector_models']))
-                spec = Spec.from_dict(spec_dict)
+            # find spec
+            if spec_dict is None:
+                raise SmifDataNotFoundError("Parameter {} not found in any of {}".format(
+                    parameter_name, sos_model['sector_models']))
+            spec = Spec.from_dict(spec_dict)
 
             return self.data_store.read_narrative_variant_data(key, spec, timestep)
 

@@ -345,7 +345,7 @@ class MemoryDataStore(DataStore):
     def write_model_parameter_default(self, key, data):
         self._model_parameter_defaults[key] = data
 
-    def model_parameter_default_exists(self, key):
+    def model_parameter_default_data_exists(self, key):
         return (key in self._model_parameter_defaults.keys())
 
     # endregion
@@ -368,7 +368,7 @@ class MemoryDataStore(DataStore):
     def write_interventions(self, key, interventions):
         self._interventions[key] = interventions
 
-    def interventions_data_exists(self, key)
+    def interventions_data_exists(self, key):
         return (key in self._interventions.keys())
 
     def read_strategy_interventions(self, strategy):
@@ -386,8 +386,8 @@ class MemoryDataStore(DataStore):
     def write_initial_conditions(self, key, initial_conditions):
         self._initial_conditions[key] = initial_conditions
 
-    def write_initial_conditions(self, key)
-        return (key in self._initial_conditions.key())
+    def initial_conditions_data_exists(self, key):
+        return (key in self._initial_conditions.keys())
     # endregion
 
     # region State
