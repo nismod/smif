@@ -279,11 +279,17 @@ class MemoryDataStore(DataStore):
     def write_scenario_variant_data(self, key, data, timestep=None):
         self._write_data_array(key, data, timestep)
 
+    def scenario_variant_data_exists(self, key):
+        return (key in self._data_array.keys())
+
     def read_narrative_variant_data(self, key, spec, timestep=None):
         return self._read_data_array(key, spec, timestep)
 
     def write_narrative_variant_data(self, key, data, timestep=None):
         self._write_data_array(key, data, timestep)
+
+    def narrative_variant_data_exists(self, key):
+        return (key in self._data_array.keys())
 
     def _read_data_array(self, key, spec, timestep=None):
         if timestep:
@@ -338,6 +344,10 @@ class MemoryDataStore(DataStore):
 
     def write_model_parameter_default(self, key, data):
         self._model_parameter_defaults[key] = data
+
+    def model_parameter_default_exists(self, key):
+        return (key in self._model_parameter_defaults.keys())
+
     # endregion
 
     # region Interventions
@@ -358,17 +368,26 @@ class MemoryDataStore(DataStore):
     def write_interventions(self, key, interventions):
         self._interventions[key] = interventions
 
+    def interventions_data_exists(self, key)
+        return (key in self._interventions.keys())
+
     def read_strategy_interventions(self, strategy):
         return strategy['interventions']
 
     def write_strategy_interventions(self, strategy, data):
         strategy['interventions'] = data
 
+    def strategy_data_exists(self, strategy):
+        return ('interventions' in strategy.keys())
+
     def read_initial_conditions(self, keys):
         return [self._initial_conditions[key] for key in keys][0]
 
     def write_initial_conditions(self, key, initial_conditions):
         self._initial_conditions[key] = initial_conditions
+
+    def write_initial_conditions(self, key)
+        return (key in self._initial_conditions.key())
     # endregion
 
     # region State
