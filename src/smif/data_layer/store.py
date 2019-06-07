@@ -427,12 +427,14 @@ class Store():
         """
         self.config_store.write_strategies(model_run_name, strategies)
 
-    def convert_strategies_data(self, model_run_name, tgt_store):
+    def convert_strategies_data(self, model_run_name, tgt_store, noclobber=False):
         strategies = self.read_strategies(model_run_name)
         for strategy in strategies:
             if strategy['type'] == 'pre-specified-planning':
-                data = self.read_strategy_interventions(strategy)
-                tgt_store.write_strategy_interventions(strategy, data)
+                data_exists = tgt_store.read_strategy_interventions(strategy, assert_exists=True)
+                if not(noclobber and data_exists):
+                    data = self.read_strategy_interventions(strategy)
+                    tgt_store.write_strategy_interventions(strategy, data)
 
     # endregion
 
@@ -577,17 +579,23 @@ class Store():
                                   data.spec.name)
         self.data_store.write_scenario_variant_data(key, data, timestep)
 
-    def convert_scenario_data(self, model_run_name, tgt_store):
+    def convert_scenario_data(self, model_run_name, tgt_store, noclobber=False):
         model_run = self.read_model_run(model_run_name)
         # Convert scenario data for model run
         get_data = self.read_scenario_variant_data_multiple_timesteps
         for scenario_name in model_run['scenarios']:
             for variant in self.read_scenario_variants(scenario_name):
                 for variable in variant['data']:
-                    data_array = get_data(scenario_name, variant['name'], variable,
-                                          model_run['timesteps'])
-                    tgt_store.write_scenario_variant_data(scenario_name, variant['name'],
-                                                          data_array)
+                    data_exists = tgt_store.read_scenario_variant_data(scenario_name,
+                                                                       variant['name'],
+                                                                       variable,
+                                                                       model_run['timesteps'][0],
+                                                                       assert_exists=True)
+                    if not(noclobber and data_exists):
+                        data_array = get_data(scenario_name, variant['name'], variable,
+                                              model_run['timesteps'])
+                        tgt_store.write_scenario_variant_data(scenario_name, variant['name'],
+                                                              data_array)
     # endregion
 
     # region Narrative Data
@@ -663,11 +671,17 @@ class Store():
             variant['data'][data.spec.name], narrative_name, variant_name, data.spec.name)
         self.data_store.write_narrative_variant_data(key, data)
 
-    def convert_narrative_data(self, sos_model_name, tgt_store):
+    def convert_narrative_data(self, sos_model_name, tgt_store, noclobber=False):
         sos_model = self.read_sos_model(sos_model_name)
         for narrative in sos_model['narratives']:
             for variant in narrative['variants']:
                 for param in variant['data']:
+                    data_exists = tgt_store.read_narrative_variant_data(sos_model_name,
+                                                                        narrative['name'],
+                                                                        variant['name'],
+                                                                        param,
+                                                                        assert_exists=True)
+                if not(noclobber and data_exists):
                     data_array = self.read_narrative_variant_data(sos_model_name,
                                                                   narrative['name'],
                                                                   variant['name'],
@@ -724,13 +738,17 @@ class Store():
         key = self._key_from_data(path, model_name, parameter_name)
         self.data_store.write_model_parameter_default(key, data)
 
-    def convert_model_parameter_default_data(self, sector_model_name, tgt_store):
+    def convert_model_parameter_default_data(self, sector_model_name, tgt_store, noclobber=False):
         sector_model = self.read_model(sector_model_name)
         for parameter in sector_model['parameters']:
-            data_array = self.read_model_parameter_default(sector_model_name,
-                                                           parameter['name'])
-            tgt_store.write_model_parameter_default(sector_model_name, parameter['name'],
-                                                    data_array)
+            data_exists = tgt_store.read_model_parameter_default(sector_model_name,
+                                                                 parameter['name'],
+                                                                 assert_exists=True)
+            if not(noclobber and data_exists):
+                data_array = self.read_model_parameter_default(sector_model_name,
+                                                               parameter['name'])
+                tgt_store.write_model_parameter_default(sector_model_name, parameter['name'],
+                                                        data_array)
     # endregion
 
     # region Interventions
@@ -782,17 +800,21 @@ class Store():
             raise SmifDataNotFoundError("Intervention {} not found for"
                                         " sector model {}.".format(string_id, model_name))
 
-    def convert_interventions_data(self, sector_model_name, tgt_store):
+    def convert_interventions_data(self, sector_model_name, tgt_store, noclobber=False):
         sector_model = self.read_model(sector_model_name)
         for intervention in sector_model['interventions']:
-            interventions = self.read_interventions_file(sector_model_name, intervention)
-            tgt_store.write_interventions_file(sector_model_name, intervention, interventions)
+            data_exists = tgt_store.read_interventions_file(sector_model_name,
+                                                            intervention,
+                                                            assert_exists=True)
+            if not(noclobber and data_exists):
+                interventions = self.read_interventions_file(sector_model_name, intervention)
+                tgt_store.write_interventions_file(sector_model_name, intervention, interventions)
 
     def read_strategy_interventions(self, strategy, assert_exists=False):
         """Read interventions as defined in a model run strategy
         """
         if assert_exists:
-            return self.data_store.strategy_interventions_exists(strategy)
+            return self.data_store.strategy_data_exists(strategy)
         else:
             return self.data_store.read_strategy_interventions(strategy)
 
@@ -851,13 +873,17 @@ class Store():
             raise SmifDataNotFoundError("Initial conditions {} not found for"
                                         " sector model {}.".format(string_id, model_name))
 
-    def convert_initial_conditions_data(self, sector_model_name, tgt_store):
+    def convert_initial_conditions_data(self, sector_model_name, tgt_store, noclobber=False):
         sector_model = self.read_model(sector_model_name)
         for initial_condition in sector_model['initial_conditions']:
-            initial_conditions = self.read_initial_conditions_file(sector_model_name,
-                                                                   initial_condition)
-            tgt_store.write_initial_conditions_file(sector_model_name, initial_condition,
-                                                    initial_conditions)
+            data_exists = tgt_store.read_initial_conditions_file(sector_model_name,
+                                                                 initial_condition,
+                                                                 assert_exists=True)
+            if not(noclobber and data_exists):
+                initial_conditions = self.read_initial_conditions_file(sector_model_name,
+                                                                       initial_condition)
+                tgt_store.write_initial_conditions_file(sector_model_name, initial_condition,
+                                                        initial_conditions)
 
     def read_all_initial_conditions(self, model_run_name) -> List[Dict]:
         """A list of all historical interventions
