@@ -225,17 +225,17 @@ def prepare_convert(args):
     sos_model = src_store.read_sos_model(model_run['sos_model'])
     # Now let us convert data
     # Convert strategies interventions for model run
-    src_store.convert_strategies_data(model_run['name'], tgt_store)
+    src_store.convert_strategies_data(model_run['name'], tgt_store, args.noclobber)
     # Convert scenario data for model run
-#    src_store.convert_scenario_data(model_run['name'], tgt_store)
+    src_store.convert_scenario_data(model_run['name'], tgt_store)
     # Convert narrative data for sos model
-    src_store.convert_narrative_data(sos_model['name'], tgt_store)
+    src_store.convert_narrative_data(sos_model['name'], tgt_store, args.noclobber)
     # Convert initial conditions, default parameter and interventions data
     # for sector models in sos model
     for sector_model_name in sos_model['sector_models']:
-        src_store.convert_model_parameter_default_data(sector_model_name, tgt_store)
-        src_store.convert_interventions_data(sector_model_name, tgt_store)
-        src_store.convert_initial_conditions_data(sector_model_name, tgt_store)
+        src_store.convert_model_parameter_default_data(sector_model_name, tgt_store, args.noclobber)
+        src_store.convert_interventions_data(sector_model_name, tgt_store, args.noclobber)
+        src_store.convert_initial_conditions_data(sector_model_name, tgt_store, args.noclobber)
         
 def run_model_runs(args):
     """Run the model runs as requested. Check if results exist and asks
@@ -400,6 +400,9 @@ def parse_arguments():
     parser_convert.set_defaults(func=prepare_convert)
     parser_convert.add_argument(
         'model_run', help='Name of the model run')
+    parser_convert.add_argument(
+        '-nc', '--noclobber',
+        help='Do not convert existing data files', action='store_true')
 
     # APP
     parser_app = subparsers.add_parser(
