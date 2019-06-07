@@ -232,6 +232,8 @@ class TestStoreData():
             scenario_name, variant_name, scenario_variant_data
         )
 
+        assert store.read_scenario_variant_data(scenario_name, variant_name, variable,
+                                                2015, assert_Exists=True)
         # Read 2015
         actual = store.read_scenario_variant_data(
             scenario_name, variant_name, variable, 2015
@@ -300,6 +302,9 @@ class TestStoreData():
         # write
         store.write_narrative_variant_data(
             sos_model_name, narrative_name, variant_name, narrative_variant_data)
+
+        assert store.read_narrative_variant_data(
+            sos_model_name, narrative_name, variant_name, param_name, assert_exists=True) 
         # read
         actual = store.read_narrative_variant_data(
             sos_model_name, narrative_name, variant_name, param_name)
@@ -359,6 +364,8 @@ class TestStoreData():
         # write
         store.write_model_parameter_default(
             get_sector_model['name'], param_data.name, param_data)
+        assert store.read_model_parameter_default(get_sector_model['name'],
+                                                  param_data.name, assert_exists=True)
         # read
         actual = store.read_model_parameter_default(get_sector_model['name'], param_data.name)
         assert actual == param_data
@@ -427,8 +434,10 @@ class TestStoreData():
         # write
         store.write_interventions_file(get_sector_model['name'],
                                        'path', interventions)
+        # check data existence
+        assert store.read_interventions_file(get_sector_model['name'], 'path', assert_exists=True)
+        
         result = store.read_interventions_file(get_sector_model['name'], 'path')
-
         assert result == interventions
 
     def test_initial_conditions(self, store, sample_dimensions, initial_conditions,
@@ -481,6 +490,8 @@ class TestStoreData():
         # write
         store.write_initial_conditions_file(get_sector_model['name'],
                                             'path', initial_conditions)
+        assert store.read_initial_conditions_file(get_sector_model['name'], 'path',
+                                                  assert_exists=True)
         result = store.read_initial_conditions_file(get_sector_model['name'], 'path')
 
         assert result == initial_conditions

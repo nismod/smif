@@ -90,6 +90,10 @@ class FileDataStore(DataStore):
         path = os.path.join(self.data_folders['scenarios'], key+'.{}'.format(self.ext))
         self._write_data_array(path, data, timestep)
 
+    def scenario_variant_data_exists(self, key):
+        path = os.path.join(self.data_folders['scenarios'], key+'.{}'.format(self.ext))
+        return os.path.isfile(path)
+
     def read_narrative_variant_data(self, key, spec, timestep=None):
         path = os.path.join(self.data_folders['narratives'], key+'.{}'.format(self.ext))
         return self._read_data_array(path, spec, timestep)
@@ -97,6 +101,10 @@ class FileDataStore(DataStore):
     def write_narrative_variant_data(self, key, data, timestep=None):
         path = os.path.join(self.data_folders['narratives'], key+'.{}'.format(self.ext))
         self._write_data_array(path, data, timestep)
+
+    def narrative_variant_data_exists(self, key):
+        path = os.path.join(self.data_folders['narratives'], key+'.{}'.format(self.ext))
+        return os.path.isfile(path)
 
     def read_model_parameter_default(self, key, spec):
         self.logger.debug("Trying to read model parameter default from key {}".format(key))
@@ -108,6 +116,11 @@ class FileDataStore(DataStore):
     def write_model_parameter_default(self, key, data):
         path = os.path.join(self.data_folders['parameters'], key+'.{}'.format(self.ext))
         self._write_data_array(path, data)
+
+    def model_parameter_default_exists(self, key):
+        path = os.path.join(self.data_folders['parameters'], key+'.{}'.format(self.ext))
+        return os.path.isfile(path)
+
     # endregion
 
     # region Interventions
@@ -151,6 +164,10 @@ class FileDataStore(DataStore):
         path = os.path.join(self.data_folders['interventions'], key+'.{}'.format(self.ext))
         self._write_list_of_dicts(path, data)
 
+    def interventions_data_exists(self, key):
+        path = os.path.join(self.data_folders['interventions'], key+'.{}'.format(self.ext))
+        return os.path.isfile(path)
+
     def read_strategy_interventions(self, strategy):
         path = os.path.join(self.data_folders['strategies'],
                             strategy['filename']+'.{}'.format(self.ext))
@@ -160,6 +177,11 @@ class FileDataStore(DataStore):
         path = os.path.join(self.data_folders['strategies'],
                             strategy['filename']+'.{}'.format(self.ext))
         return self._write_list_of_dicts(path, data)
+
+    def strategy_data_exists(self, strategy):
+        path = os.path.join(self.data_folders['strategies'],
+                            strategy['filename']+'.{}'.format(self.ext))
+        return os.path.isfile(path)
 
     def read_initial_conditions(self, keys):
         conditions = []
@@ -172,6 +194,10 @@ class FileDataStore(DataStore):
     def write_initial_conditions(self, key, initial_conditions):
         path = os.path.join(self.data_folders['initial_conditions'], key+'.{}'.format(self.ext))
         self._write_list_of_dicts(path, initial_conditions)
+
+    def initial_conditions_data_exists(self, key):
+        path = os.path.join(self.data_folders['initial_conditions'], key+'.{}'.format(self.ext))
+        return os.path.isfile(path)
     # endregion
 
     # region State

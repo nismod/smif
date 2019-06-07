@@ -535,7 +535,7 @@ class Store():
 
     # region Scenario Variant Data
     def read_scenario_variant_data(self, scenario_name: str, variant_name: str, variable: str,
-                                   timestep: int) -> DataArray:
+                                   timestep: int, assert_exists=False) -> DataArray:
         """Read scenario data file
 
         Parameters
@@ -556,7 +556,10 @@ class Store():
         scenario = self.read_scenario(scenario_name)
         spec_dict = _pick_from_list(scenario['provides'], variable)
         spec = Spec.from_dict(spec_dict)
-        return self.data_store.read_scenario_variant_data(key, spec, timestep)
+        if assert_exists:
+            return self.data_store.scenario_variant_data_exists(key)
+        else:
+            return self.data_store.read_scenario_variant_data(key, spec, timestep)
 
     def write_scenario_variant_data(self, scenario_name, variant_name, data, timestep=None):
         """Write scenario data file
@@ -589,7 +592,7 @@ class Store():
 
     # region Narrative Data
     def read_narrative_variant_data(self, sos_model_name, narrative_name, variant_name,
-                                    parameter_name, timestep=None):
+                                    parameter_name, timestep=None, assert_exists=False):
         """Read narrative data file
 
         Parameters
@@ -621,20 +624,24 @@ class Store():
 
         key = self._key_from_data(variant['data'][parameter_name], narrative_name,
                                   variant_name, parameter_name)
-        spec_dict = None
-        # find sector model which needs this parameter, to get spec definition
-        for model_name, params in narrative['provides'].items():
-            if parameter_name in params:
-                sector_model = self.read_model(model_name)
-                spec_dict = _pick_from_list(sector_model['parameters'], parameter_name)
-                break
-        # find spec
-        if spec_dict is None:
-            raise SmifDataNotFoundError("Parameter {} not found in any of {}".format(
-                parameter_name, sos_model['sector_models']))
-        spec = Spec.from_dict(spec_dict)
 
-        return self.data_store.read_narrative_variant_data(key, spec, timestep)
+        if assert_exists:
+            return self.data_store.narrative_variant_data_exists(key)
+        else:
+            spec_dict = None
+            # find sector model which needs this parameter, to get spec definition
+            for model_name, params in narrative['provides'].items():
+                if parameter_name in params:
+                    sector_model = self.read_model(model_name)
+                    spec_dict = _pick_from_list(sector_model['parameters'], parameter_name)
+                    break
+                # find spec
+                if spec_dict is None:
+                    raise SmifDataNotFoundError("Parameter {} not found in any of {}".format(
+                        parameter_name, sos_model['sector_models']))
+                spec = Spec.from_dict(spec_dict)
+
+            return self.data_store.read_narrative_variant_data(key, spec, timestep)
 
     def write_narrative_variant_data(self, sos_model_name, narrative_name, variant_name,
                                      data, timestep=None):
@@ -668,7 +675,7 @@ class Store():
                     tgt_store.write_narrative_variant_data(sos_model_name, narrative['name'],
                                                            variant['name'], data_array)
 
-    def read_model_parameter_default(self, model_name, parameter_name):
+    def read_model_parameter_default(self, model_name, parameter_name, assert_exists=False):
         """Read default data for a sector model parameter
 
         Parameters
@@ -691,7 +698,10 @@ class Store():
         except KeyError:
             path = 'default__{}__{}.csv'.format(model_name, parameter_name)
         key = self._key_from_data(path, model_name, parameter_name)
-        return self.data_store.read_model_parameter_default(key, spec)
+        if assert_exists:
+            return self.data_store.model_parameter_default_data_exists(key)
+        else:
+            return self.data_store.read_model_parameter_default(key, spec)
 
     def write_model_parameter_default(self, model_name, parameter_name, data):
         """Write default data for a sector model parameter
@@ -761,10 +771,13 @@ class Store():
             raise SmifDataNotFoundError("Intervention {} not found for"
                                         " sector model {}.".format(string_id, model_name))
 
-    def read_interventions_file(self, model_name, string_id):
+    def read_interventions_file(self, model_name, string_id, assert_exists=False):
         model = self.read_model(model_name)
         if string_id in model['interventions']:
-            return self.data_store.read_interventions([string_id])
+            if assert_exists:
+                return self.data_store.interventions_data_exists(string_id)
+            else:
+                return self.data_store.read_interventions([string_id])
         else:
             raise SmifDataNotFoundError("Intervention {} not found for"
                                         " sector model {}.".format(string_id, model_name))
@@ -775,10 +788,13 @@ class Store():
             interventions = self.read_interventions_file(sector_model_name, intervention)
             tgt_store.write_interventions_file(sector_model_name, intervention, interventions)
 
-    def read_strategy_interventions(self, strategy):
+    def read_strategy_interventions(self, strategy, assert_exists=False):
         """Read interventions as defined in a model run strategy
         """
-        return self.data_store.read_strategy_interventions(strategy)
+        if assert_exists:
+            return self.data_store.strategy_interventions_exists(strategy)
+        else:
+            return self.data_store.read_strategy_interventions(strategy)
 
     def write_strategy_interventions(self, strategy, data):
         """
@@ -824,10 +840,13 @@ class Store():
             raise SmifDataNotFoundError("Initial condition {} not found for"
                                         " sector model {}.".format(string_id, model_name))
 
-    def read_initial_conditions_file(self, model_name, string_id):
+    def read_initial_conditions_file(self, model_name, string_id, assert_exists=False):
         model = self.read_model(model_name)
         if string_id in model['initial_conditions']:
-            return self.data_store.read_initial_conditions([string_id])
+            if assert_exists:
+                return self.data_store.initial_conditions_data_exists(string_id)
+            else:
+                return self.data_store.read_initial_conditions([string_id])
         else:
             raise SmifDataNotFoundError("Initial conditions {} not found for"
                                         " sector model {}.".format(string_id, model_name))
