@@ -274,8 +274,13 @@ class TestNarrativeVariantData:
     def test_narrative_data_missing(self, config_handler):
         """Should raise a SmifDataNotFoundError if narrative has no data
         """
+        spec = Spec.from_dict({
+            'name': 'homogeneity_coefficient',
+            'unit': 'percentage',
+            'dtype': 'float'
+        })
         with raises(SmifDataNotFoundError):
-            config_handler.read_narrative_variant_data('does not exist', None)
+            config_handler.read_narrative_variant_data('does not exist', spec)
 
     def test_default_data_mismatch(self, config_handler, get_sector_model_parameter_defaults):
         parameter_name = 'smart_meter_savings'

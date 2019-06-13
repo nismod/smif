@@ -8,6 +8,8 @@ from abc import ABCMeta, abstractmethod
 from typing import Dict, List
 
 from smif.data_layer.data_array import DataArray
+from smif.exception import SmifDataMismatchError, SmifDataNotFoundError
+from smif.metadata import Spec
 
 
 class DataStore(metaclass=ABCMeta):
@@ -15,15 +17,28 @@ class DataStore(metaclass=ABCMeta):
     """
     # region DataArray
     @abstractmethod
-    def read_scenario_variant_data(self, key, spec, timestep=None) -> DataArray:
-        """Read data array
+    def read_scenario_variant_data(
+            self, key, spec, timestep=None, timesteps=None) -> DataArray:
+        """Read scenario variant data array.
+
+        If a single timestep is specified, the spec MAY include 'timestep' as a dimension,
+        which should match the timestep specified.
+
+        If multiple timesteps are specified, the spec MUST include 'timestep' as a dimension,
+        which should match the timesteps specified.
+
+        If timestep and timesteps are None, read all available timesteps. Whether or not the
+        spec includes 'timestep' as a dimension, the returned DataArray will include a
+        'timestep' dimension with all available timesteps included.
 
         Parameters
         ----------
         key : str
         spec : ~smif.metadata.spec.Spec
         timestep : int (optional)
-            If None, read data for all timesteps
+            If set, read data for single timestep
+        timesteps : list[int] (optional)
+            If set, read data for specified timesteps
 
         Returns
         -------
@@ -31,15 +46,13 @@ class DataStore(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def write_scenario_variant_data(self, key, data_array, timestep=None):
+    def write_scenario_variant_data(self, key, data_array):
         """Write data array
 
         Parameters
         ----------
         key : str
         data_array : ~smif.data_layer.data_array.DataArray
-        timestep : int (optional)
-            If None, write data for all timesteps
         """
 
     @abstractmethod
@@ -59,15 +72,13 @@ class DataStore(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def write_narrative_variant_data(self, key, data_array, timestep=None):
+    def write_narrative_variant_data(self, key, data_array):
         """Write data array
 
         Parameters
         ----------
         key : str
         data_array : ~smif.data_layer.data_array.DataArray
-        timestep : int (optional)
-            If None, write data for all timesteps
         """
 
     @abstractmethod
@@ -275,3 +286,84 @@ class DataStore(metaclass=ABCMeta):
              Each tuple is (timestep, decision_iteration, model_name, output_name)
         """
     # endregion
+
+    @classmethod
+    def filter_on_timesteps(cls, dataframe, spec, path, timestep=None, timesteps=None):
+        """Filter dataframe by timestep
+
+        The 'timestep' dimension is treated as follows:
+
+        If a single timestep is specified, the spec MAY include 'timestep' as a dimension. If so,
+        the returned DataArray's spec will match the timestep requested. Otherwise, the DataArray
+        will not include timestep as a dimension.
+
+        If multiple timesteps are specified, the returned DataArray's spec will include a
+        'timestep' dimension to match the timesteps requested.
+
+        If timestep and timesteps are None, and the stored data has a timestep column, read all
+        available timesteps. The returned DataArray's spec 'timestep' dimension will match the
+        timesteps requested. If the stored data does not have a timestep column, ignore and pass
+        through unchanged.
+        """
+        if timestep is not None:
+            dataframe = cls._check_timestep_column_exists(dataframe, spec, path)
+            dataframe = dataframe[dataframe.timestep == timestep]
+            if 'timestep' in spec.dims:
+                spec = cls._set_spec_timesteps(spec, [timestep])
+            else:
+                dataframe = dataframe.drop('timestep', axis=1)
+        elif timesteps is not None:
+            dataframe = cls._check_timestep_column_exists(dataframe, spec, path)
+            dataframe = dataframe[dataframe.timestep.isin(timesteps)]
+            spec = cls._set_spec_timesteps(spec, timesteps)
+        elif timestep is None and timesteps is None:
+            try:
+                dataframe = cls._check_timestep_column_exists(dataframe, spec, path)
+                spec = cls._set_spec_timesteps(spec, sorted(list(dataframe.timestep.unique())))
+            except SmifDataMismatchError:
+                pass
+
+        if dataframe.empty:
+            raise SmifDataNotFoundError(
+                "Data for '{}' not found for timestep {}".format(spec.name, timestep))
+
+        return dataframe, spec
+
+    @staticmethod
+    def dataframe_to_data_array(dataframe, spec, path):
+        if spec.dims:
+            data_array = DataArray.from_df(spec, dataframe)
+        else:
+            # zero-dimensional case (scalar)
+            data = dataframe[spec.name]
+            if data.shape != (1,):
+                msg = "Data for '{}' should contain a single value, instead got {} while " + \
+                        "reading from {}"
+                raise SmifDataMismatchError(msg.format(spec.name, len(data), path))
+            data_array = DataArray(spec, data.iloc[0])
+
+        return data_array
+
+    @staticmethod
+    def _check_timestep_column_exists(dataframe, spec, path):
+        if 'timestep' not in dataframe.columns:
+            if 'timestep' in dataframe.index.names:
+                dataframe = dataframe.reset_index()
+            else:
+                msg = "Data for '{name}' expected a column called 'timestep', instead " + \
+                        "got data columns {data_columns} and index names {index_names} " + \
+                        "while reading from {path}"
+                raise SmifDataMismatchError(msg.format(
+                    data_columns=dataframe.columns.values.tolist(),
+                    index_names=dataframe.index.names,
+                    name=spec.name,
+                    path=path))
+        return dataframe
+
+    @staticmethod
+    def _set_spec_timesteps(spec, timesteps):
+        spec_config = spec.as_dict()
+        if 'timestep' not in spec_config['dims']:
+            spec_config['dims'] = ['timestep'] + spec_config['dims']
+        spec_config['coords']['timestep'] = timesteps
+        return Spec.from_dict(spec_config)

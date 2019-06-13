@@ -20,11 +20,10 @@ import os
 from collections import OrderedDict
 from copy import deepcopy
 from operator import itemgetter
-from typing import Dict, List, Optional
 from os.path import splitext
+from typing import Dict, List, Optional
 
 import numpy as np  # type: ignore
-
 from smif.data_layer import DataArray
 from smif.data_layer.abstract_data_store import DataStore
 from smif.data_layer.abstract_metadata_store import MetadataStore
@@ -388,7 +387,7 @@ class Store():
 
         model_run = self.read_model_run(model_run_name)
         scenario = self.read_scenario(scenario_name)
-        
+
         # read strategies from config store (Store.read_strategies pulls together data on
         # interventions as well, which we don't need here)
         config_strategies = self.config_store.read_strategies(model_run_name)
@@ -617,8 +616,10 @@ class Store():
     #
 
     # region Scenario Variant Data
-    def read_scenario_variant_data(self, scenario_name: str, variant_name: str, variable: str,
-                                   timestep: int) -> DataArray:
+    def read_scenario_variant_data(
+            self, scenario_name: str, variant_name: str, variable: str,
+            timestep: Optional[int] = None, timesteps: Optional[List[int]] = None
+            ) -> DataArray:
         """Read scenario data file
 
         Parameters
@@ -638,9 +639,9 @@ class Store():
         scenario = self.read_scenario(scenario_name)
         spec_dict = _pick_from_list(scenario['provides'], variable)
         spec = Spec.from_dict(spec_dict)
-        return self.data_store.read_scenario_variant_data(key, spec, timestep)
+        return self.data_store.read_scenario_variant_data(key, spec, timestep, timesteps)
 
-    def write_scenario_variant_data(self, scenario_name, variant_name, data, timestep=None):
+    def write_scenario_variant_data(self, scenario_name, variant_name, data):
         """Write scenario data file
 
         Parameters
@@ -648,13 +649,11 @@ class Store():
         scenario_name : str
         variant_name : str
         data : ~smif.data_layer.data_array.DataArray
-        timestep : int (optional)
-            If None, write data for all timesteps
         """
         variant = self.read_scenario_variant(scenario_name, variant_name)
         key = self._key_from_data(variant['data'][data.spec.name], scenario_name, variant_name,
                                   data.spec.name)
-        self.data_store.write_scenario_variant_data(key, data, timestep)
+        self.data_store.write_scenario_variant_data(key, data)
 
     # endregion
 
@@ -707,8 +706,7 @@ class Store():
 
         return self.data_store.read_narrative_variant_data(key, spec, timestep)
 
-    def write_narrative_variant_data(self, sos_model_name, narrative_name, variant_name,
-                                     data, timestep=None):
+    def write_narrative_variant_data(self, sos_model_name, narrative_name, variant_name, data):
         """Read narrative data file
 
         Parameters
@@ -717,8 +715,6 @@ class Store():
         narrative_name : str
         variant_name : str
         data : ~smif.data_layer.data_array.DataArray
-        timestep : int (optional)
-            If None, write data for all timesteps
         """
         sos_model = self.read_sos_model(sos_model_name)
         narrative = _pick_from_list(sos_model['narratives'], narrative_name)
@@ -977,47 +973,6 @@ class Store():
         """
         self.data_store.write_results(
             data_array, model_run_name, model_name, timestep, decision_iteration)
-
-    def read_scenario_variant_data_multiple_timesteps(
-            self, scenario_name: str, variant_name: str, variable: str, timesteps: list):
-        """Read scenario variant for prescribed list of timesteps.
-           Returns a dataArray object with extra dimension for the timesteps
-
-        Parameters
-        ----------
-        scenario_name : str
-            the requested scenario name
-        variant_name: str
-            the requested scenario variant name
-        variable : str
-            the requested output variable name that the requested scenario provides
-        timesteps : list
-            the requested timesteps
-
-        Returns
-        -------
-        data_array : ~smif.data_layer.data_array.DataArray
-        """
-        # Get spec as a dict. for variable
-        # see store.read_scenario_variant_data
-        scenario = self.read_scenario(scenario_name)
-        spec_dict = _pick_from_list(scenario['provides'], variable)
-
-        # Now append timestep dimension, see store.get_result_darray_internal()
-        spec_dict['dims'] = ['timestep'] + spec_dict['dims']
-        spec_dict['coords']['timestep'] = timesteps
-
-        spec = Spec.from_dict(spec_dict)
-
-        # Read the results for each timestep tuple and stack them
-        list_of_numpy_arrays = []
-        for t in timesteps:
-            d_array = self.read_scenario_variant_data(scenario_name, variant_name, variable, t)
-            list_of_numpy_arrays.append(d_array.data)
-
-        stacked_data = np.vstack(list_of_numpy_arrays)
-
-        return DataArray(spec, np.reshape(stacked_data, spec.shape))
 
     def available_results(self, model_run_name):
         """List available results from a model run

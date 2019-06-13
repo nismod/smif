@@ -4,7 +4,6 @@ from copy import deepcopy
 
 import numpy as np
 from pytest import fixture, mark, param, raises
-
 from smif.data_layer.data_array import DataArray
 from smif.data_layer.database_interface import DbDataStore
 from smif.data_layer.file.file_data_store import CSVDataStore, ParquetDataStore
@@ -40,16 +39,22 @@ class TestDataArray():
     """Read and write DataArray
     """
     def test_read_write_data_array(self, handler, scenario):
-        data = np.array([0, 1], dtype='float')
-        spec = Spec.from_dict(scenario['provides'][0])
-
+        spec_config = deepcopy(scenario['provides'][0])
+        spec_config['dims'] = ['timestep'] + spec_config['dims']
+        spec_config['coords']['timestep'] = [{'name': 2010}]
+        spec = Spec.from_dict(spec_config)
+        data = np.array([[0, 1]], dtype='float')
         da = DataArray(spec, data)
+        handler.write_scenario_variant_data('mortality.csv', da)
 
-        handler.write_scenario_variant_data('mortality.csv', da, 2010)
+        spec_config = deepcopy(scenario['provides'][0])
+        spec = Spec.from_dict(spec_config)
+        data = np.array([0, 1], dtype='float')
+        expected = DataArray(spec, data)
+
         actual = handler.read_scenario_variant_data('mortality.csv', spec, 2010)
-
-        assert actual == da
-        np.testing.assert_array_equal(actual.as_ndarray(), da.as_ndarray())
+        assert actual == expected
+        np.testing.assert_array_equal(actual.as_ndarray(), expected.as_ndarray())
 
     def test_read_write_data_array_all(self, handler, scenario):
         spec = Spec.from_dict(deepcopy(scenario['provides'][0]))
@@ -102,12 +107,15 @@ class TestDataArray():
         assert actual == np.array(1.0)
 
     def test_read_data_array_missing_timestep(self, handler, scenario):
-        data = np.array([0, 1], dtype=float)
-        spec = Spec.from_dict(scenario['provides'][0])
+        data = np.array([[0, 1]], dtype=float)
+        spec_config = deepcopy(scenario['provides'][0])
+        spec_config['dims'] = ['timestep'] + spec_config['dims']
+        spec_config['coords']['timestep'] = [{'name': 2010}]
+        spec = Spec.from_dict(spec_config)
 
         da = DataArray(spec, data)
 
-        handler.write_scenario_variant_data('mortality.csv', da, 2010)
+        handler.write_scenario_variant_data('mortality.csv', da)
         msg = "not found for timestep 2011"
         with raises(SmifDataNotFoundError) as ex:
             handler.read_scenario_variant_data('mortality.csv', spec, 2011)
@@ -116,15 +124,15 @@ class TestDataArray():
     def test_string_data(self, handler):
         spec = Spec(
             name='string_data',
-            dims=['zones'],
-            coords={'zones': ['a', 'b', 'c']},
+            dims=['timestep', 'zones'],
+            coords={'timestep': [2010], 'zones': ['a', 'b', 'c']},
             dtype='object'
         )
-        data = np.array(['alpha', 'beta', 'γάμμα'], dtype='object')
+        data = np.array([['alpha', 'beta', 'γάμμα']], dtype='object')
         expected = DataArray(spec, data)
 
-        handler.write_scenario_variant_data('key', expected, 2010)
-        actual = handler.read_scenario_variant_data('key', spec, 2010)
+        handler.write_scenario_variant_data('key', expected)
+        actual = handler.read_scenario_variant_data('key', spec)
         assert actual == expected
 
 

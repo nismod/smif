@@ -4,18 +4,17 @@ Many methods simply proxy to config/metadata/data store implementations, but the
 cross-coordination and there are some convenience methods implemented at this layer.
 """
 import os
+
 import numpy as np
 import numpy.testing
 from pytest import fixture, raises
-
 from smif.data_layer import Store
 from smif.data_layer.data_array import DataArray
 from smif.data_layer.memory_interface import (MemoryConfigStore,
                                               MemoryDataStore,
                                               MemoryMetadataStore)
-from smif.exception import SmifDataNotFoundError
+from smif.exception import SmifDataError, SmifDataNotFoundError
 from smif.metadata import Spec
-from smif.exception import SmifDataError
 
 
 @fixture
@@ -319,9 +318,8 @@ class TestStoreData():
         key, scenario_variant_data = setup
         scenario_name, variant_name, variable = key
 
-        actual = store.read_scenario_variant_data_multiple_timesteps(
-            scenario_name, variant_name, variable, [2016]
-        )
+        actual = store.read_scenario_variant_data(
+            scenario_name, variant_name, variable, timesteps=[2016])
 
         assert (actual.data == [scenario_variant_data.data[1]]).all()
 
@@ -330,9 +328,8 @@ class TestStoreData():
         key, scenario_variant_data = setup
         scenario_name, variant_name, variable = key
 
-        actual = store.read_scenario_variant_data_multiple_timesteps(
-            scenario_name, variant_name, variable, [2015, 2016]
-        )
+        actual = store.read_scenario_variant_data(
+            scenario_name, variant_name, variable, timesteps=[2015, 2016])
 
         assert (actual.data == scenario_variant_data.data).all()
 
