@@ -121,6 +121,10 @@ class FileDataStore(DataStore):
         path = os.path.join(self.data_folders['parameters'], key+'.{}'.format(self.ext))
         return os.path.isfile(path)
 
+    def get_timesteps_from_data(self, key, spec_dict):
+        path = path = os.path.join(self.data_folders['scenarios'], key+'.{}'.format(self.ext))
+        return self._get_timesteps_from_data(path, spec_dict).tolist()
+
     # endregion
 
     # region Interventions
@@ -414,6 +418,15 @@ class CSVDataStore(FileDataStore):
         self.ext = 'csv'
         self.coef_ext = 'txt.gz'
 
+    def _get_timesteps_from_data(self, path, spec_dict):
+        try:
+            dataframe = pandas.read_csv(path)
+        except FileNotFoundError:
+            raise SmifDataNotFoundError
+
+        dim = list(spec_dict['coords'].keys())[0]
+        return dataframe.iloc[::len(spec_dict['coords'][dim]),0].values
+
     def _read_data_array(self, path, spec, timestep=None):
         """Read DataArray from file
         """
@@ -479,6 +492,16 @@ class ParquetDataStore(FileDataStore):
         super().__init__(base_folder)
         self.ext = 'parquet'
         self.coef_ext = 'npy'
+
+    def _get_timesteps_from_data(self, path, spec_dict):
+        try:
+            dataframe = pandas.read_parquet(path, engine='pyarrow')
+        except (pa.lib.ArrowIOError, OSError) as ex:
+            msg = "Could not find data for {} at {}"
+            raise SmifDataNotFoundError(msg.format(spec.name, path)) from ex
+
+        dim = list(spec_dict['coords'].keys())[0]
+        return dataframe.iloc[::len(spec_dict['coords'][dim]),0].values
 
     def _read_parquet_data_array(self, path, spec, timestep=None):
 

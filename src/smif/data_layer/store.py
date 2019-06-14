@@ -1023,7 +1023,7 @@ class Store():
             data_array, model_run_name, model_name, timestep, decision_iteration)
 
     def read_scenario_variant_data_multiple_timesteps(
-            self, scenario_name: str, variant_name: str, variable: str, timesteps: list):
+            self, scenario_name: str, variant_name: str, variable: str, timesteps=None):
         """Read scenario variant for prescribed list of timesteps.
            Returns a dataArray object with extra dimension for the timesteps
 
@@ -1047,12 +1047,17 @@ class Store():
         scenario = self.read_scenario(scenario_name)
         spec_dict = _pick_from_list(scenario['provides'], variable)
         
+        if timesteps is None:
+            variant = self.read_scenario_variant(scenario_name, variant_name)
+            key = self._key_from_data(variant['data'][variable], scenario_name, variant_name,
+                                    variable)
+            timesteps = self.data_store.get_timesteps_from_data(key, spec_dict)
         # Now append timestep dimension, see store.get_result_darray_internal()
         spec_dict['dims'].append('timestep')
         spec_dict['coords']['timestep'] = timesteps
         
         spec = Spec.from_dict(spec_dict)
-                              
+
         # Read the results for each timestep tuple and stack them
         list_of_numpy_arrays = []
         for t in timesteps:
