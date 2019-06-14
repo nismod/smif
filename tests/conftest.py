@@ -627,9 +627,11 @@ def sample_scenario_data(scenario_with_timestep, get_sector_model, energy_supply
     for scenario in [scenario_with_timestep]:
         for variant in scenario['variants']:
             for data_key, data_value in variant['data'].items():
-                spec = Spec.from_dict(
-                    [provides for provides in scenario['provides']
-                     if provides['name'] == data_key][0])
+                spec_dict = [
+                    provides for provides in scenario['provides']
+                    if provides['name'] == data_key
+                ][0]
+                spec = Spec.from_dict(spec_dict)
                 nda = np.random.random(spec.shape)
                 da = DataArray(spec, nda)
                 key = (scenario['name'], variant['name'], data_key)

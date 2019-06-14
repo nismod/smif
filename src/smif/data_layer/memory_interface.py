@@ -263,7 +263,8 @@ class MemoryDataStore(DataStore):
     """
     def __init__(self):
         super().__init__()
-        self._data_array = OrderedDict()
+        self._scenario_data = OrderedDict()
+        self._narrative_data = OrderedDict()
         self._interventions = OrderedDict()
         self._initial_conditions = OrderedDict()
         self._state = OrderedDict()
@@ -273,64 +274,36 @@ class MemoryDataStore(DataStore):
         self.ext = None
 
     # region Data Array
-    def read_scenario_variant_data(self, key, spec, timestep=None):
-        return self._read_data_array(key, spec, timestep)
+    def read_scenario_variant_data(self, key, spec, timestep=None, timesteps=None):
+        return self._read_data_array(self._scenario_data, key, spec, timestep, timesteps)
 
-    def write_scenario_variant_data(self, key, data, timestep=None):
-        self._write_data_array(key, data, timestep)
+    def write_scenario_variant_data(self, key, data):
+        self._scenario_data[key] = data
 
     def scenario_variant_data_exists(self, key):
-        return (key in self._data_array.keys())
+        return key in self._scenario_data
 
     def read_narrative_variant_data(self, key, spec, timestep=None):
-        return self._read_data_array(key, spec, timestep)
+        return self._read_data_array(self._narrative_data, key, spec, timestep)
 
-    def write_narrative_variant_data(self, key, data, timestep=None):
-        self._write_data_array(key, data, timestep)
+    def write_narrative_variant_data(self, key, data):
+        self._narrative_data[key] = data
 
     def narrative_variant_data_exists(self, key):
-        return (key in self._data_array.keys())
+        return key in self._narrative_data
 
-    def _read_data_array(self, key, spec, timestep=None):
-        if timestep:
-            try:
-                data = self._data_array[key, timestep]
-            except KeyError:
-                try:
-                    data = self._filter_timestep(self._data_array[key], spec, timestep)
-                except KeyError:
-                    raise SmifDataNotFoundError(
-                        "Data for {} not found for timestep {}".format(spec.name, timestep))
-        else:
-            try:
-                data = self._data_array[key]
-            except KeyError:
-                raise SmifDataNotFoundError(
-                    "Data for {} not found".format(spec.name))
+    def _read_data_array(self, lookup, key, spec, timestep=None, timesteps=None):
+        try:
+            data = lookup[key]
+        except KeyError:
+            raise SmifDataNotFoundError("Data for {} not found".format(spec.name))
 
-        if data.spec != spec:
-            raise SmifDataMismatchError(
-                "Spec did not match reading {}, requested {}, got {}".format(
-                    spec.name, spec, data.spec))
-        return data
+        dataframe = data.as_df()
+        dataframe, spec = DataStore.filter_on_timesteps(
+            dataframe, spec, key, timestep, timesteps)
+        data_array = DataStore.dataframe_to_data_array(dataframe, spec, key)
+        return data_array
 
-    def _filter_timestep(self, data, read_spec, timestep):
-        dataframe = data.as_df().reset_index()
-        if 'timestep' not in dataframe.columns:
-            msg = "Missing 'timestep' key, found {} in {}"
-            raise SmifDataMismatchError(msg.format(list(dataframe.columns), data.name))
-        dataframe = dataframe[dataframe.timestep == timestep]
-        if dataframe.empty:
-            raise SmifDataNotFoundError(
-                "Data for {} not found for timestep {}".format(data.name, timestep))
-        dataframe.drop('timestep', axis=1, inplace=True)
-        return DataArray.from_df(read_spec, dataframe)
-
-    def _write_data_array(self, key, data, timestep=None):
-        if timestep:
-            self._data_array[key, timestep] = data
-        else:
-            self._data_array[key] = data
     # endregion
 
     # region Model parameters

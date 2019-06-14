@@ -354,23 +354,20 @@ class TestStoreData():
         )
         src_store.convert_scenario_data(model_run['name'], tgt_store)
 
-        src_get_data = src_store.read_scenario_variant_data_multiple_timesteps
-        tgt_get_data = tgt_store.read_scenario_variant_data_multiple_timesteps
         for variant in src_store.read_scenario_variants(scenario_name):
             for variable in variant['data']:
-                expected = src_get_data(scenario_name, variant['name'], variable,
-                                        model_run['timesteps'])
-                result = tgt_get_data(scenario_name, variant['name'], variable,
-                                      model_run['timesteps'])
+                expected = src_store.read_scenario_variant_data(
+                    scenario_name, variant['name'], variable, timesteps=model_run['timesteps'])
+                result = tgt_store.read_scenario_variant_data(
+                    scenario_name, variant['name'], variable, timesteps=model_run['timesteps'])
                 assert result == expected
 
     def test_scenario_variant_data_mult_one_year(self, store, setup):
         key, scenario_variant_data = setup
         scenario_name, variant_name, variable = key
 
-        actual = store.read_scenario_variant_data_multiple_timesteps(
-            scenario_name, variant_name, variable, [2016]
-        )
+        actual = store.read_scenario_variant_data(
+            scenario_name, variant_name, variable, timesteps=[2016])
 
         assert (actual.data == [scenario_variant_data.data[1]]).all()
 
@@ -379,9 +376,8 @@ class TestStoreData():
         key, scenario_variant_data = setup
         scenario_name, variant_name, variable = key
 
-        actual = store.read_scenario_variant_data_multiple_timesteps(
-            scenario_name, variant_name, variable, [2015, 2016]
-        )
+        actual = store.read_scenario_variant_data(
+            scenario_name, variant_name, variable, timesteps=[2015, 2016])
 
         assert (actual.data == scenario_variant_data.data).all()
 

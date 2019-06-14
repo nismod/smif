@@ -220,7 +220,6 @@ class TestScenarios:
               "columns ['population_count', 'region', 'season'] and index names [None]"
         assert msg in str(ex)
 
-
     def test_scenario_data_validates(self, setup_folder_structure, config_handler,
                                      get_remapped_scenario_data, scenario_spec):
         """Store performs validation of scenario data against raw interval and region data.
@@ -274,8 +273,13 @@ class TestNarrativeVariantData:
     def test_narrative_data_missing(self, config_handler):
         """Should raise a SmifDataNotFoundError if narrative has no data
         """
+        spec = Spec.from_dict({
+            'name': 'homogeneity_coefficient',
+            'unit': 'percentage',
+            'dtype': 'float'
+        })
         with raises(SmifDataNotFoundError):
-            config_handler.read_narrative_variant_data('does not exist', None)
+            config_handler.read_narrative_variant_data('does not exist', spec)
 
     def test_default_data_mismatch(self, config_handler, get_sector_model_parameter_defaults):
         parameter_name = 'smart_meter_savings'
@@ -390,7 +394,6 @@ class TestNarrativeVariantData:
         msg = "Data for 'test' had missing values - read 1 but expected 4 in total, from " + \
               "dims of length {a: 2, b: 2}"
         assert msg in str(ex)
-
 
 
 class TestResults:

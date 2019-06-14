@@ -121,7 +121,7 @@ class Coordinates(object):
             msg = "Elements in dimension '{}' must have a name field, " \
                   "or be a simple list of identifiers"
             raise KeyError(msg.format(self.name))
-        except TypeError:
+        except (TypeError, IndexError):
             # elements might not be dict-like - in which case, treat them as names
             self._ids = elements
             self._elements = [{"name": e} for e in elements]

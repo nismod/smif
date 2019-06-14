@@ -9,8 +9,7 @@ import numpy as np  # type: ignore
 import pandas  # type: ignore
 import pyarrow as pa  # type: ignore
 from smif.data_layer.abstract_data_store import DataStore
-from smif.data_layer.data_array import DataArray
-from smif.exception import SmifDataMismatchError, SmifDataNotFoundError
+from smif.exception import SmifDataNotFoundError
 
 
 class FileDataStore(DataStore):
@@ -80,34 +79,33 @@ class FileDataStore(DataStore):
     # endregion
 
     # region Data Array
-    def read_scenario_variant_data(self, key, spec, timestep=None):
-        path = os.path.join(self.data_folders['scenarios'], key+'.{}'.format(self.ext))
-        data = self._read_data_array(path, spec, timestep)
+    def read_scenario_variant_data(self, key, spec, timestep=None, timesteps=None):
+        path = os.path.join(self.data_folders['scenarios'], '{}.{}'.format(key, self.ext))
+        data = self._read_data_array(path, spec, timestep, timesteps)
         data.validate_as_full()
         return data
 
-    def write_scenario_variant_data(self, key, data, timestep=None):
-        path = os.path.join(self.data_folders['scenarios'], key+'.{}'.format(self.ext))
-        self._write_data_array(path, data, timestep)
+    def write_scenario_variant_data(self, key, data):
+        path = os.path.join(self.data_folders['scenarios'], '{}.{}'.format(key, self.ext))
+        self._write_data_array(path, data)
 
     def scenario_variant_data_exists(self, key):
-        path = os.path.join(self.data_folders['scenarios'], key+'.{}'.format(self.ext))
+        path = os.path.join(self.data_folders['scenarios'], '{}.{}'.format(key, self.ext))
         return os.path.isfile(path)
 
     def read_narrative_variant_data(self, key, spec, timestep=None):
-        path = os.path.join(self.data_folders['narratives'], key+'.{}'.format(self.ext))
+        path = os.path.join(self.data_folders['narratives'], '{}.{}'.format(key, self.ext))
         return self._read_data_array(path, spec, timestep)
 
-    def write_narrative_variant_data(self, key, data, timestep=None):
-        path = os.path.join(self.data_folders['narratives'], key+'.{}'.format(self.ext))
-        self._write_data_array(path, data, timestep)
+    def write_narrative_variant_data(self, key, data):
+        path = os.path.join(self.data_folders['narratives'], '{}.{}'.format(key, self.ext))
+        self._write_data_array(path, data)
 
     def narrative_variant_data_exists(self, key):
         path = os.path.join(self.data_folders['narratives'], key+'.{}'.format(self.ext))
         return os.path.isfile(path)
 
     def read_model_parameter_default(self, key, spec):
-        self.logger.debug("Trying to read model parameter default from key {}".format(key))
         path = os.path.join(self.data_folders['parameters'], key+'.{}'.format(self.ext))
         data = self._read_data_array(path, spec)
         data.validate_as_full()
@@ -190,17 +188,20 @@ class FileDataStore(DataStore):
     def read_initial_conditions(self, keys):
         conditions = []
         for key in keys:
-            path = os.path.join(self.data_folder, 'initial_conditions', key+'.{}'.format(self.ext))
+            path = os.path.join(
+                self.data_folder, 'initial_conditions', key+'.{}'.format(self.ext))
             data = self._read_list_of_dicts(path)
             conditions.extend(data)
         return conditions
 
     def write_initial_conditions(self, key, initial_conditions):
-        path = os.path.join(self.data_folders['initial_conditions'], key+'.{}'.format(self.ext))
+        path = os.path.join(
+            self.data_folders['initial_conditions'], key+'.{}'.format(self.ext))
         self._write_list_of_dicts(path, initial_conditions)
 
     def initial_conditions_data_exists(self, key):
-        path = os.path.join(self.data_folders['initial_conditions'], key+'.{}'.format(self.ext))
+        path = os.path.join(
+            self.data_folders['initial_conditions'], key+'.{}'.format(self.ext))
         return os.path.isfile(path)
     # endregion
 
@@ -385,30 +386,6 @@ class FileDataStore(DataStore):
         return (timestep, decision_iteration, model_name, output_name)
     # endregion
 
-    def _filter_on_timestep(self, timestep, dataframe, path, spec):
-        if timestep is not None:
-            if 'timestep' not in dataframe.columns:
-                if 'timestep' not in dataframe.index.names:
-                    msg = "Data for '{name}' expected a column called 'timestep', instead " + \
-                          "got data columns {data_columns} and index names {index_names} " + \
-                          "while reading from {path}"
-                    raise SmifDataMismatchError(msg.format(
-                        data_columns=dataframe.columns.values.tolist(),
-                        index_names=dataframe.index.names,
-                        name=spec.name,
-                        path=path))
-                dataframe = dataframe.reset_index(level='timestep')
-
-            dataframe = dataframe[dataframe.timestep == timestep]
-
-            if dataframe.empty:
-                raise SmifDataNotFoundError(
-                    "Data for '{}' not found for timestep {}".format(spec.name, timestep))
-
-            dataframe = dataframe.drop('timestep', axis=1)
-
-        return dataframe
-
 
 class CSVDataStore(FileDataStore):
     """CSV text file data store
@@ -418,43 +395,24 @@ class CSVDataStore(FileDataStore):
         self.ext = 'csv'
         self.coef_ext = 'txt.gz'
 
-    def _get_timesteps_from_data(self, path, spec_dict):
-        try:
-            dataframe = pandas.read_csv(path)
-        except FileNotFoundError:
-            raise SmifDataNotFoundError
-
-        dim = list(spec_dict['coords'].keys())[0]
-        return dataframe.iloc[::len(spec_dict['coords'][dim]),0].values
-
-    def _read_data_array(self, path, spec, timestep=None):
+    def _read_data_array(self, path, spec, timestep=None, timesteps=None):
         """Read DataArray from file
         """
         try:
             dataframe = pandas.read_csv(path)
-        except FileNotFoundError:
-            raise SmifDataNotFoundError
+        except FileNotFoundError as ex:
+            msg = "Could not find data for {} at {}"
+            raise SmifDataNotFoundError(msg.format(spec.name, path)) from ex
 
-        dataframe = self._filter_on_timestep(timestep, dataframe, path, spec)
-
-        if spec.dims:
-            data_array = DataArray.from_df(spec, dataframe)
-        else:
-            # zero-dimensional case (scalar)
-            data = dataframe[spec.name]
-            if data.shape != (1,):
-                msg = "Data for '{}' should contain a single value, instead got {} while " + \
-                      "reading from {}"
-                raise SmifDataMismatchError(msg.format(spec.name, len(data), path))
-            data_array = DataArray(spec, data.iloc[0])
+        dataframe, spec = DataStore.filter_on_timesteps(
+            dataframe, spec, path, timestep, timesteps)
+        data_array = DataStore.dataframe_to_data_array(dataframe, spec, path)
         return data_array
 
-    def _write_data_array(self, path, data_array, timestep=None):
+    def _write_data_array(self, path, data_array):
         """Write DataArray to file
         """
         dataframe = data_array.as_df()
-        if timestep is not None:
-            dataframe['timestep'] = timestep
         dataframe.reset_index().to_csv(path, index=False)
 
     def _read_list_of_dicts(self, path):
@@ -493,49 +451,24 @@ class ParquetDataStore(FileDataStore):
         self.ext = 'parquet'
         self.coef_ext = 'npy'
 
-    def _get_timesteps_from_data(self, path, spec_dict):
+    def _read_data_array(self, path, spec, timestep=None, timesteps=None):
+        """Read DataArray from file
+        """
         try:
             dataframe = pandas.read_parquet(path, engine='pyarrow')
         except (pa.lib.ArrowIOError, OSError) as ex:
             msg = "Could not find data for {} at {}"
             raise SmifDataNotFoundError(msg.format(spec.name, path)) from ex
 
-        dim = list(spec_dict['coords'].keys())[0]
-        return dataframe.iloc[::len(spec_dict['coords'][dim]),0].values
-
-    def _read_parquet_data_array(self, path, spec, timestep=None):
-
-        dataframe = pandas.read_parquet(path, engine='pyarrow')
-        dataframe = self._filter_on_timestep(timestep, dataframe, path, spec)
-
-        if spec.dims:
-            data_array = DataArray.from_df(spec, dataframe)
-        else:
-            # zero-dimensional case (scalar)
-            data = dataframe[spec.name]
-            if data.shape != (1,):
-                msg = "Expected single value, found {} in {}"
-                raise SmifDataMismatchError(msg.format(list(data.shape), path))
-            data_array = DataArray(spec, data.iloc[0])
-
+        dataframe, spec = DataStore.filter_on_timesteps(
+            dataframe, spec, path, timestep, timesteps)
+        data_array = DataStore.dataframe_to_data_array(dataframe, spec, path)
         return data_array
 
-    def _read_data_array(self, path, spec, timestep=None):
-        """Read DataArray from file
-        """
-        try:
-            data_array = self._read_parquet_data_array(path, spec, timestep)
-        except (pa.lib.ArrowIOError, OSError) as ex:
-            msg = "Could not find data for {} at {}"
-            raise SmifDataNotFoundError(msg.format(spec.name, path)) from ex
-        return data_array
-
-    def _write_data_array(self, path, data_array, timestep=None):
+    def _write_data_array(self, path, data_array):
         """Write DataArray to file
         """
         dataframe = data_array.as_df()
-        if timestep is not None:
-            dataframe['timestep'] = timestep
         dataframe.to_parquet(path, engine='pyarrow', compression='gzip')
 
     def _read_list_of_dicts(self, path):

@@ -282,7 +282,7 @@ class Results:
         """
 
         # Query the store and return as pandas data frame sorted with ascending timestep
-        scenario_data_frame = self._store.read_scenario_variant_data_multiple_timesteps(
+        scenario_data_frame = self._store.read_scenario_variant_data(
             scenario_name=scenario_name,
             variant_name=variant_name,
             variable=variable_name,
