@@ -4,9 +4,10 @@
 import os
 import subprocess
 import sys
+from itertools import product
 from tempfile import TemporaryDirectory
-from unittest.mock import call, patch
 from time import sleep
+from unittest.mock import call, patch
 
 import smif
 from pytest import fixture
@@ -124,14 +125,14 @@ def test_fixture_available_results(tmp_sample_project):
                             stdout=subprocess.PIPE)
 
     out_str = str(output.stdout)
-    assert(out_str.count('model run: energy_central') == 1)
-    assert(out_str.count('sos model: energy') == 1)
-    assert(out_str.count('sector model:') == 1)
-    assert(out_str.count('output:') == 2)
-    assert(out_str.count('output: cost') == 1)
-    assert(out_str.count('output: water_demand') == 1)
-    assert(out_str.count('no results') == 2)
-    assert(out_str.count('decision') == 0)
+    assert out_str.count('model run: energy_central') == 1
+    assert out_str.count('sos model: energy') == 1
+    assert out_str.count('sector model:') == 1
+    assert out_str.count('output:') == 2
+    assert out_str.count('output: cost') == 1
+    assert out_str.count('output: water_demand') == 1
+    assert out_str.count('no results') == 2
+    assert out_str.count('decision') == 0
 
     # Run energy_central and re-check output with optional flag for completed results
     subprocess.run(["smif", "run", "energy_central", "-d", config_dir], stdout=subprocess.PIPE)
@@ -139,21 +140,21 @@ def test_fixture_available_results(tmp_sample_project):
                             stdout=subprocess.PIPE)
 
     out_str = str(output.stdout)
-    assert(out_str.count('model run: energy_central') == 1)
-    assert(out_str.count('sos model: energy') == 1)
-    assert(out_str.count('sector model:') == 1)
-    assert(out_str.count('output:') == 2)
-    assert(out_str.count('output: cost') == 1)
-    assert(out_str.count('output: water_demand') == 1)
-    assert(out_str.count('no results') == 0)
-    assert(out_str.count('decision') == 8)
-    assert(out_str.count('decision 1') == 2)
-    assert(out_str.count('decision 2') == 2)
-    assert(out_str.count('decision 3') == 2)
-    assert(out_str.count('decision 4') == 2)
-    assert(out_str.count(': 2010') == 4)
-    assert(out_str.count(': 2015') == 2)
-    assert(out_str.count(': 2020') == 2)
+    assert out_str.count('model run: energy_central') == 1
+    assert out_str.count('sos model: energy') == 1
+    assert out_str.count('sector model:') == 1
+    assert out_str.count('output:') == 2
+    assert out_str.count('output: cost') == 1
+    assert out_str.count('output: water_demand') == 1
+    assert out_str.count('no results') == 0
+    assert out_str.count('decision') == 8
+    assert out_str.count('decision 1') == 2
+    assert out_str.count('decision 2') == 2
+    assert out_str.count('decision 3') == 2
+    assert out_str.count('decision 4') == 2
+    assert out_str.count(': 2010') == 4
+    assert out_str.count(': 2015') == 2
+    assert out_str.count(': 2020') == 2
 
 
 def test_fixture_missing_results(tmp_sample_project):
@@ -164,14 +165,14 @@ def test_fixture_missing_results(tmp_sample_project):
                             stdout=subprocess.PIPE)
 
     out_str = str(output.stdout)
-    assert(out_str.count('model run: energy_central') == 1)
-    assert(out_str.count('sos model: energy') == 1)
-    assert(out_str.count('sector model:') == 1)
-    assert(out_str.count('output:') == 2)
-    assert(out_str.count('output: cost') == 1)
-    assert(out_str.count('output: water_demand') == 1)
-    assert(out_str.count('no missing results') == 0)
-    assert(out_str.count('results missing for:') == 2)
+    assert out_str.count('model run: energy_central') == 1
+    assert out_str.count('sos model: energy') == 1
+    assert out_str.count('sector model:') == 1
+    assert out_str.count('output:') == 2
+    assert out_str.count('output: cost') == 1
+    assert out_str.count('output: water_demand') == 1
+    assert out_str.count('no missing results') == 0
+    assert out_str.count('results missing for:') == 2
 
     # Run energy_central and re-check output with optional flag for completed results
     subprocess.run(["smif", "run", "energy_central", "-d", config_dir], stdout=subprocess.PIPE)
@@ -179,14 +180,58 @@ def test_fixture_missing_results(tmp_sample_project):
                             stdout=subprocess.PIPE)
 
     out_str = str(output.stdout)
-    assert(out_str.count('model run: energy_central') == 1)
-    assert(out_str.count('sos model: energy') == 1)
-    assert(out_str.count('sector model:') == 1)
-    assert(out_str.count('output:') == 2)
-    assert(out_str.count('output: cost') == 1)
-    assert(out_str.count('output: water_demand') == 1)
-    assert(out_str.count('no missing results') == 2)
-    assert(out_str.count('results missing for:') == 0)
+    assert out_str.count('model run: energy_central') == 1
+    assert out_str.count('sos model: energy') == 1
+    assert out_str.count('sector model:') == 1
+    assert out_str.count('output:') == 2
+    assert out_str.count('output: cost') == 1
+    assert out_str.count('output: water_demand') == 1
+    assert out_str.count('no missing results') == 2
+    assert out_str.count('results missing for:') == 0
+
+
+def test_fixture_prepare_model_runs(tmp_sample_project):
+    """Test cli for preparing model runs from template
+    referencing scenario with 1 or more variants
+    """
+    config_dir = tmp_sample_project
+    pop_variants = ['low', 'med', 'high']
+    nb_variants = len(pop_variants)
+
+    clear_model_runs(config_dir)
+
+    subprocess.run(["smif", "prepare-run", "population", "energy_central", "-d", config_dir],
+                   stdout=subprocess.PIPE)
+    for suffix in pop_variants:
+        filename = 'energy_central_population_' + suffix + '.yml'
+        assert os.path.isfile(os.path.join(config_dir, 'config/model_runs', filename))
+
+    variant_range = range(0, nb_variants)
+    for s, e in product(variant_range, variant_range):
+        clear_model_runs(config_dir)
+        subprocess.run(["smif", "prepare-run", "population", "energy_central", "-s", str(s),
+                        "-e", str(e), "-d", config_dir], stdout=subprocess.PIPE)
+        for suffix in pop_variants[s:e + 1]:
+            filename = 'energy_central_population_' + suffix + '.yml'
+            assert os.path.isfile(os.path.join(config_dir, 'config/model_runs', filename))
+        for suffix in pop_variants[0:s]:
+            filename = 'energy_central_population_' + suffix + '.yml'
+            assert not os.path.isfile(os.path.join(config_dir, 'config/model_runs', filename))
+        if e < variant_range[-1]:
+            for suffix in pop_variants[e + 1:]:
+                filename = 'energy_central_population_' + suffix + '.yml'
+                assert not os.path.isfile(
+                    os.path.join(config_dir, 'config/model_runs', filename))
+
+
+def clear_model_runs(config_dir):
+    """ Helper function for test function
+        test_fixture_prepare_model_runs
+    """
+    for suffix in ['low', 'med', 'high']:
+        filename = 'energy_central_population_' + suffix + '.yml'
+        if os.path.isfile(os.path.join(config_dir, 'config/model_runs', filename)):
+            os.remove(os.path.join(config_dir, 'config/model_runs', filename))
 
 
 def test_setup_project_folder():
@@ -203,6 +248,7 @@ def test_setup_project_folder():
             folder_path = os.path.join(project_folder, folder)
 
             assert os.path.exists(folder_path)
+
 
 def test_prepare_convert(tmp_sample_project):
     project_folder = tmp_sample_project
@@ -221,14 +267,13 @@ def test_prepare_convert(tmp_sample_project):
         'narratives': [],
         'parameters': ['defaults'],
         'scenarios': ['population_density_low', 'population_density_med',
-                       'population_density_high', 'population_low', 'population_med',
-                       'population_high'],
+                      'population_density_high', 'population_low', 'population_med',
+                      'population_high'],
         'strategies': ['build_nuke'],
         }
 
-    output = subprocess.run(["smif", "prepare-convert", "energy_central",
-                             "-d", project_folder, "-i", "local_csv"],
-                            stdout=subprocess.PIPE)
+    subprocess.run(["smif", "prepare-convert", "energy_central", "-d", project_folder, "-i",
+                    "local_csv"], stdout=subprocess.PIPE)
     # assert that correct files have been generated
     for folder in list_of_files.keys():
         for filename in list_of_files[folder]:
@@ -240,15 +285,15 @@ def test_prepare_convert(tmp_sample_project):
 
     # Now call prepare-convert with the --noclobber option
     # all previously generated parquet files should not be modified
-    output = subprocess.run(["smif", "prepare-convert", "energy_central", "--noclobber",
-                             "-d", project_folder, "-i", "local_csv"],
-                            stdout=subprocess.PIPE)
+    subprocess.run(["smif", "prepare-convert", "energy_central", "--noclobber", "-d",
+                    project_folder, "-i", "local_csv"], stdout=subprocess.PIPE)
     # assert that files have not been modified
     for folder in list_of_files.keys():
         for filename in list_of_files[folder]:
             path = os.path.join(project_folder, 'data', folder, filename)
             path = "{}.parquet".format(path)
             assert (os.path.getmtime(path) > 2)
+
 
 @patch('builtins.input', return_value='y')
 def test_confirm_yes(input):

@@ -227,6 +227,7 @@ class TestResults():
         with raises(SmifDataNotFoundError):
             handler.read_results(modelrun_name, model_name, output_spec, 2020)
 
+
 class TestDataExists():
     """Check that model run data exists
     """
@@ -241,7 +242,7 @@ class TestDataExists():
 
     def test_scenario_variant_data_exists(self, handler, sample_scenario_data):
         assert not handler.scenario_variant_data_exists('scenario_variant_data')
-        
+
         key = next(iter(sample_scenario_data))
         scenario_name, variant_name, variable = key
         scenario_variant_data = sample_scenario_data[key]

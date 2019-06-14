@@ -354,7 +354,7 @@ class MemoryDataStore(DataStore):
     def read_interventions(self, keys):
         all_interventions = {}
         interventions = [list(self._interventions[key].values()) for key in keys][0]
-        
+
         for entry in interventions:
             name = entry.get('name')
             if name in all_interventions:
@@ -444,7 +444,7 @@ def _variant_list_to_dict(config):
         list_ = config['variants']
     except KeyError:
         list_ = []
-    config['variants'] = {variant['name']: variant for variant in list_}
+    config['variants'] = OrderedDict([(variant['name'], variant) for variant in list_])
     return config
 
 
