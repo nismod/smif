@@ -1,12 +1,11 @@
 """Test ModelData
 """
 # pylint: disable=redefined-outer-name
-from copy import copy
+from copy import copy, deepcopy
 from unittest.mock import Mock
 
 import numpy as np
 from pytest import fixture, raises
-
 from smif.data_layer import DataHandle
 from smif.data_layer.data_array import DataArray
 from smif.data_layer.data_handle import ResultsHandle
@@ -64,7 +63,7 @@ def mock_store(sample_dimensions, annual, get_sector_model, empty_store):
     store.write_interventions('energy_demand', data)
 
     # source scenario
-    pop_spec_data = {
+    pop_spec = {
         'name': 'population_count',
         'dtype': 'int',
         'dims': ['lad', 'annual'],
@@ -80,7 +79,7 @@ def mock_store(sample_dimensions, annual, get_sector_model, empty_store):
         'name': 'population',
         'description': 'Projected annual fertility rates',
         'provides': [
-            pop_spec_data
+            pop_spec
         ],
         'variants': [
             {
@@ -92,12 +91,11 @@ def mock_store(sample_dimensions, annual, get_sector_model, empty_store):
             }
         ]
     })
-    store.write_scenario_variant_data(
-        'population',
-        'low',
-        DataArray(Spec.from_dict(pop_spec_data), np.array([[1.0], [2.0]])),
-        2015
-    )
+    pop_spec_t = deepcopy(pop_spec)
+    pop_spec_t['dims'] = ['timestep'] + pop_spec['dims']
+    pop_spec_t['coords']['timestep'] = [{'name': 2015}]
+    pop_da = DataArray(Spec.from_dict(pop_spec_t), np.array([[[1.0], [2.0]]]))
+    store.write_scenario_variant_data('population', 'low', pop_da)
 
     # source model
     # - test output matches population input to energy demand
@@ -552,12 +550,14 @@ class TestDataHandleState():
         actual = data_handle.get_current_interventions()
         expected = {
             'water_asset_a':
-                {'build_year': 2010,
+                {'name': 'water_asset_a',
+                 'build_year': 2010,
                  'capacity': 50,
                  'location': None,
                  'sector': ''},
             'water_asset_b':
-                {'build_year': 2015,
+                {'name': 'water_asset_b',
+                 'build_year': 2015,
                  'capacity': 150,
                  'location': None,
                  'sector': ''}
@@ -581,6 +581,7 @@ class TestDataHandleState():
         data_handle = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
         actual = data_handle.get_current_interventions()
         expected = {'water_asset_a': {
+            'name': 'water_asset_a',
             'build_year': 2010,
             'capacity': 50,
             'location': None,

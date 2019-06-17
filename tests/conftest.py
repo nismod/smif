@@ -121,6 +121,17 @@ def setup_folder_structure(setup_empty_folder_structure, oxford_region, remap_mo
 
 
 @fixture
+def interventions_index_file(setup_folder_structure):
+    data = {
+        'model_1': {'model_1_id_1': 'path1', 'model_1_id_2': 'path2'},
+        'model_2': {'model_2_id_1': 'path3', 'model_2_id_2': 'path4'}
+    }
+    test_folder = setup_folder_structure
+    models_dir = str(test_folder.join('config', 'sector_models'))
+    dump(models_dir, 'interventions_file_index', data)
+
+
+@fixture
 def initial_system():
     """Initial system (interventions with build_date)
     """
@@ -616,9 +627,11 @@ def sample_scenario_data(scenario_with_timestep, get_sector_model, energy_supply
     for scenario in [scenario_with_timestep]:
         for variant in scenario['variants']:
             for data_key, data_value in variant['data'].items():
-                spec = Spec.from_dict(
-                    [provides for provides in scenario['provides']
-                     if provides['name'] == data_key][0])
+                spec_dict = [
+                    provides for provides in scenario['provides']
+                    if provides['name'] == data_key
+                ][0]
+                spec = Spec.from_dict(spec_dict)
                 nda = np.random.random(spec.shape)
                 da = DataArray(spec, nda)
                 key = (scenario['name'], variant['name'], data_key)

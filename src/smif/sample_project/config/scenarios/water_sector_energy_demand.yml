@@ -10,4 +10,4 @@ variants:
   - name: central
     description: Projected demand
     data:
-      energy_demand: water_sector_energy_demand.csv
+      energy_demand: water_sector_energy_demand

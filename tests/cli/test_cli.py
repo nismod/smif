@@ -4,9 +4,11 @@
 import os
 import subprocess
 import sys
-from tempfile import TemporaryDirectory
-from unittest.mock import call, patch
 from itertools import product
+from tempfile import TemporaryDirectory
+from time import sleep
+from unittest.mock import call, patch
+
 import smif
 from pytest import fixture
 from smif.cli import confirm, parse_arguments, setup_project_folder
@@ -198,9 +200,8 @@ def test_fixture_prepare_model_runs(tmp_sample_project):
 
     clear_model_runs(config_dir)
 
-    output = subprocess.run(["smif", "prepare-run", "population", "energy_central",
-                             "-d", config_dir],
-                            stdout=subprocess.PIPE)
+    subprocess.run(["smif", "prepare-run", "population", "energy_central", "-d", config_dir],
+                   stdout=subprocess.PIPE)
     for suffix in pop_variants:
         filename = 'energy_central_population_' + suffix + '.yml'
         assert os.path.isfile(os.path.join(config_dir, 'config/model_runs', filename))
@@ -208,9 +209,8 @@ def test_fixture_prepare_model_runs(tmp_sample_project):
     variant_range = range(0, nb_variants)
     for s, e in product(variant_range, variant_range):
         clear_model_runs(config_dir)
-        output = subprocess.run(["smif", "prepare-run", "population", "energy_central",
-                                 "-s", str(s), "-e", str(e), "-d", config_dir],
-                                stdout=subprocess.PIPE)
+        subprocess.run(["smif", "prepare-run", "population", "energy_central", "-s", str(s),
+                        "-e", str(e), "-d", config_dir], stdout=subprocess.PIPE)
         for suffix in pop_variants[s:e + 1]:
             filename = 'energy_central_population_' + suffix + '.yml'
             assert os.path.isfile(os.path.join(config_dir, 'config/model_runs', filename))
@@ -248,6 +248,51 @@ def test_setup_project_folder():
             folder_path = os.path.join(project_folder, folder)
 
             assert os.path.exists(folder_path)
+
+
+def test_prepare_convert(tmp_sample_project):
+    project_folder = tmp_sample_project
+    print(project_folder)
+    # clean up
+    # r=root, d=directories, f = files
+    path = os.path.join(project_folder, 'data')
+    for r, d, f in os.walk(path):
+        for filename in f:
+            if '.parquet' in filename:
+                os.remove(os.path.join(r, filename))
+
+    list_of_files = {
+        'initial_conditions': [],
+        'interventions': ['energy_supply', 'energy_supply_alt'],
+        'narratives': [],
+        'parameters': ['defaults'],
+        'scenarios': ['population_density_low', 'population_density_med',
+                      'population_density_high', 'population_low', 'population_med',
+                      'population_high'],
+        'strategies': ['build_nuke'],
+        }
+
+    subprocess.run(["smif", "prepare-convert", "energy_central", "-d", project_folder, "-i",
+                    "local_csv"], stdout=subprocess.PIPE)
+    # assert that correct files have been generated
+    for folder in list_of_files.keys():
+        for filename in list_of_files[folder]:
+            path = os.path.join(project_folder, 'data', folder, filename)
+            path = "{}.parquet".format(path)
+            assert os.path.isfile(path)
+
+    sleep(2)
+
+    # Now call prepare-convert with the --noclobber option
+    # all previously generated parquet files should not be modified
+    subprocess.run(["smif", "prepare-convert", "energy_central", "--noclobber", "-d",
+                    project_folder, "-i", "local_csv"], stdout=subprocess.PIPE)
+    # assert that files have not been modified
+    for folder in list_of_files.keys():
+        for filename in list_of_files[folder]:
+            path = os.path.join(project_folder, 'data', folder, filename)
+            path = "{}.parquet".format(path)
+            assert (os.path.getmtime(path) > 2)
 
 
 @patch('builtins.input', return_value='y')

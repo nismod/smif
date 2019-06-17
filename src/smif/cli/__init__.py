@@ -170,7 +170,6 @@ def list_available_results(args):
 def list_missing_results(args):
     """List the missing results for a specified model run.
     """
-
     store = _get_store(args)
     expected = store.canonical_expected_results(args.model_run)
     missing = store.canonical_missing_results(args.model_run)
@@ -204,10 +203,46 @@ def list_missing_results(args):
                 print('{} {}'.format(base_str, res_str))
 
 
+def prepare_convert(args):
+    src_store = _get_store(args)
+    if isinstance(src_store.data_store, CSVDataStore):
+        tgt_store = Store(
+            config_store=YamlConfigStore(args.directory),
+            metadata_store=FileMetadataStore(args.directory),
+            data_store=ParquetDataStore(args.directory),
+            model_base_folder=(args.directory)
+        )
+    else:
+        tgt_store = Store(
+            config_store=YamlConfigStore(args.directory),
+            metadata_store=FileMetadataStore(args.directory),
+            data_store=CSVDataStore(args.directory),
+            model_base_folder=(args.directory)
+        )
+    # Read model run
+    model_run = src_store.read_model_run(args.model_run)
+    # Read sos model for model run
+    sos_model = src_store.read_sos_model(model_run['sos_model'])
+    # Now let us convert data
+    # Convert strategies interventions for model run
+    src_store.convert_strategies_data(model_run['name'], tgt_store, args.noclobber)
+    # Convert scenario data for model run
+    src_store.convert_scenario_data(model_run['name'], tgt_store)
+    # Convert narrative data for sos model
+    src_store.convert_narrative_data(sos_model['name'], tgt_store, args.noclobber)
+    # Convert initial conditions, default parameter and interventions data
+    # for sector models in sos model
+    for sector_model_name in sos_model['sector_models']:
+        src_store.convert_model_parameter_default_data(
+            sector_model_name, tgt_store, args.noclobber)
+        src_store.convert_interventions_data(sector_model_name, tgt_store, args.noclobber)
+        src_store.convert_initial_conditions_data(sector_model_name, tgt_store, args.noclobber)
+
+
 def prepare_scenario(args):
-    """ Update scenario configuration file to include multiple scenario
-        variants.
-        The initial scenario configuration file is overwritten.
+    """Update scenario configuration file to include multiple scenario variants.
+
+    The initial scenario configuration file is overwritten.
     """
     # Read template scenario using the Store class
     store = _get_store(args)
@@ -217,8 +252,7 @@ def prepare_scenario(args):
 
 
 def prepare_model_runs(args):
-    """
-    Generate multiple model runs according to a model run file referencing a scenario
+    """Generate multiple model runs according to a model run file referencing a scenario
     with multiple variants.
     """
     # Read model run and scenario using the Store class
@@ -410,6 +444,16 @@ def parse_arguments():
     )
 
     # PREPARE
+    parser_convert = subparsers.add_parser(
+        'prepare-convert', help='Convert data from one format to another',
+        parents=[parent_parser])
+    parser_convert.set_defaults(func=prepare_convert)
+    parser_convert.add_argument(
+        'model_run', help='Name of the model run')
+    parser_convert.add_argument(
+        '-nc', '--noclobber',
+        help='Do not convert existing data files', action='store_true')
+
     parser_prepare_scenario = subparsers.add_parser(
         'prepare-scenario', help='Prepare scenario configuration file with multiple variants',
         parents=[parent_parser])
@@ -419,7 +463,7 @@ def parse_arguments():
     parser_prepare_scenario.add_argument(
         'variants_range', nargs=2, type=int,
         help='Two integers delimiting the range of variants')
-    # PREPARE
+
     parser_prepare_model_runs = subparsers.add_parser(
         'prepare-run', help='Prepare model runs based on scenario variants',
         parents=[parent_parser])

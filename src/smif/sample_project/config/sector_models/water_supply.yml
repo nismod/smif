@@ -46,10 +46,10 @@ outputs:
   dtype: float
   unit: Ml
 interventions:
-  - water_supply.csv
+  - water_supply
 initial_conditions:
-  - water_supply_oxford.csv
-  - reservoirs.csv
+  - water_supply_oxford
+  - reservoirs
 parameters:
 - name: clever_water_meter_savings
   description: The savings from smart water meters
@@ -59,7 +59,7 @@ parameters:
   exp_range:
   - 3
   - 10
-  default: defaults.csv
+  default: defaults
   dtype: float
   unit: '%'
 - name: per_capita_water_demand
@@ -70,6 +70,6 @@ parameters:
   exp_range:
   - 1
   - 1.3
-  default: defaults.csv
+  default: defaults
   dtype: float
   unit: 'liter/person'

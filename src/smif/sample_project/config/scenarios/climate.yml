@@ -11,4 +11,4 @@ variants:
   - name: central
     description: Central Rainfall
     data:
-      precipitation: precipitation.csv
+      precipitation: precipitation

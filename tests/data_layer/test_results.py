@@ -347,7 +347,7 @@ class TestReadScenarios:
                                         sample_scenario_data):
         store = results_no_results._store
 
-        # Setup ###############################################################################
+        # Setup
         for dim in sample_dimensions:
             store.write_dimension(dim)
         store.write_scenario(scenario)
@@ -357,7 +357,7 @@ class TestReadScenarios:
         scenario_variant_data = sample_scenario_data[key]
         # Write
         store.write_scenario_variant_data(scenario_name, variant_name, scenario_variant_data)
-        # End setup ###########################################################################
+        # End setup
 
         scenario_data_frame = results_no_results.read_scenario_data(
             scenario_name, variant_name, variable, [2015, 2016]

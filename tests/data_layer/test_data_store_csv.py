@@ -173,8 +173,8 @@ class TestReadState:
 
 
 def _write_scenario_csv(base_folder, data, keys):
-    key = 'population_high.csv'
-    filepath = os.path.join(str(base_folder), 'data', 'scenarios', key)
+    key = 'population_high'
+    filepath = os.path.join(str(base_folder), 'data', 'scenarios', key+'.csv')
     with open(filepath, 'w+') as output_file:
         dict_writer = csv.DictWriter(output_file, keys)
         dict_writer.writeheader()
@@ -219,7 +219,6 @@ class TestScenarios:
               "'population_count' and index names ['county', 'season'], instead got data " + \
               "columns ['population_count', 'region', 'season'] and index names [None]"
         assert msg in str(ex)
-
 
     def test_scenario_data_validates(self, setup_folder_structure, config_handler,
                                      get_remapped_scenario_data, scenario_spec):
@@ -268,14 +267,19 @@ class TestNarrativeVariantData:
             'dtype': 'float'
         })
 
-        actual = config_handler.read_narrative_variant_data('central_planning.csv', spec)
+        actual = config_handler.read_narrative_variant_data('central_planning', spec)
         assert actual == DataArray(spec, np.array(8, dtype=float))
 
     def test_narrative_data_missing(self, config_handler):
         """Should raise a SmifDataNotFoundError if narrative has no data
         """
+        spec = Spec.from_dict({
+            'name': 'homogeneity_coefficient',
+            'unit': 'percentage',
+            'dtype': 'float'
+        })
         with raises(SmifDataNotFoundError):
-            config_handler.read_narrative_variant_data('does not exist', None)
+            config_handler.read_narrative_variant_data('does not exist', spec)
 
     def test_default_data_mismatch(self, config_handler, get_sector_model_parameter_defaults):
         parameter_name = 'smart_meter_savings'
@@ -288,7 +292,7 @@ class TestNarrativeVariantData:
                 writer.writerow({parameter_name: i})
 
         with raises(SmifDataMismatchError) as ex:
-            config_handler.read_model_parameter_default('default.csv', spec)
+            config_handler.read_model_parameter_default('default', spec)
 
         msg = "Data for 'smart_meter_savings' should contain a single value, instead got " + \
               "4 while reading from"
@@ -312,7 +316,7 @@ class TestNarrativeVariantData:
             ])
 
         with raises(SmifDataMismatchError) as ex:
-            config_handler.read_model_parameter_default('default.csv', spec)
+            config_handler.read_model_parameter_default('default', spec)
 
         msg = "Data for 'test' contains duplicate values at [{'a': 1}]"
         assert msg in str(ex)
@@ -337,7 +341,7 @@ class TestNarrativeVariantData:
             ])
 
         with raises(SmifDataMismatchError) as ex:
-            config_handler.read_model_parameter_default('default.csv', spec)
+            config_handler.read_model_parameter_default('default', spec)
 
         msg = "Data for 'test' contains duplicate values at [{'a': 2, 'b': 4}]"
         msg_alt = "Data for 'test' contains duplicate values at [{'b': 4, 'a': 2}]"
@@ -361,7 +365,7 @@ class TestNarrativeVariantData:
             })
 
         with raises(SmifDataMismatchError) as ex:
-            config_handler.read_model_parameter_default('default.csv', spec)
+            config_handler.read_model_parameter_default('default', spec)
 
         msg = "Data for 'test' expected a data column called 'test' and index names " + \
               "['a', 'b'], instead got data columns ['wrong_name'] and index names ['a', 'b']"
@@ -385,12 +389,11 @@ class TestNarrativeVariantData:
             })
 
         with raises(SmifDataMismatchError) as ex:
-            config_handler.read_model_parameter_default('default.csv', spec)
+            config_handler.read_model_parameter_default('default', spec)
 
         msg = "Data for 'test' had missing values - read 1 but expected 4 in total, from " + \
               "dims of length {a: 2, b: 2}"
         assert msg in str(ex)
-
 
 
 class TestResults:
