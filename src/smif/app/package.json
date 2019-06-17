@@ -10,7 +10,7 @@
   "main": "src/index.js",
   "scripts": {
     "test": "cross-env NODE_PATH=./src nyc mocha --require @babel/polyfill --require @babel/register --require ./test/helpers.js --recursive",
-    "report": "nyc report --reporter=lcov > coverage.lcov",
+    "report": "nyc report --reporter=lcovonly",
     "build": "webpack --mode production",
     "watch": "webpack --progress --watch --mode development",
     "start": "webpack-dev-server --open --mode development"
@@ -62,7 +62,7 @@
     "jsdom-global": "^3.0.2",
     "mini-css-extract-plugin": "^0.5.0",
     "mocha": "^5.2.0",
-    "nyc": "^13.3.0",
+    "nyc": "^14.1.1",
     "react-hot-loader": "^4.6.3",
     "react-test-renderer": "^16.7.0",
     "sinon": "^7.2.2",
