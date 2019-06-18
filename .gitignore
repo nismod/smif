@@ -52,6 +52,7 @@ src/smif/app/dist
 
 # smif outputs
 src/smif/sample_project/results/*
+*.batch
 
 # data file
 energy_demand_data/*

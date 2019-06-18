@@ -246,13 +246,13 @@ Citation
 
 If you use **smif** for research, please cite the software directly:
 
-* Will Usher, Tom Russell, Roald Schoenmakers & Craig Robson. (2019). nismod/smif
+* Will Usher, Tom Russell, Roald Schoenmakers, Craig Robson, Fergus Cooper & Thibault Lestang. (2019). nismod/smif
   vX.Y.Z (Version vX.Y.Z). Zenodo. http://doi.org/10.5281/zenodo.1309336
 
 Here's an example BibTeX entry::
 
         @misc{smif_software,
-              author       = {Will Usher and Tom Russell and Roald Schoenmakers and Craig Robson},
+              author       = {Will Usher and Tom Russell and Roald Schoenmakers and Craig Robson and Fergus Cooper and Thibault Lestang},
               title        = {nismod/smif vX.Y.Z},
               month        = Aug,
               year         = 2018,

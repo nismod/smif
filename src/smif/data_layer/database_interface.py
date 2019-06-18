@@ -1233,8 +1233,7 @@ class DbDataStore(DataStore):
     def read_scenario_variant_data(self, scenario_name, variant_name, variable, timestep=None):
         raise NotImplementedError()
 
-    def write_scenario_variant_data(self, scenario_name, variant_name,
-                                    data_array, timestep=None):
+    def write_scenario_variant_data(self, scenario_name, variant_name, data_array):
         raise NotImplementedError()
     # endregion
 
@@ -1243,8 +1242,7 @@ class DbDataStore(DataStore):
                                     timestep=None):
         raise NotImplementedError()
 
-    def write_narrative_variant_data(self, narrative_name, variant_name, data_array,
-                                     timestep=None):
+    def write_narrative_variant_data(self, narrative_name, variant_name, data_array):
         raise NotImplementedError()
 
     def read_model_parameter_default(self, model_name, parameter_name):

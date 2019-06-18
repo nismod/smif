@@ -39,16 +39,22 @@ class TestDataArray():
     """Read and write DataArray
     """
     def test_read_write_data_array(self, handler, scenario):
-        data = np.array([0, 1], dtype='float')
-        spec = Spec.from_dict(scenario['provides'][0])
-
+        spec_config = deepcopy(scenario['provides'][0])
+        spec_config['dims'] = ['timestep'] + spec_config['dims']
+        spec_config['coords']['timestep'] = [{'name': 2010}]
+        spec = Spec.from_dict(spec_config)
+        data = np.array([[0, 1]], dtype='float')
         da = DataArray(spec, data)
+        handler.write_scenario_variant_data('mortality.csv', da)
 
-        handler.write_scenario_variant_data('mortality.csv', da, 2010)
+        spec_config = deepcopy(scenario['provides'][0])
+        spec = Spec.from_dict(spec_config)
+        data = np.array([0, 1], dtype='float')
+        expected = DataArray(spec, data)
+
         actual = handler.read_scenario_variant_data('mortality.csv', spec, 2010)
-
-        assert actual == da
-        np.testing.assert_array_equal(actual.as_ndarray(), da.as_ndarray())
+        assert actual == expected
+        np.testing.assert_array_equal(actual.as_ndarray(), expected.as_ndarray())
 
     def test_read_write_data_array_all(self, handler, scenario):
         spec = Spec.from_dict(deepcopy(scenario['provides'][0]))
@@ -101,12 +107,15 @@ class TestDataArray():
         assert actual == np.array(1.0)
 
     def test_read_data_array_missing_timestep(self, handler, scenario):
-        data = np.array([0, 1], dtype=float)
-        spec = Spec.from_dict(scenario['provides'][0])
+        data = np.array([[0, 1]], dtype=float)
+        spec_config = deepcopy(scenario['provides'][0])
+        spec_config['dims'] = ['timestep'] + spec_config['dims']
+        spec_config['coords']['timestep'] = [{'name': 2010}]
+        spec = Spec.from_dict(spec_config)
 
         da = DataArray(spec, data)
 
-        handler.write_scenario_variant_data('mortality.csv', da, 2010)
+        handler.write_scenario_variant_data('mortality.csv', da)
         msg = "not found for timestep 2011"
         with raises(SmifDataNotFoundError) as ex:
             handler.read_scenario_variant_data('mortality.csv', spec, 2011)
@@ -115,15 +124,15 @@ class TestDataArray():
     def test_string_data(self, handler):
         spec = Spec(
             name='string_data',
-            dims=['zones'],
-            coords={'zones': ['a', 'b', 'c']},
+            dims=['timestep', 'zones'],
+            coords={'timestep': [2010], 'zones': ['a', 'b', 'c']},
             dtype='object'
         )
-        data = np.array(['alpha', 'beta', 'γάμμα'], dtype='object')
+        data = np.array([['alpha', 'beta', 'γάμμα']], dtype='object')
         expected = DataArray(spec, data)
 
-        handler.write_scenario_variant_data('key', expected, 2010)
-        actual = handler.read_scenario_variant_data('key', spec, 2010)
+        handler.write_scenario_variant_data('key', expected)
+        actual = handler.read_scenario_variant_data('key', spec)
         assert actual == expected
 
 
@@ -226,3 +235,60 @@ class TestResults():
 
         with raises(SmifDataNotFoundError):
             handler.read_results(modelrun_name, model_name, output_spec, 2020)
+
+
+class TestDataExists():
+    """Check that model run data exists
+    """
+    def test_strategy_data_exists(self, handler, strategies):
+        for strategy in strategies:
+            if strategy['type'] == 'pre-specified-planning':
+                new_strategy = {'filename': 'strategy'}
+                assert not handler.strategy_data_exists(new_strategy)
+                handler.write_strategy_interventions(new_strategy, strategy['interventions'])
+
+                assert handler.strategy_data_exists(new_strategy)
+
+    def test_scenario_variant_data_exists(self, handler, sample_scenario_data):
+        assert not handler.scenario_variant_data_exists('scenario_variant_data')
+
+        key = next(iter(sample_scenario_data))
+        scenario_name, variant_name, variable = key
+        scenario_variant_data = sample_scenario_data[key]
+        handler.write_scenario_variant_data('scenario_variant_data', scenario_variant_data)
+
+        assert handler.scenario_variant_data_exists('scenario_variant_data')
+
+    def test_narrative_variant_data_exists(self, handler, sample_narrative_data):
+        assert not handler.narrative_variant_data_exists('narrative_variant_data')
+        # pick out single sample
+        key = (
+            'energy',
+            'technology',
+            'high_tech_dsm',
+            'smart_meter_savings'
+        )
+        sos_model_name, narrative_name, variant_name, param_name = key
+        narrative_variant_data = sample_narrative_data[key]
+        handler.write_narrative_variant_data('narrative_variant_data', narrative_variant_data)
+
+        assert handler.narrative_variant_data_exists('narrative_variant_data')
+
+    def test_model_parameter_default_data_exists(self, handler, get_multidimensional_param):
+        assert not handler.model_parameter_default_data_exists('parameter_default')
+        param_data = get_multidimensional_param
+        handler.write_model_parameter_default('parameter_default', param_data)
+
+        assert handler.model_parameter_default_data_exists('parameter_default')
+
+    def test_interventions_data_exists(self, handler, interventions):
+        assert not handler.interventions_data_exists('interventions')
+        handler.write_interventions('interventions', interventions)
+
+        assert handler.interventions_data_exists('interventions')
+
+    def test_initial_conditions_data_exists(self, handler, initial_conditions):
+        assert not handler.initial_conditions_data_exists('initial_conditions')
+        handler.write_initial_conditions('initial_conditions', initial_conditions)
+
+        assert handler.initial_conditions_data_exists('initial_conditions')

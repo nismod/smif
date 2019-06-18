@@ -11,4 +11,4 @@ variants:
   - name: historical
     description: Historical Reservoir levels
     data:
-      reservoir_level: reservoir_level.csv
+      reservoir_level: reservoir_level

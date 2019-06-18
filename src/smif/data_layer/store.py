@@ -20,6 +20,7 @@ import os
 from collections import OrderedDict
 from copy import deepcopy
 from operator import itemgetter
+from os.path import splitext
 from typing import Dict, List, Optional
 
 import numpy as np  # type: ignore
@@ -30,7 +31,7 @@ from smif.data_layer.file import (CSVDataStore, FileMetadataStore,
                                   ParquetDataStore, YamlConfigStore)
 from smif.data_layer.validate import (validate_sos_model_config,
                                       validate_sos_model_format)
-from smif.exception import SmifDataNotFoundError
+from smif.exception import SmifDataError, SmifDataNotFoundError
 from smif.metadata.spec import Spec
 
 
@@ -44,6 +45,7 @@ class Store():
     metadata_store: ~smif.data_layer.abstract_metadata_store.MetadataStore
     data_store: ~smif.data_layer.abstract_data_store.DataStore
     """
+
     def __init__(self, config_store, metadata_store: MetadataStore,
                  data_store: DataStore, model_base_folder="."):
         self.logger = logging.getLogger(__name__)
@@ -144,6 +146,7 @@ class Store():
         model_run_name : str
         """
         self.config_store.delete_model_run(model_run_name)
+
     # endregion
 
     # region System-of-systems models
@@ -201,6 +204,7 @@ class Store():
         sos_model_name : str
         """
         self.config_store.delete_sos_model(sos_model_name)
+
     # endregion
 
     # region Models
@@ -262,6 +266,7 @@ class Store():
         model_name : str
         """
         self.config_store.delete_model(model_name)
+
     # endregion
 
     # region Scenarios
@@ -323,6 +328,86 @@ class Store():
         scenario_name : str
         """
         self.config_store.delete_scenario(scenario_name)
+
+    def prepare_scenario(self, scenario_name, list_of_variants):
+        """ Modify {scenario_name} config file to include multiple
+        scenario variants.
+
+        Parameters
+        ----------
+        scenario_name: str
+        list_of_variants: list[int] - indices of scenario variants
+        """
+        scenario = self.read_scenario(scenario_name)
+        # Check that template scenario file does not define more than one variant
+        if not scenario['variants'] or len(scenario['variants']) > 1:
+            raise SmifDataError("Template scenario file must define one"
+                                " unique template variant.")
+
+        # Read variant defined in template scenario file
+        variant_template_name = scenario['variants'][0]['name']
+        base_variant = self.read_scenario_variant(scenario_name, variant_template_name)
+        self.delete_scenario_variant(scenario_name, variant_template_name)
+
+        # Read template names of scenario variant data files
+        output_filenames = {}  # output_name => (base, ext)
+        # root is a dict. keyed on scenario outputs.
+        # Entries contain the root of the variants filenames
+        for output in scenario['provides']:
+            output_name = output['name']
+            base, ext = splitext(base_variant['data'][output_name])
+            output_filenames[output_name] = base, ext
+        # Now modify scenario file
+        for variant_number in list_of_variants:
+            # Copying the variant dict is required when underlying config_store
+            # is an instance of MemoryConfigStore, which attribute _scenarios holds
+            # a reference to the variant object passed to update or
+            # write_scenario_variant
+            variant = deepcopy(base_variant)
+            variant['name'] = '{}_{:03d}'.format(scenario_name, variant_number)
+            variant['description'] = '{} variant number {:03d}'.format(
+                scenario_name, variant_number)
+            for output_name, (base, ext) in output_filenames.items():
+                variant['data'][output_name] = '{}{:03d}{}'.format(base, variant_number, ext)
+            self.write_scenario_variant(scenario_name, variant)
+
+    def prepare_model_runs(self, model_run_name, scenario_name,
+                           first_var, last_var):
+        """Write multiple model run config files corresponding to multiple
+        scenario variants of {scenario_name}, based on template {model_run_name}
+           Write batchfile containing each of the generated model runs
+
+        Parameters
+        ----------
+        model_run_name: str
+        scenario_name: str
+        first_var: int - between 0 and number of variants-1
+        last_var: int - between first_var and number of variants-1
+        """
+
+        model_run = self.read_model_run(model_run_name)
+        scenario = self.read_scenario(scenario_name)
+
+        # read strategies from config store (Store.read_strategies pulls together data on
+        # interventions as well, which we don't need here)
+        config_strategies = self.config_store.read_strategies(model_run_name)
+        # Open batchfile
+        f_handle = open(model_run_name + '.batch', 'w')
+        # For each variant model_run, write a new model run file with corresponding
+        # scenario variant and update batchfile
+        for variant in scenario['variants'][first_var:last_var + 1]:
+            variant_model_run_name = model_run_name + '_' + variant['name']
+            model_run_copy = deepcopy(model_run)
+            model_run_copy['name'] = variant_model_run_name
+            model_run_copy['scenarios'][scenario_name] = variant['name']
+
+            self.write_model_run(model_run_copy)
+            self.config_store.write_strategies(variant_model_run_name, config_strategies)
+            f_handle.write(model_run_name + '_' + variant['name'] + '\n')
+
+        # Close batchfile
+        f_handle.close()
+
     # endregion
 
     # region Scenario Variants
@@ -384,6 +469,7 @@ class Store():
         variant_name : str
         """
         self.config_store.delete_scenario_variant(scenario_name, variant_name)
+
     # endregion
 
     # region Narratives
@@ -396,6 +482,7 @@ class Store():
         narrative_name : str
         """
         return self.config_store.read_narrative(sos_model_name, narrative_name)
+
     # endregion
 
     # region Strategies
@@ -426,6 +513,17 @@ class Store():
         strategies : list[dict]
         """
         self.config_store.write_strategies(model_run_name, strategies)
+
+    def convert_strategies_data(self, model_run_name, tgt_store, noclobber=False):
+        strategies = self.read_strategies(model_run_name)
+        for strategy in strategies:
+            if strategy['type'] == 'pre-specified-planning':
+                data_exists = tgt_store.read_strategy_interventions(
+                    strategy, assert_exists=True)
+                if not(noclobber and data_exists):
+                    data = self.read_strategy_interventions(strategy)
+                    tgt_store.write_strategy_interventions(strategy, data)
+
     # endregion
 
     #
@@ -452,6 +550,7 @@ class Store():
             Pint-compatible unit definitions
         """
         self.metadata_store.write_unit_definitions(definitions)
+
     # endregion
 
     # region Dimensions
@@ -519,6 +618,7 @@ class Store():
                         for dim in spec['dims']
                     }
         return item
+
     # endregion
 
     #
@@ -527,7 +627,9 @@ class Store():
 
     # region Scenario Variant Data
     def read_scenario_variant_data(
-            self, scenario_name, variant_name, variable, timestep=None) -> DataArray:
+            self, scenario_name: str, variant_name: str, variable: str,
+            timestep: Optional[int] = None, timesteps: Optional[List[int]] = None,
+            assert_exists: bool = False) -> DataArray:
         """Read scenario data file
 
         Parameters
@@ -535,8 +637,7 @@ class Store():
         scenario_name : str
         variant_name : str
         variable : str
-        timestep : int (optional)
-            If None, read data for all timesteps
+        timestep : int
 
         Returns
         -------
@@ -548,9 +649,12 @@ class Store():
         scenario = self.read_scenario(scenario_name)
         spec_dict = _pick_from_list(scenario['provides'], variable)
         spec = Spec.from_dict(spec_dict)
-        return self.data_store.read_scenario_variant_data(key, spec, timestep)
+        if assert_exists:
+            return self.data_store.scenario_variant_data_exists(key)
+        else:
+            return self.data_store.read_scenario_variant_data(key, spec, timestep, timesteps)
 
-    def write_scenario_variant_data(self, scenario_name, variant_name, data, timestep=None):
+    def write_scenario_variant_data(self, scenario_name, variant_name, data):
         """Write scenario data file
 
         Parameters
@@ -558,18 +662,30 @@ class Store():
         scenario_name : str
         variant_name : str
         data : ~smif.data_layer.data_array.DataArray
-        timestep : int (optional)
-            If None, write data for all timesteps
         """
         variant = self.read_scenario_variant(scenario_name, variant_name)
         key = self._key_from_data(variant['data'][data.spec.name], scenario_name, variant_name,
                                   data.spec.name)
-        self.data_store.write_scenario_variant_data(key, data, timestep)
+        self.data_store.write_scenario_variant_data(key, data)
+
+    def convert_scenario_data(self, model_run_name, tgt_store, noclobber=False):
+        model_run = self.read_model_run(model_run_name)
+        # Convert scenario data for model run
+        for scenario_name in model_run['scenarios']:
+            for variant in self.read_scenario_variants(scenario_name):
+                for variable in variant['data']:
+                    data_exists = tgt_store.read_scenario_variant_data(
+                        scenario_name, variant['name'], variable, assert_exists=True)
+                    if not(noclobber and data_exists):
+                        data_array = self.read_scenario_variant_data(
+                            scenario_name, variant['name'], variable)
+                        tgt_store.write_scenario_variant_data(
+                            scenario_name, variant['name'], data_array)
     # endregion
 
     # region Narrative Data
     def read_narrative_variant_data(self, sos_model_name, narrative_name, variant_name,
-                                    parameter_name, timestep=None):
+                                    parameter_name, timestep=None, assert_exists=False):
         """Read narrative data file
 
         Parameters
@@ -601,23 +717,26 @@ class Store():
 
         key = self._key_from_data(variant['data'][parameter_name], narrative_name,
                                   variant_name, parameter_name)
-        spec_dict = None
-        # find sector model which needs this parameter, to get spec definition
-        for model_name, params in narrative['provides'].items():
-            if parameter_name in params:
-                sector_model = self.read_model(model_name)
-                spec_dict = _pick_from_list(sector_model['parameters'], parameter_name)
-                break
-        # find spec
-        if spec_dict is None:
-            raise SmifDataNotFoundError("Parameter {} not found in any of {}".format(
-                parameter_name, sos_model['sector_models']))
-        spec = Spec.from_dict(spec_dict)
 
-        return self.data_store.read_narrative_variant_data(key, spec, timestep)
+        if assert_exists:
+            return self.data_store.narrative_variant_data_exists(key)
+        else:
+            spec_dict = None
+            # find sector model which needs this parameter, to get spec definition
+            for model_name, params in narrative['provides'].items():
+                if parameter_name in params:
+                    sector_model = self.read_model(model_name)
+                    spec_dict = _pick_from_list(sector_model['parameters'], parameter_name)
+                    break
+            # find spec
+            if spec_dict is None:
+                raise SmifDataNotFoundError("Parameter {} not found in any of {}".format(
+                    parameter_name, sos_model['sector_models']))
+            spec = Spec.from_dict(spec_dict)
 
-    def write_narrative_variant_data(self, sos_model_name, narrative_name, variant_name,
-                                     data, timestep=None):
+            return self.data_store.read_narrative_variant_data(key, spec, timestep)
+
+    def write_narrative_variant_data(self, sos_model_name, narrative_name, variant_name, data):
         """Read narrative data file
 
         Parameters
@@ -626,8 +745,6 @@ class Store():
         narrative_name : str
         variant_name : str
         data : ~smif.data_layer.data_array.DataArray
-        timestep : int (optional)
-            If None, write data for all timesteps
         """
         sos_model = self.read_sos_model(sos_model_name)
         narrative = _pick_from_list(sos_model['narratives'], narrative_name)
@@ -636,7 +753,25 @@ class Store():
             variant['data'][data.spec.name], narrative_name, variant_name, data.spec.name)
         self.data_store.write_narrative_variant_data(key, data)
 
-    def read_model_parameter_default(self, model_name, parameter_name):
+    def convert_narrative_data(self, sos_model_name, tgt_store, noclobber=False):
+        sos_model = self.read_sos_model(sos_model_name)
+        for narrative in sos_model['narratives']:
+            for variant in narrative['variants']:
+                for param in variant['data']:
+                    data_exists = tgt_store.read_narrative_variant_data(sos_model_name,
+                                                                        narrative['name'],
+                                                                        variant['name'],
+                                                                        param,
+                                                                        assert_exists=True)
+                if not(noclobber and data_exists):
+                    data_array = self.read_narrative_variant_data(sos_model_name,
+                                                                  narrative['name'],
+                                                                  variant['name'],
+                                                                  param)
+                    tgt_store.write_narrative_variant_data(sos_model_name, narrative['name'],
+                                                           variant['name'], data_array)
+
+    def read_model_parameter_default(self, model_name, parameter_name, assert_exists=False):
         """Read default data for a sector model parameter
 
         Parameters
@@ -659,7 +794,10 @@ class Store():
         except KeyError:
             path = 'default__{}__{}.csv'.format(model_name, parameter_name)
         key = self._key_from_data(path, model_name, parameter_name)
-        return self.data_store.read_model_parameter_default(key, spec)
+        if assert_exists:
+            return self.data_store.model_parameter_default_data_exists(key)
+        else:
+            return self.data_store.read_model_parameter_default(key, spec)
 
     def write_model_parameter_default(self, model_name, parameter_name, data):
         """Write default data for a sector model parameter
@@ -681,6 +819,19 @@ class Store():
             path = 'default__{}__{}.csv'.format(model_name, parameter_name)
         key = self._key_from_data(path, model_name, parameter_name)
         self.data_store.write_model_parameter_default(key, data)
+
+    def convert_model_parameter_default_data(self, sector_model_name, tgt_store,
+                                             noclobber=False):
+        sector_model = self.read_model(sector_model_name)
+        for parameter in sector_model['parameters']:
+            data_exists = tgt_store.read_model_parameter_default(sector_model_name,
+                                                                 parameter['name'],
+                                                                 assert_exists=True)
+            if not(noclobber and data_exists):
+                data_array = self.read_model_parameter_default(sector_model_name,
+                                                               parameter['name'])
+                tgt_store.write_model_parameter_default(sector_model_name, parameter['name'],
+                                                        data_array)
     # endregion
 
     # region Interventions
@@ -713,10 +864,51 @@ class Store():
         self.update_model(model_name, model)
         self.data_store.write_interventions(model['interventions'][0], interventions)
 
-    def read_strategy_interventions(self, strategy):
+    def write_interventions_file(self, model_name, string_id, interventions):
+        model = self.read_model(model_name)
+        if string_id in model['interventions']:
+            self.data_store.write_interventions(string_id, interventions)
+        else:
+            raise SmifDataNotFoundError("Intervention {} not found for"
+                                        " sector model {}.".format(string_id, model_name))
+
+    def read_interventions_file(self, model_name, string_id, assert_exists=False):
+        model = self.read_model(model_name)
+        if string_id in model['interventions']:
+            if assert_exists:
+                return self.data_store.interventions_data_exists(string_id)
+            else:
+                return self.data_store.read_interventions([string_id])
+        else:
+            raise SmifDataNotFoundError("Intervention {} not found for"
+                                        " sector model {}.".format(string_id, model_name))
+
+    def convert_interventions_data(self, sector_model_name, tgt_store, noclobber=False):
+        sector_model = self.read_model(sector_model_name)
+        for intervention in sector_model['interventions']:
+            data_exists = tgt_store.read_interventions_file(sector_model_name,
+                                                            intervention,
+                                                            assert_exists=True)
+            if not(noclobber and data_exists):
+                interventions = self.read_interventions_file(sector_model_name, intervention)
+                tgt_store.write_interventions_file(
+                    sector_model_name, intervention, interventions)
+
+    def read_strategy_interventions(self, strategy, assert_exists=False):
         """Read interventions as defined in a model run strategy
         """
-        return self.data_store.read_strategy_interventions(strategy)
+        if assert_exists:
+            return self.data_store.strategy_data_exists(strategy)
+        else:
+            return self.data_store.read_strategy_interventions(strategy)
+
+    def write_strategy_interventions(self, strategy, data):
+        """
+        Parameters
+        ----------
+        list[dicts]
+        """
+        self.data_store.write_strategy_interventions(strategy, data)
 
     def read_initial_conditions(self, model_name) -> List[Dict]:
         """Read historical interventions for `model_name`
@@ -746,6 +938,37 @@ class Store():
         self.data_store.write_initial_conditions(model['initial_conditions'][0],
                                                  initial_conditions)
 
+    def write_initial_conditions_file(self, model_name, string_id, initial_conditions):
+        model = self.read_model(model_name)
+        if string_id in model['initial_conditions']:
+            self.data_store.write_initial_conditions(string_id, initial_conditions)
+        else:
+            raise SmifDataNotFoundError("Initial condition {} not found for"
+                                        " sector model {}.".format(string_id, model_name))
+
+    def read_initial_conditions_file(self, model_name, string_id, assert_exists=False):
+        model = self.read_model(model_name)
+        if string_id in model['initial_conditions']:
+            if assert_exists:
+                return self.data_store.initial_conditions_data_exists(string_id)
+            else:
+                return self.data_store.read_initial_conditions([string_id])
+        else:
+            raise SmifDataNotFoundError("Initial conditions {} not found for"
+                                        " sector model {}.".format(string_id, model_name))
+
+    def convert_initial_conditions_data(self, sector_model_name, tgt_store, noclobber=False):
+        sector_model = self.read_model(sector_model_name)
+        for initial_condition in sector_model['initial_conditions']:
+            data_exists = tgt_store.read_initial_conditions_file(sector_model_name,
+                                                                 initial_condition,
+                                                                 assert_exists=True)
+            if not(noclobber and data_exists):
+                initial_conditions = self.read_initial_conditions_file(sector_model_name,
+                                                                       initial_condition)
+                tgt_store.write_initial_conditions_file(sector_model_name, initial_condition,
+                                                        initial_conditions)
+
     def read_all_initial_conditions(self, model_run_name) -> List[Dict]:
         """A list of all historical interventions
 
@@ -763,6 +986,7 @@ class Store():
                 self.read_initial_conditions(sector_model_name)
             )
         return historical_interventions
+
     # endregion
 
     # region State
@@ -795,6 +1019,7 @@ class Store():
         decision_iteration : int, optional
         """
         self.data_store.write_state(state, model_run_name, timestep, decision_iteration)
+
     # endregion
 
     # region Conversion coefficients
@@ -842,6 +1067,7 @@ class Store():
         To be called from :class:`~smif.convert.adaptor.Adaptor` implementations.
         """
         self.data_store.write_coefficients(source_dim, destination_dim, data)
+
     # endregion
 
     # region Results
@@ -1065,17 +1291,16 @@ class Store():
             list_of_numpy_arrays.append(d_array.data)
 
         stacked_data = np.vstack(list_of_numpy_arrays)
-        data = np.transpose(stacked_data)
 
         # Add new dimensions to the data spec
         output_dict = output_spec.as_dict()
-        output_dict['dims'].append('timestep_decision')
+        output_dict['dims'] = ['timestep_decision'] + output_dict['dims']
         output_dict['coords']['timestep_decision'] = time_decision_tuples
 
         output_spec = Spec.from_dict(output_dict)
 
         # Create a new DataArray from the modified spec and stacked data
-        return DataArray(output_spec, np.reshape(data, output_spec.shape))
+        return DataArray(output_spec, np.reshape(stacked_data, output_spec.shape))
 
     def get_result_darray(self, model_run_name, model_name, output_name, timesteps=None,
                           decision_iterations=None, time_decision_tuples=None):

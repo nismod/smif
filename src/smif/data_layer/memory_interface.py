@@ -22,6 +22,7 @@ class MemoryConfigStore(ConfigStore):
         self._scenarios = OrderedDict()
         self._narratives = OrderedDict()
         self._strategies = OrderedDict()
+        self._index = OrderedDict()
 
     # region Model runs
     def read_model_runs(self):
@@ -110,6 +111,19 @@ class MemoryConfigStore(ConfigStore):
             del self._models[model_name]
         except KeyError:
             raise SmifDataNotFoundError("model '%s' not found" % (model_name))
+
+    def read_interventions_index(self, model_name, index_name, ext):
+        if model_name not in self._index:
+            raise SmifDataNotFoundError("model '%s' not found" % (model_name))
+        if index_name not in self._index[model_name]:
+            raise SmifDataNotFoundError("index '%s' not found" % (index_name))
+        return self._index[model_name][index_name]
+
+    def update_interventions_index(self, model_name, index_name, int_file, ext):
+        if model_name not in self._index:
+            self._index[model_name] = {}
+        self._index[model_name][index_name] = int_file
+
     # endregion
 
     # region Scenarios
@@ -249,67 +263,47 @@ class MemoryDataStore(DataStore):
     """
     def __init__(self):
         super().__init__()
-        self._data_array = OrderedDict()
+        self._scenario_data = OrderedDict()
+        self._narrative_data = OrderedDict()
         self._interventions = OrderedDict()
         self._initial_conditions = OrderedDict()
         self._state = OrderedDict()
         self._model_parameter_defaults = OrderedDict()
         self._coefficients = OrderedDict()
         self._results = OrderedDict()
+        self.ext = None
 
     # region Data Array
-    def read_scenario_variant_data(self, key, spec, timestep=None):
-        return self._read_data_array(key, spec, timestep)
+    def read_scenario_variant_data(self, key, spec, timestep=None, timesteps=None):
+        return self._read_data_array(self._scenario_data, key, spec, timestep, timesteps)
 
-    def write_scenario_variant_data(self, key, data, timestep=None):
-        self._write_data_array(key, data, timestep)
+    def write_scenario_variant_data(self, key, data):
+        self._scenario_data[key] = data
+
+    def scenario_variant_data_exists(self, key):
+        return key in self._scenario_data
 
     def read_narrative_variant_data(self, key, spec, timestep=None):
-        return self._read_data_array(key, spec, timestep)
+        return self._read_data_array(self._narrative_data, key, spec, timestep)
 
-    def write_narrative_variant_data(self, key, data, timestep=None):
-        self._write_data_array(key, data, timestep)
+    def write_narrative_variant_data(self, key, data):
+        self._narrative_data[key] = data
 
-    def _read_data_array(self, key, spec, timestep=None):
-        if timestep:
-            try:
-                data = self._data_array[key, timestep]
-            except KeyError:
-                try:
-                    data = self._filter_timestep(self._data_array[key], spec, timestep)
-                except KeyError:
-                    raise SmifDataNotFoundError(
-                        "Data for {} not found for timestep {}".format(spec.name, timestep))
-        else:
-            try:
-                data = self._data_array[key]
-            except KeyError:
-                raise SmifDataNotFoundError(
-                    "Data for {} not found".format(spec.name))
+    def narrative_variant_data_exists(self, key):
+        return key in self._narrative_data
 
-        if data.spec != spec:
-            raise SmifDataMismatchError(
-                "Spec did not match reading {}, requested {}, got {}".format(
-                    spec.name, spec, data.spec))
-        return data
+    def _read_data_array(self, lookup, key, spec, timestep=None, timesteps=None):
+        try:
+            data = lookup[key]
+        except KeyError:
+            raise SmifDataNotFoundError("Data for {} not found".format(spec.name))
 
-    def _filter_timestep(self, data, read_spec, timestep):
-        dataframe = data.as_df().reset_index()
-        if 'timestep' not in dataframe.columns:
-            msg = "Missing 'timestep' key, found {} in {}"
-            raise SmifDataMismatchError(msg.format(list(dataframe.columns), data.name))
-        dataframe = dataframe[dataframe.timestep == timestep]
-        if dataframe.empty:
-            raise SmifDataNotFoundError(
-                "Data for {} not found for timestep {}".format(data.name, timestep))
-        dataframe.drop('timestep', axis=1, inplace=True)
-        return DataArray.from_df(read_spec, dataframe)
+        dataframe = data.as_df()
+        dataframe, spec = DataStore.filter_on_timesteps(
+            dataframe, spec, key, timestep, timesteps)
+        data_array = DataStore.dataframe_to_data_array(dataframe, spec, key)
+        return data_array
 
-    def _write_data_array(self, key, data, timestep=None):
-        if timestep:
-            self._data_array[key, timestep] = data
-        else:
-            self._data_array[key] = data
     # endregion
 
     # region Model parameters
@@ -323,6 +317,10 @@ class MemoryDataStore(DataStore):
 
     def write_model_parameter_default(self, key, data):
         self._model_parameter_defaults[key] = data
+
+    def model_parameter_default_data_exists(self, key):
+        return (key in self._model_parameter_defaults.keys())
+
     # endregion
 
     # region Interventions
@@ -331,7 +329,7 @@ class MemoryDataStore(DataStore):
         interventions = [list(self._interventions[key].values()) for key in keys][0]
 
         for entry in interventions:
-            name = entry.pop('name')
+            name = entry.get('name')
             if name in all_interventions:
                 msg = "An entry for intervention {} already exists"
                 raise ValueError(msg.format(name))
@@ -343,14 +341,26 @@ class MemoryDataStore(DataStore):
     def write_interventions(self, key, interventions):
         self._interventions[key] = interventions
 
+    def interventions_data_exists(self, key):
+        return (key in self._interventions.keys())
+
     def read_strategy_interventions(self, strategy):
         return strategy['interventions']
+
+    def write_strategy_interventions(self, strategy, data):
+        strategy['interventions'] = data
+
+    def strategy_data_exists(self, strategy):
+        return ('interventions' in strategy.keys())
 
     def read_initial_conditions(self, keys):
         return [self._initial_conditions[key] for key in keys][0]
 
     def write_initial_conditions(self, key, initial_conditions):
         self._initial_conditions[key] = initial_conditions
+
+    def initial_conditions_data_exists(self, key):
+        return (key in self._initial_conditions.keys())
     # endregion
 
     # region State
@@ -407,7 +417,7 @@ def _variant_list_to_dict(config):
         list_ = config['variants']
     except KeyError:
         list_ = []
-    config['variants'] = {variant['name']: variant for variant in list_}
+    config['variants'] = OrderedDict([(variant['name'], variant) for variant in list_])
     return config
 
 

@@ -41,7 +41,6 @@ def empty_store():
 
 @fixture
 def setup_empty_folder_structure(tmpdir_factory):
-
     folder_list = ['models', 'results', 'config', 'data']
 
     config_folders = [
@@ -122,6 +121,17 @@ def setup_folder_structure(setup_empty_folder_structure, oxford_region, remap_mo
 
 
 @fixture
+def interventions_index_file(setup_folder_structure):
+    data = {
+        'model_1': {'model_1_id_1': 'path1', 'model_1_id_2': 'path2'},
+        'model_2': {'model_2_id_1': 'path3', 'model_2_id_2': 'path4'}
+    }
+    test_folder = setup_folder_structure
+    models_dir = str(test_folder.join('config', 'sector_models'))
+    dump(models_dir, 'interventions_file_index', data)
+
+
+@fixture
 def initial_system():
     """Initial system (interventions with build_date)
     """
@@ -159,7 +169,7 @@ def planned_interventions():
         },
         {
             'name': 'water_asset_b',
-            'capacity':  {'value': 6, 'unit': 'Ml'},
+            'capacity': {'value': 6, 'unit': 'Ml'},
             'description': 'Existing water treatment plants',
             'location': {'lat': 51.74556, 'lon': -1.240528}
         },
@@ -610,16 +620,18 @@ def sample_scenarios():
 
 
 @fixture
-def sample_scenario_data(scenario, get_sector_model, energy_supply_sector_model,
+def sample_scenario_data(scenario_with_timestep, get_sector_model, energy_supply_sector_model,
                          water_supply_sector_model):
     scenario_data = {}
 
-    for scenario in [scenario]:
+    for scenario in [scenario_with_timestep]:
         for variant in scenario['variants']:
             for data_key, data_value in variant['data'].items():
-                spec = Spec.from_dict(
-                    [provides for provides in scenario['provides']
-                     if provides['name'] == data_key][0])
+                spec_dict = [
+                    provides for provides in scenario['provides']
+                    if provides['name'] == data_key
+                ][0]
+                spec = Spec.from_dict(spec_dict)
                 nda = np.random.random(spec.shape)
                 da = DataArray(spec, nda)
                 key = (scenario['name'], variant['name'], data_key)
@@ -816,7 +828,7 @@ def hourly():
     return [
         {
             'name': n,
-            'interval': [['PT{}H'.format(n), 'PT{}H'.format(n+1)]]
+            'interval': [['PT{}H'.format(n), 'PT{}H'.format(n + 1)]]
         }
         for n in range(8)  # should be 8760
     ]
@@ -913,7 +925,6 @@ def conversion_coefficients():
 
 @fixture
 def scenario(sample_dimensions):
-
     return deepcopy({
         'name': 'mortality',
         'description': 'The annual mortality rate in UK population',
@@ -922,6 +933,90 @@ def scenario(sample_dimensions):
                 'name': 'mortality',
                 'dims': ['lad'],
                 'coords': {'lad': sample_dimensions[0]['elements']},
+                'dtype': 'float',
+            }
+        ],
+        'variants': [
+            {
+                'name': 'low',
+                'description': 'Mortality (Low)',
+                'data': {
+                    'mortality': 'mortality_low.csv',
+                },
+            }
+        ]
+    })
+
+
+@fixture
+def scenario_2_variants(sample_dimensions):
+    return deepcopy({
+        'name': 'mortality_2_variants',
+        'description': 'The annual mortality rate in UK population',
+        'provides': [
+            {
+                'name': 'mortality',
+                'dims': ['lad'],
+                'coords': {'lad': sample_dimensions[0]['elements']},
+                'dtype': 'float',
+            }
+        ],
+        'variants': [
+            {
+                'name': 'low',
+                'description': 'Mortality (Low)',
+                'data': {
+                    'mortality': 'mortality_low.csv',
+                },
+            },
+            {
+                'name': 'high',
+                'description': 'Mortality (High)',
+                'data': {
+                    'mortality': 'mortality_high.csv',
+                },
+            }
+        ]
+    })
+
+
+@fixture
+def scenario_no_variant(sample_dimensions):
+    return deepcopy({
+        'name': 'mortality_no_variants',
+        'description': 'The annual mortality rate in UK population',
+        'provides': [
+            {
+                'name': 'mortality',
+                'dims': ['lad'],
+                'coords': {'lad': sample_dimensions[0]['elements']},
+                'dtype': 'float',
+            }
+        ],
+        'variants': [
+        ]
+    })
+
+
+@fixture
+def scenario_with_timestep(sample_dimensions):
+    """This fixture should only be used if you need to write scenario variant data for the
+    purpose of a test.  See, for instance, test_scenario_variant_data in the test_store.py.
+    In this case, the timestep dimension (that is always present for scenario variant data)
+    is explicitly provided for ease of writing out complete scenario variant data.
+    """
+
+    return deepcopy({
+        'name': 'mortality',
+        'description': 'The annual mortality rate in UK population',
+        'provides': [
+            {
+                'name': 'mortality',
+                'dims': ['timestep', 'lad'],
+                'coords': {
+                    'timestep': [2015, 2016],
+                    'lad': sample_dimensions[0]['elements']
+                },
                 'dtype': 'float',
             }
         ],

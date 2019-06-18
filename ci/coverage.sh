@@ -12,7 +12,9 @@ if [[ "$COVERAGE" == "true" ]]; then
     bash <(curl -s https://codecov.io/bash) -cF python || echo "failed"
 
     # Run node coverage
-    cd $TRAVIS_BUILD_DIR/src/smif/app && npm run-script report
+    cd $TRAVIS_BUILD_DIR/src/smif/app && \
+        npm run-script report && \
+        mv coverage/lcov.info coverage.lcov
 
     # Upload javascript coverage
     bash <(curl -s https://codecov.io/bash) -cF javascript || echo "failed"

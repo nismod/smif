@@ -20,12 +20,27 @@ def results_no_results(empty_store):
         'name': 'sample_dim',
         'elements': [{'name': 'a'}, {'name': 'b'}]
     })
+    empty_store.write_dimension({
+        'name': 'sample_dim_colour',
+        'elements': [{'name': 'red'}, {'name': 'green'}, {'name': 'blue'}]
+    })
     sample_output = {
         'name': 'sample_output',
-        'dtype': 'float',
-        'dims': ['sample_dim'],
-        'coords': {'sample_dim': [{'name': 'a'}, {'name': 'b'}]},
+        'dtype': 'int',
+        'dims': ['sample_dim', 'sample_dim_colour'],
+        'coords': {
+            'sample_dim': [{'name': 'a'}, {'name': 'b'}],
+            'sample_dim_colour': [{'name': 'red'}, {'name': 'green'}, {'name': 'blue'}],
+        },
         'unit': 'm'
+    }
+    scenarios_1 = {
+        'a_scenario': 'a_variant_1',
+        'b_scenario': 'b_variant_1',
+    }
+    scenarios_2 = {
+        'a_scenario': 'a_variant_2',
+        'b_scenario': 'b_variant_2',
     }
     empty_store.write_model({
         'name': 'a_model',
@@ -63,7 +78,7 @@ def results_no_results(empty_store):
         'description': 'Sample model run',
         'timesteps': [2010, 2015, 2020, 2025, 2030],
         'sos_model': 'a_sos_model',
-        'scenarios': {},
+        'scenarios': scenarios_1,
         'strategies': [],
         'narratives': {}
     })
@@ -72,7 +87,7 @@ def results_no_results(empty_store):
         'description': 'Sample model run',
         'timesteps': [2010, 2015, 2020, 2025, 2030],
         'sos_model': 'a_sos_model',
-        'scenarios': {},
+        'scenarios': scenarios_2,
         'strategies': [],
         'narratives': {}
     })
@@ -82,17 +97,19 @@ def results_no_results(empty_store):
 
 @fixture
 def results_with_results(results_no_results):
-
     sample_output = {
         'name': 'sample_output',
-        'dtype': 'float',
-        'dims': ['sample_dim'],
-        'coords': {'sample_dim': [{'name': 'a'}, {'name': 'b'}]},
+        'dtype': 'int',
+        'dims': ['sample_dim', 'sample_dim_colour'],
+        'coords': {
+            'sample_dim': [{'name': 'a'}, {'name': 'b'}],
+            'sample_dim_colour': [{'name': 'red'}, {'name': 'green'}, {'name': 'blue'}],
+        },
         'unit': 'm'
     }
 
     spec = Spec.from_dict(sample_output)
-    data = np.zeros((2,), dtype=float)
+    data = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int32)
     sample_results = DataArray(spec, data)
 
     results_no_results._store.write_results(sample_results, 'model_run_1', 'a_model', 2010, 0)
@@ -121,7 +138,6 @@ def results_with_results(results_no_results):
 class TestNoResults:
 
     def test_exceptions(self, empty_store):
-
         # No arguments is not allowed
         with raises(TypeError) as e:
             Results()
@@ -169,22 +185,51 @@ class TestNoResults:
         results = Results(store=empty_store)
         assert results.list_model_runs() == []
 
+    def test_list_outputs(self, results_no_results):
+        assert results_no_results.list_outputs('a_model') == ['sample_output']
+
+    def test_list_sector_models(self, results_no_results):
+        assert results_no_results.list_sector_models('model_run_1') == ['a_model', 'b_model']
+        assert results_no_results.list_sector_models('model_run_2') == ['a_model', 'b_model']
+
+    def test_list_scenarios(self, results_no_results):
+        scenarios_dict = results_no_results.list_scenarios('model_run_1')
+        assert scenarios_dict['a_scenario'] == 'a_variant_1'
+        assert scenarios_dict['b_scenario'] == 'b_variant_1'
+
+        scenarios_dict = results_no_results.list_scenarios('model_run_2')
+        assert scenarios_dict['a_scenario'] == 'a_variant_2'
+        assert scenarios_dict['b_scenario'] == 'b_variant_2'
+
+    def test_list_scenario_outputs(self, results_no_results):
+        store = results_no_results._store
+        store.write_scenario({
+            'name': 'a_scenario',
+            'provides': [{'name': 'a_provides'}, {'name': 'b_provides'}]
+        })
+
+        assert results_no_results.list_scenario_outputs('a_scenario') == ['a_provides',
+                                                                          'b_provides']
+
     def test_available_results(self, results_no_results):
         available = results_no_results.available_results('model_run_1')
 
         assert available['model_run'] == 'model_run_1'
         assert available['sos_model'] == 'a_sos_model'
         assert available['sector_models'] == {}
+        assert available['scenarios']['a_scenario'] == 'a_variant_1'
+        assert available['scenarios']['b_scenario'] == 'b_variant_1'
 
 
 class TestSomeResults:
 
     def test_available_results(self, results_with_results):
-
         available = results_with_results.available_results('model_run_1')
 
         assert available['model_run'] == 'model_run_1'
         assert available['sos_model'] == 'a_sos_model'
+        assert available['scenarios']['a_scenario'] == 'a_variant_1'
+        assert available['scenarios']['b_scenario'] == 'b_variant_1'
 
         sec_models = available['sector_models']
         assert sorted(sec_models.keys()) == ['a_model', 'b_model']
@@ -219,10 +264,9 @@ class TestSomeResults:
         assert outputs['sample_output'] == output_answer
 
     def test_read_validate_names(self, results_with_results):
-
         # Passing anything other than one sector model or output is current not implemented
         with raises(NotImplementedError) as e:
-            results_with_results.read(
+            results_with_results.read_results(
                 model_run_names=['model_run_1', 'model_run_2'],
                 model_names=[],
                 output_names=['sample_output']
@@ -230,7 +274,7 @@ class TestSomeResults:
         assert 'requires exactly one sector model' in str(e.value)
 
         with raises(NotImplementedError) as e:
-            results_with_results.read(
+            results_with_results.read_results(
                 model_run_names=['model_run_1', 'model_run_2'],
                 model_names=['a_model', 'b_model'],
                 output_names=['one']
@@ -238,7 +282,7 @@ class TestSomeResults:
         assert 'requires exactly one sector model' in str(e.value)
 
         with raises(ValueError) as e:
-            results_with_results.read(
+            results_with_results.read_results(
                 model_run_names=[],
                 model_names=['a_model'],
                 output_names=['sample_output']
@@ -246,7 +290,7 @@ class TestSomeResults:
         assert 'requires at least one sector model name' in str(e.value)
 
         with raises(ValueError) as e:
-            results_with_results.read(
+            results_with_results.read_results(
                 model_run_names=['model_run_1'],
                 model_names=['a_model'],
                 output_names=[]
@@ -254,9 +298,8 @@ class TestSomeResults:
         assert 'requires at least one output name' in str(e.value)
 
     def test_read(self, results_with_results):
-
         # Read one model run and one output
-        results_data = results_with_results.read(
+        results_data = results_with_results.read_results(
             model_run_names=['model_run_1'],
             model_names=['a_model'],
             output_names=['sample_output']
@@ -265,19 +308,18 @@ class TestSomeResults:
         expected = pd.DataFrame(
             OrderedDict([
                 ('model_run', 'model_run_1'),
-                ('timestep', [2010, 2015, 2015, 2015, 2020, 2020, 2020,
-                              2010, 2015, 2015, 2015, 2020, 2020, 2020]),
-                ('decision', [0, 0, 1, 2, 0, 1, 2, 0, 0, 1, 2, 0, 1, 2]),
-                ('sample_dim', ['a', 'a', 'a', 'a', 'a', 'a', 'a',
-                                'b', 'b', 'b', 'b', 'b', 'b', 'b']),
-                ('sample_output', 0.0),
+                ('timestep', [2010] * 6 + [2015] * 18 + [2020] * 18),
+                ('decision', [0] * 12 + [1] * 6 + [2] * 6 + [0] * 6 + [1] * 6 + [2] * 6),
+                ('sample_dim', ['a', 'a', 'a', 'b', 'b', 'b'] * 7),
+                ('sample_dim_colour', ['red', 'green', 'blue'] * 14),
+                ('sample_output', np.asarray([1, 2, 3, 4, 5, 6] * 7, dtype=np.int32)),
             ])
         )
 
         pd.testing.assert_frame_equal(results_data, expected)
 
         # Read two model runs and one output
-        results_data = results_with_results.read(
+        results_data = results_with_results.read_results(
             model_run_names=['model_run_1', 'model_run_2'],
             model_names=['b_model'],
             output_names=['sample_output']
@@ -285,12 +327,48 @@ class TestSomeResults:
 
         expected = pd.DataFrame(
             OrderedDict([
-                ('model_run', ['model_run_1'] * 10 + ['model_run_2'] * 10),
-                ('timestep', [2010, 2015, 2020, 2025, 2030] * 4),
+                ('model_run', ['model_run_1'] * 30 + ['model_run_2'] * 30),
+                ('timestep', [2010] * 6 + [2015] * 6 + [2020] * 6 + [2025] * 6 + [2030] * 6 +
+                             [2010] * 6 + [2015] * 6 + [2020] * 6 + [2025] * 6 + [2030] * 6),
                 ('decision', 0),
-                ('sample_dim', ['a'] * 5 + ['b'] * 5 + ['a'] * 5 + ['b'] * 5),
-                ('sample_output', 0.0),
+                ('sample_dim', ['a', 'a', 'a', 'b', 'b', 'b'] * 10),
+                ('sample_dim_colour', ['red', 'green', 'blue'] * 20),
+                ('sample_output', np.asarray([1, 2, 3, 4, 5, 6] * 10, dtype=np.int32)),
             ])
         )
 
         pd.testing.assert_frame_equal(results_data, expected)
+
+
+class TestReadScenarios:
+
+    def test_read_scenario_variant_data(self, results_no_results, model_run, sample_dimensions,
+                                        scenario,
+                                        sample_scenario_data):
+        store = results_no_results._store
+
+        # Setup
+        for dim in sample_dimensions:
+            store.write_dimension(dim)
+        store.write_scenario(scenario)
+        # Pick out single sample
+        key = next(iter(sample_scenario_data))
+        scenario_name, variant_name, variable = key
+        scenario_variant_data = sample_scenario_data[key]
+        # Write
+        store.write_scenario_variant_data(scenario_name, variant_name, scenario_variant_data)
+        # End setup
+
+        scenario_data_frame = results_no_results.read_scenario_data(
+            scenario_name, variant_name, variable, [2015, 2016]
+        )
+
+        expected = pd.DataFrame(
+            OrderedDict([
+                ('timestep', [2015, 2015, 2016, 2016]),
+                ('lad', ['a', 'b', 'a', 'b']),
+                ('mortality', scenario_variant_data.data.flatten()),
+            ])
+        )
+
+        pd.testing.assert_frame_equal(scenario_data_frame, expected)
