@@ -120,27 +120,27 @@ class JobRunner extends Component {
         switch (model_run_status.status) {
         case 'unstarted':
             controls.push(<SuccessButton value='Start Modelrun' onClick={() => {this.startJob(model_run.name)}}/>)
-            this.outstanding_request_from == model_run_status.status ? this.setRenderInterval(100) : this.setRenderInterval(0)
+            this.outstanding_request_from == model_run_status.status ? this.setRenderInterval(1000) : this.setRenderInterval(0)
             break
         case 'queing':
             controls.push(<DangerButton value='Stop Modelrun' onClick={() => {this.stopJob(model_run.name)}}/>)
-            this.setRenderInterval(100)
+            this.setRenderInterval(1000)
             break
         case 'running':
             controls.push(<DangerButton value='Stop Modelrun' onClick={() => {this.stopJob(model_run.name)}}/>)
-            this.setRenderInterval(100)
+            this.setRenderInterval(1000)
             break
         case 'stopped':
             controls.push(<PrimaryButton value='Retry Modelrun' onClick={() => {this.startJob(model_run.name)}}/>)
-            this.outstanding_request_from == model_run_status.status ? this.setRenderInterval(100) : this.setRenderInterval(0)
+            this.outstanding_request_from == model_run_status.status ? this.setRenderInterval(1000) : this.setRenderInterval(0)
             break
         case 'done':
             controls.push(<SuccessButton value='Restart Modelrun' onClick={() => {this.startJob(model_run.name)}}/>)
-            this.outstanding_request_from == model_run_status.status ? this.setRenderInterval(100) : this.setRenderInterval(0)
+            this.outstanding_request_from == model_run_status.status ? this.setRenderInterval(1000) : this.setRenderInterval(0)
             break
         case 'failed':
             controls.push(<PrimaryButton value='Retry Modelrun' onClick={() => {this.startJob(model_run.name)}}/>)
-            this.outstanding_request_from == model_run_status.status ? this.setRenderInterval(100) : this.setRenderInterval(0)
+            this.outstanding_request_from == model_run_status.status ? this.setRenderInterval(1000) : this.setRenderInterval(0)
             break
         }
 

@@ -4,7 +4,8 @@ from unittest.mock import Mock, patch
 
 import networkx
 from pytest import fixture, raises
-from smif.controller.scheduler import JobScheduler, ModelRunScheduler
+from smif.controller.modelschedulers.defaultscheduler import *
+from smif.controller.jobscheduler import JobScheduler
 from smif.model import ModelOperation, ScenarioModel, SectorModel
 
 
@@ -14,7 +15,7 @@ class EmptySectorModel(SectorModel):
 
 
 class TestModelRunScheduler():
-    @patch('smif.controller.scheduler.subprocess.Popen')
+    @patch('smif.controller.modelschedulers.defaultscheduler.subprocess.Popen')
     def test_single_modelrun(self, mock_popen):
         my_scheduler = ModelRunScheduler()
         my_scheduler.add('my_model_run', {
@@ -25,7 +26,7 @@ class TestModelRunScheduler():
         })
 
         mock_popen.assert_called_with(
-            'smif  run my_model_run -d mock/dir -i local_csv',
+            'smif run  my_model_run -d mock/dir -i local_csv',
             shell=True,
             stderr=-2, stdout=-1
         )
@@ -35,7 +36,7 @@ class TestModelRunScheduler():
         status = my_scheduler.get_status('my_model_run')
         assert status['status'] == 'unstarted'
 
-    @patch('smif.controller.scheduler.subprocess.Popen')
+    @patch('smif.controller.modelschedulers.defaultscheduler.subprocess.Popen')
     def test_status_model_started(self, mock_popen):
         attrs = {
             'poll.return_value': None,
@@ -58,7 +59,7 @@ class TestModelRunScheduler():
         status = my_scheduler.get_status('my_model_run')
         assert status['status'] == 'running'
 
-    @patch('smif.controller.scheduler.subprocess.Popen')
+    @patch('smif.controller.modelschedulers.defaultscheduler.subprocess.Popen')
     def test_status_model_done(self, mock_popen):
         attrs = {
             'poll.return_value': 0,
@@ -81,7 +82,7 @@ class TestModelRunScheduler():
 
         assert response['status'] == 'done'
 
-    @patch('smif.controller.scheduler.subprocess.Popen')
+    @patch('smif.controller.modelschedulers.defaultscheduler.subprocess.Popen')
     def test_status_model_failed(self, mock_popen):
         attrs = {
             'poll.return_value': 1,
@@ -105,7 +106,7 @@ class TestModelRunScheduler():
 
         assert response['status'] == 'failed'
 
-    @patch('smif.controller.scheduler.subprocess.Popen')
+    @patch('smif.controller.modelschedulers.defaultscheduler.subprocess.Popen')
     def test_status_model_stopped(self, mock_popen):
         attrs = {
             'poll.return_value': None,

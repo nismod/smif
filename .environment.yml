@@ -5,6 +5,7 @@ name: smif
 channels:
 - conda-forge
 - defaults
+- anaconda-platform
 dependencies:
 - python=3.6
 - codecov  # test
@@ -21,6 +22,7 @@ dependencies:
 - pytest  # test
 - pytest-cov  # test
 - python-dateutil
+- requests
 - ruamel.yaml
 - rtree
 - shapely
@@ -29,4 +31,5 @@ dependencies:
 - pip:
   - better-apidoc  # docs
   - mypy  # dev
+  - minio
   - pre-commit  # dev

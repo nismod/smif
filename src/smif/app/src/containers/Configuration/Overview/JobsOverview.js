@@ -20,7 +20,7 @@ class JobsOverview extends Component {
     componentDidMount () {
         const { dispatch } = this.props
 
-        this.interval = setInterval(() => dispatch(fetchModelRuns(this.param)), 100)
+        this.interval = setInterval(() => dispatch(fetchModelRuns(this.param)), 1000)
     }
 
     componentWillUnmount() {
