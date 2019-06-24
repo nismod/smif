@@ -5,7 +5,6 @@ name: smif
 channels:
 - conda-forge
 - defaults
-- anaconda-platform
 dependencies:
 - python=3.6
 - codecov  # test

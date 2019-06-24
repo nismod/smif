@@ -10,7 +10,7 @@ import subprocess
 from collections import defaultdict
 from datetime import datetime
 
-class ModelRunScheduler(object):
+class SubProcessRunScheduler(object):
     """The scheduler can run instances of smif as a subprocess
     and can provide information whether the modelrun is running,
     is done or has failed.

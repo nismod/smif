@@ -20,7 +20,7 @@ ModeRun has attributes:
 from logging import getLogger
 
 import networkx as nx
-from smif.controller.jobscheduler import JobScheduler
+from smif.controller.job.serialjobscheduler import SerialJobScheduler
 from smif.decision.decision import DecisionManager
 from smif.exception import SmifModelRunError, SmifTimestepResolutionError
 from smif.metadata import RelativeTimestep
@@ -174,7 +174,7 @@ class ModelRunner(object):
 
         # Initialise the job scheduler
         self.logger.debug("Initialising the job scheduler")
-        job_scheduler = JobScheduler()
+        job_scheduler = SerialJobScheduler()
         job_scheduler.store = store
 
         for bundle in decision_manager.decision_loop():

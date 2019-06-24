@@ -33,12 +33,19 @@ if "BACKEND_ACCESS_KEY" in os.environ:
     ACCESS_KEY=os.environ['BACKEND_ACCESS_KEY']
 else: 
     ACCESS_KEY=""
+if "BACKEND_JOBSUBMISSION_API" in os.environ:
+    JOBSUBMISSION_API_URL=os.environ['BACKEND_JOBSUBMISSION_API']
+else: 
+    JOBSUBMISSION_API_URL=""
+if "BACKEND_MINIO_IP" in os.environ:
+    MINIO_IP=os.environ['BACKEND_MINIO_IP']
+else: 
+    MINIO_IP=""
 
-JOBSUBMISSION_API_URL="https://pilots-jobsubmissionapi-review-nismod-api-3udmh2.staging.dafni.rl.ac.uk/"
 URL_AUTH=JOBSUBMISSION_API_URL + "auth/obtain_token/"
 URL_JOBS=JOBSUBMISSION_API_URL + "nismod-model/jobs"
 
-class DafniScheduler(object):
+class DAFNIRunScheduler(object):
     """The scheduler can run instances of smif as a subprocess
     and can provide information whether the modelrun is running,
     is done or has failed.
@@ -54,19 +61,17 @@ class DafniScheduler(object):
         self.password = password
         response = requests.post(
             URL_AUTH,
-            json = json.loads('{ \
-                "username": "' + self.username + '", \
-                "password": "' + self.password + '" \
-            }')
+            json={
+                "username": self.username,
+                "password": self.password 
+            },
+            allow_redirects=False
         )
         response.raise_for_status()
-        print(response.text)
-        print(response.json())
-        self.token = response.json()['token']
-
-        auth_header = json.loads('{ "Authorization": "JWT ' + self.token + '"}')
-        response = requests.get(URL_JOBS, headers=auth_header)
-        print(response.text)
+        token = response.json()['token']
+        self.auth_header = json.loads('{ "Authorization": "JWT ' + token + '"}')
+        response = requests.get(URL_JOBS, headers=self.auth_header)
+        response.raise_for_status()
         
     def add(self, model_run_name, args):
         """Add a model_run to the Modelrun scheduler.
@@ -108,11 +113,11 @@ class DafniScheduler(object):
             yaml_files = self.get_yamls(model_run_name, args)
             model_run_id = model_run_name.replace("_", "-")
 
-            #minio_credentials = self.get_dict_from_json(MINIO_CREDENTIALS_FILE)
+            minio_credentials = self.get_dict_from_json(MINIO_CREDENTIALS_FILE)
             minio_client = Minio(
-                "130.246.6.245:9000",
-                ACCESS_KEY,
-                SECRET_KEY,
+                MINIO_IP,
+                access_key=minio_credentials['accessKey'],
+                secret_key=minio_credentials['secretKey'],
                 secure=False
             )
             bucket_list = minio_client.list_buckets()
@@ -133,23 +138,24 @@ class DafniScheduler(object):
                 except ResponseError as err:
                     print(err)
 
-            auth_header = json.loads('{ "Authorization": "JWT ' + self.token + '"}')
-            response = requests.get(URL_JOBS, headers=auth_header)
+            response = requests.get(URL_JOBS, headers=self.auth_header)
+            response.raise_for_status()
 
             for job in response.json():  
                 if job['job']['job_name'] == model_run_id:
-                    response = requests.delete(URL_JOBS + "/" + str(job['job']['id']), headers=auth_header)
-                    print(response)
+                    response = requests.delete(URL_JOBS + "/" + str(job['job']['id']), headers=self.auth_header)
+                    response.raise_for_status()
 
-            job_string = json.loads('{ \
-                "job_name": "' + model_run_id + '", \
-                "model_name": "' + model_run_name + '", \
-                "minio_config_id": "' + model_run_id + '" \
-            }')
-            response = requests.post(URL_JOBS, headers=auth_header, json=job_string)
-            print(response.text)
-
-        print("ADD")
+            response = requests.post(
+                URL_JOBS,
+                json={
+                    "job_name": model_run_id,
+                    "model_name": model_run_name,
+                    "minio_config_id": model_run_id 
+                },
+                headers=self.auth_header
+            )
+            response.raise_for_status()
 
     def get_scheduler_type(self):
         return "dafni"
@@ -158,12 +164,12 @@ class DafniScheduler(object):
         yaml_files = []
         yaml_files.append("/config/model_runs/" + model_run_name + ".yml")
         f = open(args['directory'] + yaml_files[0], "r")
-        doc = YAML().load(f.read(), YAML().SafeLoader)
+        doc = YAML(typ='safe').load(f.read())
 
         yaml_files.append("/config/sos_models/" + doc['sos_model'] + ".yml")
         
         sos_f = open(args['directory'] + yaml_files[1])
-        sos_doc = YAML().load(sos_f.read(), YAML().SafeLoader)
+        sos_doc = YAML(typ='safe').load(sos_f.read())
 
         for sector_model in sos_doc['sector_models']:
             yaml_files.append("/config/sector_models/" + sector_model + ".yml")
@@ -198,47 +204,42 @@ class DafniScheduler(object):
         if self._status[model_run_name] == 'running':
             self._status[model_run_name] = 'stopped'
 
+        minio_credentials = self.get_dict_from_json(MINIO_CREDENTIALS_FILE)
         minio_client = Minio(
-            "130.246.6.245:9000",
-            ACCESS_KEY,
-            SECRET_KEY,
-            # access_key=minio_credentials['accessKey'],
-            # secret_key=minio_credentials['secretKey'],
+            MINIO_IP,
+            access_key=minio_credentials['accessKey'],
+            secret_key=minio_credentials['secretKey'],
             secure=False
         )
 
         model_run_id = model_run_name.replace("_", "-")
         yaml_files_minio = minio_client.list_objects(model_run_id, recursive=True)
         for d in yaml_files_minio:
-            print(d.object_name)
             minio_client.remove_object(model_run_id, d.object_name)
 
         minio_client.remove_bucket(model_run_id)
 
-        auth_header = json.loads('{ "Authorization": "JWT ' + self.token + '"}')
-
-        auth_header = json.loads('{ "Authorization": "JWT ' + self.token + '"}')
-        response = requests.get(URL_JOBS, headers=auth_header)
+        response = requests.get(URL_JOBS, headers=self.auth_header)
+        response.raise_for_status()
 
         for job in response.json():  
             if job['job']['job_name'] == model_run_id:
-                requests.delete(URL_JOBS + "/" + str(job['job']['id']), headers=auth_header)
-
-        print("KILL")
+                requests.delete(URL_JOBS + "/" + str(job['job']['id']), headers=self.auth_header)
 
     def get_status(self, model_run_name):
-        print("GET_STATUS")
-        auth_header = json.loads('{ "Authorization": "JWT ' + self.token + '"}')
-        response = requests.get(URL_JOBS, headers=auth_header)
-        print(response.text)
+        response = requests.get(URL_JOBS, headers=self.auth_header)
+        response.raise_for_status()
         model_run_id = model_run_name.replace("_", "-")
-        for j in response.json():  
-            if j['job']['job_name'] == model_run_id:
-                job = j['job']
-                status = job['status']
-                jobStatus = ["unstarted", "unstarted", "running", "done", "failed"]
-                self._status[model_run_name] = jobStatus[status]
-                break
+        if len(response.json()) > 0:
+            for j in response.json():  
+                if j['job']['job_name'] == model_run_id:
+                    job = j['job']
+                    status = job['status']
+                    jobStatus = ["unstarted", "unstarted", "running", "done", "failed"]
+                    self._status[model_run_name] = jobStatus[status]
+                    break
+        else:
+            self._status[model_run_name] = "unstarted"
         return {
             'status': self._status[model_run_name],
             'output': self._output[model_run_name]

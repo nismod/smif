@@ -75,7 +75,7 @@ import pkg_resources
 import smif
 import smif.cli.log
 from smif.controller import (copy_project_folder, execute_model_run)
-from smif.controller.modelschedulers import *
+from smif.controller.run import *
 from smif.data_layer import Store
 from smif.data_layer.file import (CSVDataStore, FileMetadataStore,
                                   ParquetDataStore, YamlConfigStore)
@@ -334,11 +334,13 @@ def _get_store(args):
 
 def _run_server(args):
     app_folder = pkg_resources.resource_filename('smif', 'app/dist')
-    
+    if args.scheduler == 'dafni' and args.interface != 'local_csv':
+        raise ValueError("Scheduler implementation {0}, is not valid when combined with {1}.".format(args.scheduler, args.interface))
+
     if args.scheduler == 'default':
-        model_scheduler = ModelRunScheduler()
+        model_scheduler = SubProcessRunScheduler()
     elif args.scheduler == 'dafni':
-        model_scheduler = DafniScheduler(args.username, args.password)
+        model_scheduler = DAFNIRunScheduler(args.username, args.password)
     else:
         raise ValueError("Scheduler implentation {} not recognised.".format(args.scheduler))
 
