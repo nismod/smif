@@ -1,3 +1,8 @@
+""" Job Schedulers are used to run job graphs.
+
+Runs a job graph by calling simulate() on the python Model
+objects in order.
+"""
 from smif.data_layer import DataHandle
 from smif.model import ModelOperation
 from collections import defaultdict

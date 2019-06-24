@@ -5,6 +5,10 @@ or individual models to be called in series.
 
 Future implementations may interface with common schedulers to queue
 up models to run in parallel and/or distributed.
+
+Calls smif run ... on the selected model in a sub process, where ... 
+are the options set in the app for info/debug messages, warm start 
+and output format.
 """
 import subprocess
 from collections import defaultdict

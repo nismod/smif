@@ -8,6 +8,9 @@ up models to run in parallel and/or distributed.
 
 The Dafni Scheduler currently only works while connected to
 the RAL vpn.
+
+Posts all of the model run information to the DAFNI API so that a 
+DAFNI worker can start the model run.
 """
 import subprocess
 from ruamel.yaml import YAML  # type: ignore
@@ -90,12 +93,9 @@ class DAFNIRunScheduler(object):
 
         Notes
         -----
-        There is no queuing mechanism implemented, each `add`
-        will directly start a subprocess. This means that it
-        is possible to run multiple modelruns concurrently.
-        This may cause conflicts, it depends on the
-        implementation whether a certain sector model / wrapper
-        touches the filesystem or other shared resources.
+        DAFNI's queuing mechanism starts model runs in separate
+        container. This means that it is possible to run multiple 
+        modelruns concurrently. This will not cause conflicts.
         """
         if self._status[model_run_name] is not 'running':
             self._output[model_run_name] = ''
