@@ -4,6 +4,7 @@
 fiona>=1.7
 Flask>=0.12
 isodate>=0.6
+minio
 networkx>=1.11
 numpy>=1.11
 pandas
@@ -12,6 +13,7 @@ psycopg2>=2,7
 pyarrow==0.9
 python-dateutil>=2.6
 pywin32; sys_platform == 'win32'
+requests
 Rtree>=0.7
 ruamel.yaml==0.15.50
 shapely>=1.3

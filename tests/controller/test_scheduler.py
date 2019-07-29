@@ -1,10 +1,11 @@
-"""Test ModelRunScheduler and JobScheduler
+"""Test SubProcessRunScheduler and SerialJobScheduler
 """
 from unittest.mock import Mock, patch
 
 import networkx
 from pytest import fixture, raises
-from smif.controller.scheduler import JobScheduler, ModelRunScheduler
+from smif.controller.run.defaultscheduler import *
+from smif.controller.job.serialjobscheduler import SerialJobScheduler
 from smif.model import ModelOperation, ScenarioModel, SectorModel
 
 
@@ -13,10 +14,10 @@ class EmptySectorModel(SectorModel):
         return data
 
 
-class TestModelRunScheduler():
-    @patch('smif.controller.scheduler.subprocess.Popen')
+class TestSubProcessRunScheduler():
+    @patch('smif.controller.run.defaultscheduler.subprocess.Popen')
     def test_single_modelrun(self, mock_popen):
-        my_scheduler = ModelRunScheduler()
+        my_scheduler = SubProcessRunScheduler()
         my_scheduler.add('my_model_run', {
             'directory': 'mock/dir',
             'verbosity': 0,
@@ -25,17 +26,17 @@ class TestModelRunScheduler():
         })
 
         mock_popen.assert_called_with(
-            'smif  run my_model_run -d mock/dir -i local_csv',
+            'smif run  my_model_run -d mock/dir -i local_csv',
             shell=True,
             stderr=-2, stdout=-1
         )
 
     def test_status_modelrun_never_added(self):
-        my_scheduler = ModelRunScheduler()
+        my_scheduler = SubProcessRunScheduler()
         status = my_scheduler.get_status('my_model_run')
         assert status['status'] == 'unstarted'
 
-    @patch('smif.controller.scheduler.subprocess.Popen')
+    @patch('smif.controller.run.defaultscheduler.subprocess.Popen')
     def test_status_model_started(self, mock_popen):
         attrs = {
             'poll.return_value': None,
@@ -47,7 +48,7 @@ class TestModelRunScheduler():
         process_mock = Mock(**attrs)
         mock_popen.return_value = process_mock
 
-        my_scheduler = ModelRunScheduler()
+        my_scheduler = SubProcessRunScheduler()
         my_scheduler.add('my_model_run', {
             'directory': 'mock/dir',
             'verbosity': 0,
@@ -58,7 +59,7 @@ class TestModelRunScheduler():
         status = my_scheduler.get_status('my_model_run')
         assert status['status'] == 'running'
 
-    @patch('smif.controller.scheduler.subprocess.Popen')
+    @patch('smif.controller.run.defaultscheduler.subprocess.Popen')
     def test_status_model_done(self, mock_popen):
         attrs = {
             'poll.return_value': 0,
@@ -69,7 +70,7 @@ class TestModelRunScheduler():
         process_mock = Mock(**attrs)
         mock_popen.return_value = process_mock
 
-        my_scheduler = ModelRunScheduler()
+        my_scheduler = SubProcessRunScheduler()
         my_scheduler.add('my_model_run', {
             'directory': 'mock/dir',
             'verbosity': 0,
@@ -81,7 +82,7 @@ class TestModelRunScheduler():
 
         assert response['status'] == 'done'
 
-    @patch('smif.controller.scheduler.subprocess.Popen')
+    @patch('smif.controller.run.defaultscheduler.subprocess.Popen')
     def test_status_model_failed(self, mock_popen):
         attrs = {
             'poll.return_value': 1,
@@ -92,7 +93,7 @@ class TestModelRunScheduler():
         process_mock = Mock(**attrs)
         mock_popen.return_value = process_mock
 
-        my_scheduler = ModelRunScheduler()
+        my_scheduler = SubProcessRunScheduler()
         my_scheduler.add('my_model_run', {
             'directory': 'mock/dir',
             'verbosity': 0,
@@ -105,7 +106,7 @@ class TestModelRunScheduler():
 
         assert response['status'] == 'failed'
 
-    @patch('smif.controller.scheduler.subprocess.Popen')
+    @patch('smif.controller.run.defaultscheduler.subprocess.Popen')
     def test_status_model_stopped(self, mock_popen):
         attrs = {
             'poll.return_value': None,
@@ -116,7 +117,7 @@ class TestModelRunScheduler():
         process_mock = Mock(**attrs)
         mock_popen.return_value = process_mock
 
-        my_scheduler = ModelRunScheduler()
+        my_scheduler = SubProcessRunScheduler()
         my_scheduler.add('my_model_run', {
             'directory': 'mock/dir',
             'verbosity': 0,
@@ -131,7 +132,7 @@ class TestModelRunScheduler():
         assert response['status'] == 'stopped'
 
 
-class TestJobScheduler():
+class TestSerialJobScheduler():
     @fixture
     def job_graph(self):
         G = networkx.DiGraph()
@@ -172,7 +173,7 @@ class TestJobScheduler():
             'scenario_dependencies': [],
             'model_dependencies': []
         })
-        scheduler = JobScheduler()
+        scheduler = SerialJobScheduler()
         scheduler.store = empty_store
         return scheduler
 
@@ -184,7 +185,7 @@ class TestJobScheduler():
         assert scheduler.get_status(job_id)['status'] == 'done'
 
     def test_default_status(self):
-        scheduler = JobScheduler()
+        scheduler = SerialJobScheduler()
         assert scheduler.get_status(0)['status'] == 'unstarted'
 
     def test_add_cyclic(self, job_graph, scheduler):

@@ -42,6 +42,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
         pytest-cov \
         gdal \
         numpy \
+        requests \
         rtree \
         xarray \
         pandas \
@@ -50,6 +51,8 @@ if [[ "$DISTRIB" == "conda" ]]; then
         fiona
 
     source activate testenv
+
+    pip install minio
 fi
 
 python setup.py develop

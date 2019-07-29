@@ -74,8 +74,8 @@ import pkg_resources
 
 import smif
 import smif.cli.log
-from smif.controller import (ModelRunScheduler, copy_project_folder,
-                             execute_model_run)
+from smif.controller import (copy_project_folder, execute_model_run)
+from smif.controller.run import *
 from smif.data_layer import Store
 from smif.data_layer.file import (CSVDataStore, FileMetadataStore,
                                   ParquetDataStore, YamlConfigStore)
@@ -334,11 +334,21 @@ def _get_store(args):
 
 def _run_server(args):
     app_folder = pkg_resources.resource_filename('smif', 'app/dist')
+    if args.scheduler == 'dafni' and args.interface != 'local_csv':
+        raise ValueError("Scheduler implementation {0}, is not valid when combined with {1}.".format(args.scheduler, args.interface))
+
+    if args.scheduler == 'default':
+        model_scheduler = SubProcessRunScheduler()
+    elif args.scheduler == 'dafni':
+        model_scheduler = DAFNIRunScheduler(args.username, args.password)
+    else:
+        raise ValueError("Scheduler implentation {} not recognised.".format(args.scheduler))
+
     app = create_app(
         static_folder=app_folder,
         template_folder=app_folder,
         data_interface=_get_store(args),
-        scheduler=ModelRunScheduler()
+        scheduler=model_scheduler
     )
 
     print("    Opening smif app\n")
@@ -485,6 +495,14 @@ def parse_arguments():
                             type=int,
                             default=5000,
                             help="The port over which to serve the app")
+    parser_app.add_argument('-s', '--scheduler',
+                            default='default',
+                            choices=['default', 'dafni'],
+                            help="The module scheduling implementation to use")
+    parser_app.add_argument('-u', '--username',
+                            help="The username for logging in to the dafni JobSubmissionAPI, only needed with the dafni job scheduler")
+    parser_app.add_argument('-pw', '--password',
+                            help="The password for logging in to the dafni JobSubmissionAPI, only needed with the dafni job scheduler")
 
     # RUN
     parser_run = subparsers.add_parser(
@@ -573,7 +591,6 @@ def main(arguments=None):
             print("{}: {}".format(exception_type.__name__, exception))
 
     sys.excepthook = exception_handler
-
     if 'func' in args:
         args.func(args)
     else:
