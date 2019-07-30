@@ -235,7 +235,7 @@ class TestRegionSet():
                 }
             ])
 
-        assert 'Region set must have uniquely named regions' in str(ex)
+        assert 'Region set must have uniquely named regions' in str(ex.value)
 
 
 class TestRegionRegister():
@@ -247,7 +247,7 @@ class TestRegionRegister():
 
         with raises(ValueError) as ex:
             register.get_entry('nonexistent')
-        assert "ResolutionSet 'nonexistent' not registered" in str(ex)
+        assert "ResolutionSet 'nonexistent' not registered" in str(ex.value)
 
     def test_convert_equal(self, register):
         data = np.ones(1)

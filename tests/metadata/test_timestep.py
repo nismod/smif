@@ -15,7 +15,7 @@ class TestRelativeTimestep(object):
         assert RelativeTimestep.PREVIOUS == RelativeTimestep.from_name("PREVIOUS")
         with raises(ValueError) as ex:
             RelativeTimestep.from_name("UNKNOWN")
-        assert "Relative timestep 'UNKNOWN' is not recognised" in str(ex)
+        assert "Relative timestep 'UNKNOWN' is not recognised" in str(ex.value)
 
     def test_resolve(self):
         """Should be able to resolve current/previous/base timesteps
@@ -32,9 +32,9 @@ class TestRelativeTimestep(object):
 
         with raises(SmifTimestepResolutionError) as ex:
             rel.resolve_relative_to(99, timesteps)
-        assert "is not present" in str(ex)
+        assert "is not present" in str(ex.value)
 
         rel = RelativeTimestep.PREVIOUS
         with raises(SmifTimestepResolutionError) as ex:
             rel.resolve_relative_to(0, timesteps)
-        assert "has no previous timestep" in str(ex)
+        assert "has no previous timestep" in str(ex.value)

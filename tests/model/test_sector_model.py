@@ -130,7 +130,7 @@ class TestSectorModel():
     def test_abstract(self):
         with raises(TypeError) as ex:
             SectorModel('cannot_instantiate')
-        assert "Can't instantiate abstract class" in str(ex)
+        assert "Can't instantiate abstract class" in str(ex.value)
 
     def test_construct(self, sector_model):
         assert sector_model.description == 'a description'

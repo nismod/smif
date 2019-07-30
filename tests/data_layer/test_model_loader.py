@@ -13,4 +13,4 @@ def test_path_not_found():
             'classname': 'WaterSupplySectorModel'
         })
     msg = "Cannot find '/path/to/model.py' for the 'test' model"
-    assert msg in str(ex)
+    assert msg in str(ex.value)

@@ -131,7 +131,7 @@ class TestModelRunBuilder:
         with raises(SmifModelRunError) as ex:
             builder.finish()
         assert "ScenarioSets {'population'} are selected in the ModelRun " \
-               "configuration but not found in the SosModel configuration" in str(ex)
+               "configuration but not found in the SosModel configuration" in str(ex.value)
 
 
 class TestModelRun:
@@ -152,7 +152,7 @@ class TestModelRun:
         store = Mock()
         with raises(SmifModelRunError) as ex:
             model_run.run(store)
-        assert 'No timesteps specified' in str(ex)
+        assert 'No timesteps specified' in str(ex.value)
 
     def test_serialize(self, config_data):
         """Serialise back to config dict

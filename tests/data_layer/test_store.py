@@ -177,12 +177,12 @@ class TestStoreConfig():
         # Must raise exception if scenario defines > 1 variants
         with raises(SmifDataError) as ex:
             store.prepare_scenario(scenario_2_variants['name'], list_of_variants)
-        assert "must define one unique template variant" in str(ex)
+        assert "must define one unique template variant" in str(ex.value)
 
         # Must raise exception if scenario defines 0 variants
         with raises(SmifDataError) as ex:
             store.prepare_scenario(scenario_no_variant['name'], list_of_variants)
-        assert "must define one unique template variant" in str(ex)
+        assert "must define one unique template variant" in str(ex.value)
 
         store.prepare_scenario(scenario['name'], list_of_variants)
 
@@ -733,7 +733,7 @@ class TestWrongRaises:
 
         expected = "Variant name 'bla' does not exist in narrative 'technology'"
 
-        assert expected in str(ex)
+        assert expected in str(ex.value)
 
     def test_narrative_name(self, store, sample_dimensions, get_sos_model,
                             get_sector_model, energy_supply_sector_model,
@@ -758,4 +758,4 @@ class TestWrongRaises:
                 sos_model_name, 'bla', variant_name, param_name)
 
         expected = "Narrative name 'bla' does not exist in sos_model 'energy'"
-        assert expected in str(ex)
+        assert expected in str(ex.value)

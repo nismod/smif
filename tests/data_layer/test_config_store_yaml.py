@@ -48,7 +48,7 @@ class TestModelRun:
 
         with raises(SmifDataExistsError) as ex:
             config_handler.write_model_run(model_run1)
-        assert "Model_run 'unique' already exists" in str(ex)
+        assert "Model_run 'unique' already exists" in str(ex.value)
 
     def test_model_run_read_one(self, model_run, config_handler):
         """Test reading a single model_run.
@@ -70,7 +70,7 @@ class TestModelRun:
         """
         with raises(SmifDataNotFoundError) as ex:
             config_handler.read_model_run('missing_name')
-        assert "Model_run 'missing_name' not found" in str(ex)
+        assert "Model_run 'missing_name' not found" in str(ex.value)
 
     def test_model_run_update(self, model_run, config_handler):
         """Test updating a model_run description
@@ -95,7 +95,7 @@ class TestModelRun:
         model_run['name'] = 'model_run'
         with raises(SmifDataMismatchError) as ex:
             config_handler.update_model_run('model_run2', model_run)
-        assert "name 'model_run2' must match 'model_run'" in str(ex)
+        assert "name 'model_run2' must match 'model_run'" in str(ex.value)
 
     def test_model_run_update_missing(self, model_run, config_handler):
         """Test that updating a nonexistent model_run should fail
@@ -105,7 +105,7 @@ class TestModelRun:
 
         with raises(SmifDataNotFoundError) as ex:
             config_handler.update_model_run('missing_name', model_run)
-        assert "Model_run 'missing_name' not found" in str(ex)
+        assert "Model_run 'missing_name' not found" in str(ex.value)
 
     def test_model_run_delete(self, model_run, config_handler):
         """Test that updating a nonexistent model_run should fail
@@ -126,7 +126,7 @@ class TestModelRun:
         """
         with raises(SmifDataNotFoundError) as ex:
             config_handler.delete_model_run('missing_name')
-        assert "Model_run 'missing_name' not found" in str(ex)
+        assert "Model_run 'missing_name' not found" in str(ex.value)
 
 
 class TestSosModel:
@@ -162,7 +162,7 @@ class TestSosModel:
 
         with raises(SmifDataExistsError) as ex:
             config_handler.write_sos_model(sos_model1)
-        assert "Sos_model 'unique' already exists" in str(ex)
+        assert "Sos_model 'unique' already exists" in str(ex.value)
 
     def test_sos_model_read_one(self, get_sos_model, config_handler):
         """Test reading a single sos_model.
@@ -184,7 +184,7 @@ class TestSosModel:
         """
         with raises(SmifDataNotFoundError) as ex:
             config_handler.read_sos_model('missing_name')
-        assert "Sos_model 'missing_name' not found" in str(ex)
+        assert "Sos_model 'missing_name' not found" in str(ex.value)
 
     def test_sos_model_update(self, get_sos_model, config_handler):
         """Test updating a sos_model description
@@ -209,7 +209,7 @@ class TestSosModel:
         sos_model['name'] = 'sos_model'
         with raises(SmifDataMismatchError) as ex:
             config_handler.update_sos_model('sos_model2', sos_model)
-        assert "name 'sos_model2' must match 'sos_model'" in str(ex)
+        assert "name 'sos_model2' must match 'sos_model'" in str(ex.value)
 
     def test_sos_model_update_missing(self, get_sos_model, config_handler):
         """Test that updating a nonexistent sos_model should fail
@@ -219,7 +219,7 @@ class TestSosModel:
 
         with raises(SmifDataNotFoundError) as ex:
             config_handler.update_sos_model('missing_name', sos_model)
-        assert "Sos_model 'missing_name' not found" in str(ex)
+        assert "Sos_model 'missing_name' not found" in str(ex.value)
 
     def test_sos_model_delete(self, get_sos_model, config_handler):
         """Test that updating a nonexistent sos_model should fail
@@ -240,7 +240,7 @@ class TestSosModel:
         """
         with raises(SmifDataNotFoundError) as ex:
             config_handler.delete_sos_model('missing_name')
-        assert "Sos_model 'missing_name' not found" in str(ex)
+        assert "Sos_model 'missing_name' not found" in str(ex.value)
 
 
 class TestSectorModel:
@@ -278,7 +278,7 @@ class TestSectorModel:
 
         with raises(SmifDataExistsError) as ex:
             config_handler.write_model(sector_model1)
-        assert "Sector_model 'unique' already exists" in str(ex)
+        assert "Sector_model 'unique' already exists" in str(ex.value)
 
     def test_sector_model_read_one(self, get_sector_model, config_handler):
         """Test reading a single sector_model.
@@ -300,7 +300,7 @@ class TestSectorModel:
         """
         with raises(SmifDataNotFoundError) as ex:
             config_handler.read_model('missing_name')
-        assert "Sector_model 'missing_name' not found" in str(ex)
+        assert "Sector_model 'missing_name' not found" in str(ex.value)
 
     def test_sector_model_update(self, get_sector_model, config_handler):
         """Test updating a sector_model description
@@ -327,7 +327,7 @@ class TestSectorModel:
         sector_model['name'] = 'sector_model'
         with raises(SmifDataMismatchError) as ex:
             config_handler.update_model('sector_model2', sector_model)
-        assert "name 'sector_model2' must match 'sector_model'" in str(ex)
+        assert "name 'sector_model2' must match 'sector_model'" in str(ex.value)
 
     def test_sector_model_update_missing(self, get_sector_model, config_handler):
         """Test that updating a nonexistent sector_model should fail
@@ -337,7 +337,7 @@ class TestSectorModel:
 
         with raises(SmifDataNotFoundError) as ex:
             config_handler.update_model('missing_name', sector_model)
-        assert "Sector_model 'missing_name' not found" in str(ex)
+        assert "Sector_model 'missing_name' not found" in str(ex.value)
 
     def test_sector_model_delete(self, get_sector_model, config_handler):
         """Test that updating a nonexistent sector_model should fail
@@ -354,7 +354,7 @@ class TestSectorModel:
         """
         with raises(SmifDataNotFoundError) as ex:
             config_handler.delete_model('missing_name')
-        assert "Sector_model 'missing_name' not found" in str(ex)
+        assert "Sector_model 'missing_name' not found" in str(ex.value)
 
 
 class TestScenarios:
@@ -374,4 +374,4 @@ class TestScenarios:
         """
         with raises(SmifDataNotFoundError) as ex:
             config_handler.read_scenario('missing')
-        assert "Scenario 'missing' not found" in str(ex)
+        assert "Scenario 'missing' not found" in str(ex.value)

@@ -65,21 +65,21 @@ class TestSpec():
 
     def test_dim_coords_method(self, spec):
         assert spec.dim_coords('countries') == Coordinates('countries', ["England", "Wales"])
-        with raises(KeyError) as err:
+        with raises(KeyError) as ex:
             spec.dim_coords('does not exist')
 
-        assert "Could not find dim 'does not exist' in Spec 'population'" in str(err)
+        assert "Could not find dim 'does not exist' in Spec 'population'" in str(ex.value)
 
-        with raises(TypeError) as err:
+        with raises(TypeError) as ex:
             spec.dim_coords(['wrong type'])
 
-        assert "Expected string as argument, instead received <class 'list'>" in str(err)
+        assert "Expected string as argument, instead received <class 'list'>" in str(ex.value)
 
         spec._dims = ['countries', 'age', 'no coords']
-        with raises(KeyError) as err:
+        with raises(KeyError) as ex:
             spec.dim_coords('no coords')
 
-        assert "Coords not found for dim 'no coords', in Spec 'population'" in str(err)
+        assert "Coords not found for dim 'no coords', in Spec 'population'" in str(ex.value)
 
     def test_dim_names(self, spec):
         """Names of each coordinate in a given dimension
@@ -168,7 +168,7 @@ class TestSpec():
                 name='test',
                 coords=[Coordinates('countries', ["England", "Wales"])]
             )
-        assert "dtype must be provided" in str(ex)
+        assert "dtype must be provided" in str(ex.value)
 
     def test_coords_type_error(self):
         """A Spec must be constructed with a list of Coordinates
@@ -179,7 +179,7 @@ class TestSpec():
                 dtype='int',
                 coords=["England", "Wales"]
             )
-        assert "coords may be a dict[str,list] or a list[Coordinates]" in str(ex)
+        assert "coords may be a dict[str,list] or a list[Coordinates]" in str(ex.value)
 
     def test_coords_from_dict(self):
         """A Spec may be constructed with a dict
@@ -203,7 +203,7 @@ class TestSpec():
                 dtype='int',
                 coords={'countries': ["England", "Wales"]}
             )
-        assert "dims must be specified" in str(ex)
+        assert "dims must be specified" in str(ex.value)
 
         with raises(ValueError) as ex:
             Spec(
@@ -212,7 +212,7 @@ class TestSpec():
                 dims=['countries', 'age'],
                 coords={'countries': ["England", "Wales"]}
             )
-        assert "dims must match the keys in coords" in str(ex)
+        assert "dims must match the keys in coords" in str(ex.value)
 
         with raises(ValueError) as ex:
             Spec(
@@ -224,7 +224,7 @@ class TestSpec():
                     'age': [">30", "<30"]
                 }
             )
-        assert "dims must match the keys in coords" in str(ex)
+        assert "dims must match the keys in coords" in str(ex.value)
 
     def test_duplicate_dims_error(self):
         """A Spec must not have duplicate dimension names
@@ -235,7 +235,7 @@ class TestSpec():
                 dims=['countries', 'countries'],
                 coords={'countries': ["Scotland", "Northern Ireland"]}
             )
-        assert "duplicate dims" in str(ex)
+        assert "duplicate dims" in str(ex.value)
 
         with raises(ValueError) as ex:
             Spec(
@@ -245,7 +245,7 @@ class TestSpec():
                     Coordinates('countries', ['Scotland', 'Northern Ireland']),
                 ]
             )
-        assert "duplicate dims" in str(ex)
+        assert "duplicate dims" in str(ex.value)
 
     def test_coords_from_list_error(self):
         """A Spec constructed with a dict must have dims
@@ -257,7 +257,7 @@ class TestSpec():
                 coords=[Coordinates('countries', ["England", "Wales"])],
                 dims=['countries']
             )
-        assert "dims are derived" in str(ex)
+        assert "dims are derived" in str(ex.value)
 
     def test_ranges_must_be_list_like(self):
         """Absolute and expected ranges must be list or tuple
@@ -267,14 +267,14 @@ class TestSpec():
                 dtype='int',
                 abs_range='string should fail'
             )
-        assert "range must be a list or tuple" in str(ex)
+        assert "range must be a list or tuple" in str(ex.value)
 
         with raises(TypeError) as ex:
             Spec(
                 dtype='int',
                 exp_range='string should fail'
             )
-        assert "range must be a list or tuple" in str(ex)
+        assert "range must be a list or tuple" in str(ex.value)
 
     def test_ranges_must_be_len_two(self):
         """Absolute and expected ranges must be length two (min and max)
@@ -284,14 +284,14 @@ class TestSpec():
                 dtype='int',
                 abs_range=[0]
             )
-        assert "range must have min and max values only" in str(ex)
+        assert "range must have min and max values only" in str(ex.value)
 
         with raises(ValueError) as ex:
             Spec(
                 dtype='int',
                 exp_range=[0, 1, 2]
             )
-        assert "range must have min and max values only" in str(ex)
+        assert "range must have min and max values only" in str(ex.value)
 
     def test_ranges_must_be_min_max(self):
         """Absolute and expected ranges must be in order
@@ -301,14 +301,14 @@ class TestSpec():
                 dtype='int',
                 abs_range=[2, 1]
             )
-        assert "min value must be smaller than max value" in str(ex)
+        assert "min value must be smaller than max value" in str(ex.value)
 
         with raises(ValueError) as ex:
             Spec(
                 dtype='int',
                 exp_range=[2, 1]
             )
-        assert "min value must be smaller than max value" in str(ex)
+        assert "min value must be smaller than max value" in str(ex.value)
 
     def test_eq(self):
         """Equality based on equivalent dtype, dims, coords, unit

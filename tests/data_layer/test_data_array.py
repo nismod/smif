@@ -7,7 +7,7 @@ import xarray as xr
 from numpy.testing import assert_array_equal
 from pytest import fixture, raises
 from smif.data_layer.data_array import DataArray, show_null
-from smif.exception import SmifDataNotFoundError, SmifDataMismatchError
+from smif.exception import SmifDataMismatchError
 from smif.metadata import Spec
 
 
@@ -226,7 +226,7 @@ class TestDataFrameInterop():
             dtype='float'
         )
         data = numpy.array([
-            #4  2
+            # 4  2
             [1, 2],  # c
             [5, 6],  # a
             [9, 0]   # b
@@ -264,7 +264,7 @@ class TestDataFrameInterop():
               "['region'], instead got data columns ['other'] and index names ['region']"
         with raises(SmifDataMismatchError) as ex:
             DataArray.from_df(spec, df)
-        assert msg in str(ex)
+        assert msg in str(ex.value)
 
         # may not be indexed, if columns are otherwise all okay
         df = pd.DataFrame([
@@ -280,7 +280,7 @@ class TestDataFrameInterop():
               "['region'], instead got data columns ['test'] and index names [None]"
         with raises(SmifDataMismatchError) as ex:
             DataArray.from_df(spec, df)
-        assert msg in str(ex)
+        assert msg in str(ex.value)
 
         # must not have dimension labels outside of the spec dimension
         df = pd.DataFrame([
@@ -291,7 +291,7 @@ class TestDataFrameInterop():
               "dimension 'region': ['extra']"
         with raises(SmifDataMismatchError) as ex:
             DataArray.from_df(spec, df)
-        assert msg in str(ex)
+        assert msg in str(ex.value)
 
     def test_scalar(self):
         # should handle zero-dimensional case (numpy array as scalar)
@@ -327,7 +327,7 @@ class TestDataFrameInterop():
             DataArray.from_df(spec, df)
 
         msg = "Data for 'test' contains duplicate values at [{'a': 1}]"
-        assert msg in str(ex)
+        assert msg in str(ex.value)
 
     def test_error_duplicate_rows_multi_index(self):
         spec = Spec(
@@ -349,7 +349,7 @@ class TestDataFrameInterop():
 
         msg = "Data for 'test' contains duplicate values at [{'a': 2, 'b': 4}]"
         msg_alt = "Data for 'test' contains duplicate values at [{'b': 4, 'a': 2}]"
-        assert msg in str(ex) or msg_alt in str(ex)
+        assert msg in str(ex.value) or msg_alt in str(ex.value)
 
 
 class TestMissingData:
@@ -366,7 +366,7 @@ class TestMissingData:
 
         msg = "Data for 'test_data' had missing values - read 20 but expected 24 in " + \
               "total, from dims of length {a: 2, b: 3, c: 4}"
-        assert msg in str(ex)
+        assert msg in str(ex.value)
 
     def test_missing_data_message(self, small_da):
         """Should check for NaNs and raise SmifDataError
@@ -380,7 +380,7 @@ class TestMissingData:
 
         expected = "Data for 'test_data' had missing values - read 22 but expected 24 in " + \
                    "total, from dims of length {a: 2, b: 3, c: 4}"
-        assert expected in str(ex)
+        assert expected in str(ex.value)
 
     def test_missing_data_message_non_numeric(self, small_da_non_numeric):
         """Should check for NaNs and raise SmifDataError
@@ -394,7 +394,7 @@ class TestMissingData:
 
         expected = "Data for 'test_data' had missing values - read 22 but expected 24 in " + \
                    "total, from dims of length {a: 2, b: 3, c: 4}"
-        assert expected in str(ex)
+        assert expected in str(ex.value)
 
     def test_no_missing_data(self, small_da):
 
@@ -438,7 +438,6 @@ class TestMissingData:
             index = pd.MultiIndex(levels=levels, codes=codes, names=names)
         except TypeError:
             index = pd.MultiIndex(levels=levels, labels=codes, names=names)
-
 
         expected = pd.DataFrame(data=numpy.array([[None]], dtype=numpy.object),
                                 index=index,

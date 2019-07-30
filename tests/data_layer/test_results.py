@@ -139,43 +139,43 @@ class TestNoResults:
 
     def test_exceptions(self, empty_store):
         # No arguments is not allowed
-        with raises(TypeError) as e:
+        with raises(TypeError) as ex:
             Results()
-        assert "missing 1 required positional argument: 'store'" in str(e)
+        assert "missing 1 required positional argument: 'store'" in str(ex.value)
 
         # Check that constructing with just a store works fine
         Results(store=empty_store)
 
         # Check that valid configurations do work (but expect a SmifDataNotFoundError
         # because the store creation will fall over
-        with raises(SmifDataNotFoundError) as e:
+        with raises(SmifDataNotFoundError) as ex:
             Results(store={'interface': 'local_csv', 'dir': '.'})
-        assert 'Expected data folder' in str(e)
+        assert 'Expected data folder' in str(ex.value)
 
-        with raises(SmifDataNotFoundError) as e:
+        with raises(SmifDataNotFoundError) as ex:
             Results(store={'interface': 'local_parquet', 'dir': '.'})
-        assert 'Expected data folder' in str(e)
+        assert 'Expected data folder' in str(ex.value)
 
         # Interface left blank will default to local_csv
-        with raises(SmifDataNotFoundError) as e:
+        with raises(SmifDataNotFoundError) as ex:
             Results(store={'dir': '.'})
-        assert 'Expected data folder' in str(e)
+        assert 'Expected data folder' in str(ex.value)
 
         # Dir left blank will default to '.'
-        with raises(SmifDataNotFoundError) as e:
+        with raises(SmifDataNotFoundError) as ex:
             Results(store={'interface': 'local_parquet'})
-        assert 'Expected data folder' in str(e)
+        assert 'Expected data folder' in str(ex.value)
 
         # Invalid interface will raise a ValueError
-        with raises(ValueError) as e:
+        with raises(ValueError) as ex:
             Results(store={'interface': 'invalid', 'dir': '.'})
-        assert 'Unsupported interface "invalid"' in str(e)
+        assert 'Unsupported interface "invalid"' in str(ex.value)
 
         # Invalid directory will raise a ValueError
-        with raises(ValueError) as e:
+        with raises(ValueError) as ex:
             invalid_dir = os.path.join(os.path.dirname(__file__), 'does', 'not', 'exist')
             Results(store={'interface': 'local_csv', 'dir': invalid_dir})
-        assert 'to be a valid directory' in str(e)
+        assert 'to be a valid directory' in str(ex.value)
 
     def test_list_model_runs(self, results_no_results):
         assert results_no_results.list_model_runs() == ['model_run_1', 'model_run_2']

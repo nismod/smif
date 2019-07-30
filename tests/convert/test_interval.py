@@ -497,10 +497,10 @@ class TestInterval:
 
     def test_invalid_set_interval(self):
         interval = Interval('test', ('PT0H', 'PT1H'))
-        with raises(ValueError) as excinfo:
+        with raises(ValueError) as ex:
             interval.interval = None
         msg = "A time interval must add either a single tuple or a list of tuples"
-        assert msg in str(excinfo)
+        assert msg in str(ex.value)
 
     def test_empty_interval_tuple(self):
         with raises(ValueError):
@@ -747,19 +747,19 @@ class TestValidation:
     def test_validate_intervals_fails(self, remap_months):
         data = remap_months
         data.append({'name': '5', 'interval': [('PT0H', 'PT1H')]})
-        with raises(ValueError) as excinfo:
+        with raises(ValueError) as ex:
             IntervalSet('remap_months', data)
-        assert "Duplicate entry for hour 0 in interval set remap_months." in str(excinfo.value)
+        assert "Duplicate entry for hour 0 in interval set remap_months." in str(ex.value)
 
     def test_time_interval_start_before_end(self):
-        with raises(ValueError) as excinfo:
+        with raises(ValueError) as ex:
             Interval('backwards', ('P1Y', 'P3M'))
-        assert "A time interval must not end before it starts" in str(excinfo)
+        assert "A time interval must not end before it starts" in str(ex.value)
 
         interval = Interval('starts_ok', ('P0Y', 'P1M'))
-        with raises(ValueError) as excinfo:
+        with raises(ValueError) as ex:
             interval.interval = ('P2M', 'P1M')
-        assert "A time interval must not end before it starts" in str(excinfo)
+        assert "A time interval must not end before it starts" in str(ex.value)
 
 
 class TestIntersection:
