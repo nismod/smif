@@ -96,7 +96,7 @@ class TestCoordinates():
         """
         with raises(ValueError) as ex:
             Coordinates('zero_d', [])
-        assert "must not be empty" in str(ex)
+        assert "must not be empty" in str(ex.value)
 
     def test_elements_must_have_name(self):
         """Coordinates elements must have "name"
@@ -108,7 +108,7 @@ class TestCoordinates():
         ]
         with raises(KeyError) as ex:
             Coordinates('fossil_fuels', elements)
-        assert "must have a name" in str(ex)
+        assert "must have a name" in str(ex.value)
 
     def test_elements_must_be_finite(self):
         """Only accept finite Coordinatess
@@ -123,7 +123,7 @@ class TestCoordinates():
 
         with raises(ValueError) as ex:
             Coordinates('natural_numbers', elements)
-        assert "must be finite" in str(ex)
+        assert "must be finite" in str(ex.value)
 
     def test_eq(self):
         """Equality based on equivalent name and elements

@@ -119,7 +119,7 @@ class TestDataArray():
         msg = "not found for timestep 2011"
         with raises(SmifDataNotFoundError) as ex:
             handler.read_scenario_variant_data('mortality.csv', spec, 2011)
-        assert msg in str(ex)
+        assert msg in str(ex.value)
 
     def test_string_data(self, handler):
         spec = Spec(

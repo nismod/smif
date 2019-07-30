@@ -199,7 +199,7 @@ class TestScenarios:
         msg = "Data for 'population_count' expected a column called 'timestep', instead " + \
               "got data columns ['population_count', 'county', 'season', 'year'] and " + \
               "index names [None]"
-        assert msg in str(ex)
+        assert msg in str(ex.value)
 
     def test_data_column_error(self, setup_folder_structure, config_handler, scenario_spec,
                                get_scenario_data):
@@ -218,7 +218,7 @@ class TestScenarios:
         msg = "Data for 'population_count' expected a data column called " + \
               "'population_count' and index names ['county', 'season'], instead got data " + \
               "columns ['population_count', 'region', 'season'] and index names [None]"
-        assert msg in str(ex)
+        assert msg in str(ex.value)
 
     def test_scenario_data_validates(self, setup_folder_structure, config_handler,
                                      get_remapped_scenario_data, scenario_spec):
@@ -296,7 +296,7 @@ class TestNarrativeVariantData:
 
         msg = "Data for 'smart_meter_savings' should contain a single value, instead got " + \
               "4 while reading from"
-        assert msg in str(ex)
+        assert msg in str(ex.value)
 
     def test_error_duplicate_rows_single_index(self, config_handler):
         spec = Spec(
@@ -319,7 +319,7 @@ class TestNarrativeVariantData:
             config_handler.read_model_parameter_default('default', spec)
 
         msg = "Data for 'test' contains duplicate values at [{'a': 1}]"
-        assert msg in str(ex)
+        assert msg in str(ex.value)
 
     def test_error_duplicate_rows_multi_index(self, config_handler):
         spec = Spec(
@@ -345,7 +345,7 @@ class TestNarrativeVariantData:
 
         msg = "Data for 'test' contains duplicate values at [{'a': 2, 'b': 4}]"
         msg_alt = "Data for 'test' contains duplicate values at [{'b': 4, 'a': 2}]"
-        assert msg in str(ex) or msg_alt in str(ex)
+        assert msg in str(ex.value) or msg_alt in str(ex.value)
 
     def test_error_wrong_name(self, config_handler):
         spec = Spec(
@@ -369,7 +369,7 @@ class TestNarrativeVariantData:
 
         msg = "Data for 'test' expected a data column called 'test' and index names " + \
               "['a', 'b'], instead got data columns ['wrong_name'] and index names ['a', 'b']"
-        assert msg in str(ex)
+        assert msg in str(ex.value)
 
     def test_error_not_full(self, config_handler):
         spec = Spec(
@@ -393,7 +393,7 @@ class TestNarrativeVariantData:
 
         msg = "Data for 'test' had missing values - read 1 but expected 4 in total, from " + \
               "dims of length {a: 2, b: 2}"
-        assert msg in str(ex)
+        assert msg in str(ex.value)
 
 
 class TestResults:

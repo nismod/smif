@@ -407,7 +407,7 @@ class TestSosModel():
         with raises(AssertionError) as ex:
             sos_model.add_model(SosModel('test'))
         msg = "Only Models can be added to a SosModel (and SosModels cannot be nested)"
-        assert msg in str(ex)
+        assert msg in str(ex.value)
 
     def test_as_dict(self, sos_model):
         """as_dict correctly returns configuration as a dictionary, with child models as_dict
@@ -541,7 +541,8 @@ class TestSosModelDependencies(object):
             sos_model.add_dependency(
                 scenario_model, 'precipitation',
                 sector_model, 'precipitation')
-        assert "Could not add dependency: input 'precipitation' already provided" in str(ex)
+        assert "Could not add dependency: input 'precipitation' already provided" in \
+            str(ex.value)
 
     def test_dependency_not_present(self, sos_model, scenario_model, energy_model):
         """Should fail with missing input/output
@@ -551,13 +552,13 @@ class TestSosModelDependencies(object):
             sos_model.add_dependency(
                 scenario_model, 'not_present', energy_model, 'electricity_demand_input')
         msg = "Output 'not_present' is not defined in '{}'".format(scenario_model.name)
-        assert msg in str(ex)
+        assert msg in str(ex.value)
 
         with raises(SmifValidationError) as ex:
             sos_model.add_dependency(
                 scenario_model, 'precipitation', energy_model, 'incorrect_name')
         msg = "Input 'incorrect_name' is not defined in '{}'".format(energy_model.name)
-        assert msg in str(ex)
+        assert msg in str(ex.value)
 
     def test_dependency_model_not_exist(self, sos_model, scenario_model, energy_model):
         """Should fail with a SmifConfigurationError
@@ -571,7 +572,7 @@ class TestSosModelDependencies(object):
                 scenario_model, 'precipitation', missing_sink, 'does not matter'
             )
         msg = "Sink model 'test_sink_model' does not exist in list of models"
-        assert msg in str(ex)
+        assert msg in str(ex.value)
 
         missing_source = Mock()
         type(missing_source).name = PropertyMock(return_value='test_source_model')
@@ -581,7 +582,7 @@ class TestSosModelDependencies(object):
                 missing_source, 'does not matter', energy_model, 'electricity_demand_input'
             )
         msg = "Source model 'test_source_model' does not exist in list of models"
-        assert msg in str(ex)
+        assert msg in str(ex.value)
 
     def test_data_not_present(self, sos_model_dict, sector_model):
         """Raise a NotImplementedError if an input is defined but no dependency links
@@ -606,7 +607,7 @@ class TestSosModelDependencies(object):
 
         with raises(ValueError) as ex:
             SosModel.from_dict(sos_model_dict, [sector_model, scenario_model, economic_model])
-        assert "ml!=incompatible" in str(ex)
+        assert "ml!=incompatible" in str(ex.value)
 
     def test_invalid_unit_conversion(self, sos_model_dict, sector_model, scenario_model,
                                      economic_model):
@@ -671,19 +672,20 @@ class TestNarratives:
 
         narrative['provides'] = {'water_supply': ['no_such_parameter']}
 
-        with raises(SmifDataMismatchError) as err:
+        with raises(SmifDataMismatchError) as ex:
             sos_model.add_narrative(narrative)
 
-        assert "Parameter 'no_such_parameter' does not exist in 'water_supply'" in str(err)
+        assert "Parameter 'no_such_parameter' does not exist in 'water_supply'" in \
+            str(ex.value)
 
     def test_add_narrative_raises_for_wrong_model(self, sos_model, narrative):
 
         narrative['provides'] = {'not_a_model': ['test_parameter']}
 
-        with raises(SmifDataMismatchError) as err:
+        with raises(SmifDataMismatchError) as ex:
             sos_model.add_narrative(narrative)
 
-        assert "'not_a_model' does not exist in 'test_sos_model'" in str(err)
+        assert "'not_a_model' does not exist in 'test_sos_model'" in str(ex.value)
 
     def test_narratives_in_as_dict(self, sos_model, narrative):
 

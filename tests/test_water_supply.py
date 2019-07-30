@@ -9,9 +9,9 @@ import sys
 
 from pytest import fixture, raises
 
-from .fixtures.water_supply import (ExampleWaterSupplySimulationModel,
-                                    ExampleWaterSupplySimulationModelWithReservoir,
-                                    process_results)
+from .fixtures.water_supply import (
+    ExampleWaterSupplySimulationModel,
+    ExampleWaterSupplySimulationModelWithReservoir, process_results)
 
 
 @fixture(scope='function')
@@ -56,7 +56,7 @@ def test_water_supply_with_reservoir_negative_level():
     msg = "Reservoir level cannot be negative"
     with raises(ValueError) as ex:
         ExampleWaterSupplySimulationModelWithReservoir(raininess, reservoir_level)
-    assert msg in str(ex)
+    assert msg in str(ex.value)
 
 
 def test_process_results():
@@ -79,7 +79,7 @@ def test_raininess_oracle_out_of_range():
     msg = "timestep 2051 is outside of the range [2010, 2050]"
     with raises(AssertionError) as ex:
         a_raininess_oracle(2051)
-    assert msg in str(ex)
+    assert msg in str(ex.value)
 
 
 def test_simulate_rain_cost_python():

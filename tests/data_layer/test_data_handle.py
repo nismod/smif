@@ -469,7 +469,7 @@ class TestDataHandle():
 
         msg = "Data shape (1, 2) does not match spec " \
               "(2, 1)"
-        assert msg in str(ex)
+        assert msg in str(ex.value)
 
     def test_set_data_with_square_brackets(self, mock_store, mock_model):
         """should allow dict-like write access to output data
@@ -499,10 +499,10 @@ class TestDataHandle():
         spec = mock_model.outputs['gas_demand']
         da = DataArray(spec, data)
 
-        with raises(TypeError) as err:
+        with raises(TypeError) as ex:
             data_handle["gas_demand"] = da
 
-        assert "Pass in a numpy array" in str(err)
+        assert "Pass in a numpy array" in str(ex.value)
 
 
 class TestDataHandleState():
@@ -624,7 +624,7 @@ class TestDataHandleTimesteps():
         data_handle = DataHandle(mock_store, 1, 2015, [2015, 2020], mock_model)
         with raises(SmifTimestepResolutionError) as ex:
             data_handle.previous_timestep
-        assert 'no previous timestep' in str(ex)
+        assert 'no previous timestep' in str(ex.value)
 
 
 class TestDataHandleGetResults:

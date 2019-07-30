@@ -87,7 +87,7 @@ def test_create_with_identical_meta():
     )
     with raises(ValueError) as ex:
         Dependency(Mock(), source, Mock(), b_sink)
-    assert 'mismatched dtype' in str(ex)
+    assert 'mismatched dtype' in str(ex.value)
 
     c_sink = Spec(
         name='sink',
@@ -98,7 +98,7 @@ def test_create_with_identical_meta():
     )
     with raises(ValueError) as ex:
         Dependency(Mock(), source, Mock(), c_sink)
-    assert 'mismatched dims' in str(ex)
+    assert 'mismatched dims' in str(ex.value)
 
     d_sink = Spec(
         name='sink',
@@ -109,7 +109,7 @@ def test_create_with_identical_meta():
     )
     with raises(ValueError) as ex:
         Dependency(Mock(), source, Mock(), d_sink)
-    assert 'mismatched coords' in str(ex)
+    assert 'mismatched coords' in str(ex.value)
 
     e_sink = Spec(
         name='sink',
@@ -120,7 +120,7 @@ def test_create_with_identical_meta():
     )
     with raises(ValueError) as ex:
         Dependency(Mock(), source, Mock(), e_sink)
-    assert 'mismatched unit' in str(ex)
+    assert 'mismatched unit' in str(ex.value)
 
 
 def test_repr(dep):
