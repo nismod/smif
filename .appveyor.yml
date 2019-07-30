@@ -13,13 +13,13 @@ environment:
 init:
   - "ECHO %PYTHON_VERSION% %MINICONDA%"
 install:
-  - "set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%PATH%"
+  - CALL "%MINICONDA%\\Scripts\\activate.bat"
   - conda config --set always_yes true
   - conda update conda
   - conda config --set changeps1 false
   - conda config --set channel_priority strict
-  - conda info -a
-  - "conda create -n testenv python=3.7 \
+  - conda info --all
+  - "conda create -n testenv python=%PYTHON_VERSION% \
         fiona \
         flask \
         gdal \
@@ -37,7 +37,6 @@ install:
         shapely \
         xarray"
   - activate testenv
-  - pip install minio
   - python setup.py develop
 before_test:
   - PATH=C:\Program Files\PostgreSQL\9.6\bin\;%PATH%
