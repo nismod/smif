@@ -5,11 +5,9 @@ import json
 import os
 from functools import lru_cache
 from logging import getLogger
-from typing import Dict, List, Union
+from typing import Dict, List
 
 import pandas  # type: ignore
-from pandas import compat as pandas_compat
-from pandas.core import common as pandas_common  # type: ignore
 from ruamel.yaml import YAML  # type: ignore
 from smif.data_layer.abstract_metadata_store import MetadataStore
 from smif.exception import SmifDataNotFoundError, SmifDataReadError
@@ -101,7 +99,7 @@ class FileMetadataStore(MetadataStore):
         filebasename, ext = os.path.splitext(filename)
         if ext == '.csv':
             dataframe = pandas.read_csv(filepath)
-            data = _df_to_records(dataframe)
+            data = dataframe.to_dict('records')
             if 'interval' in data[0]:
                 data = self._unstringify_interval(data)
         elif ext in ('.geojson', '.shp'):
@@ -234,25 +232,3 @@ def _read_filenames_in_dir(path, extension):
             basename, _ = os.path.splitext(filename)
             files.append(basename)
     return files
-
-
-def _df_to_records(dataframe: pandas.DataFrame) -> List[Dict]:
-    """Fix pandas conversion to list[dict] with python scalar values
-
-    Ported here from future release of pandas 0.24.0
-
-    See:
-    - PR: https://github.com/pandas-dev/pandas/pull/23921
-    - Issue: https://github.com/pandas-dev/pandas/issues/23753
-
-    Note that this skips the pandas_common,maybe_box_datetimelike implementation, which may be
-    desired but relies on more pandas internals so is not copied over (yet).
-    """
-    into_c = pandas_common.standardize_mapping(dict)
-    return [
-        into_c(
-            (k, v)
-            for k, v in pandas_compat.iteritems(row._asdict())
-        )
-        for row in dataframe.itertuples(index=False)
-    ]
