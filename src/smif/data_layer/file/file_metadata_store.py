@@ -154,7 +154,7 @@ class FileMetadataStore(MetadataStore):
     @staticmethod
     def _read_spatial_file(filepath) -> List[Dict]:
         try:
-            with fiona.drivers():
+            with fiona.Env():
                 with fiona.open(filepath) as src:
                     data = []
                     for feature in src:
