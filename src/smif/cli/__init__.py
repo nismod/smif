@@ -626,7 +626,12 @@ def main(arguments=None):
     """
     parser = parse_arguments()
     args = parser.parse_args(arguments)
-    smif.cli.log.setup_logging(args.verbose)
+
+    try:
+        smif.cli.log.setup_logging(args.verbose)
+    except AttributeError:
+        # verbose is only set on subcommands - so `smif` or `smif -h` would error
+        pass
 
     def exception_handler(exception_type, exception, traceback, debug_hook=sys.excepthook):
         if args.verbose:
