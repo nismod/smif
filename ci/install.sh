@@ -51,10 +51,9 @@ if [[ "$DISTRIB" == "conda" ]]; then
         fiona
 
     source activate testenv
-
-    pip install minio
 fi
 
+pip install 'flake8>=3.7'
 python setup.py develop
 
 # Install node and npm dependencies

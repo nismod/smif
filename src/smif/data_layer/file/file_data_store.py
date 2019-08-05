@@ -9,7 +9,7 @@ import numpy as np  # type: ignore
 import pandas  # type: ignore
 import pyarrow as pa  # type: ignore
 from smif.data_layer.abstract_data_store import DataStore
-from smif.exception import SmifDataNotFoundError
+from smif.exception import SmifDataMismatchError, SmifDataNotFoundError
 
 
 class FileDataStore(DataStore):
@@ -82,7 +82,10 @@ class FileDataStore(DataStore):
     def read_scenario_variant_data(self, key, spec, timestep=None, timesteps=None):
         path = os.path.join(self.data_folders['scenarios'], '{}.{}'.format(key, self.ext))
         data = self._read_data_array(path, spec, timestep, timesteps)
-        data.validate_as_full()
+        try:
+            data.validate_as_full()
+        except SmifDataMismatchError as ex:
+            self.logger.warning(str(ex))
         return data
 
     def write_scenario_variant_data(self, key, data):

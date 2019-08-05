@@ -97,6 +97,7 @@ def app(request, mock_scheduler, mock_data_interface):
     with test_app.app_context():
         yield test_app
 
+
 @pytest.fixture
 def app_fail(request, mock_scheduler, mock_data_interface):
     """Return an app which will fail to find templates

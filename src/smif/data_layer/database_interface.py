@@ -37,7 +37,8 @@ class DbConfigStore(ConfigStore):
         # establish database connection
         self.database_connection = initiate_db_connection(host, user, dbname, port, password)
 
-        # list of expected port types - these should be specified somewhere, or not presumed at all
+        # list of expected port types - these should be specified somewhere, or not presumed at
+        # all
         self.port_types = ['inputs', 'outputs', 'parameters']
 
     # region Model runs
@@ -124,7 +125,9 @@ class DbConfigStore(ConfigStore):
             return
 
         # write model run to database
-        cursor.execute('INSERT INTO model_runs (name, sos_model, sos_model_id) VALUES (%s,%s,%s);', [model_run['name'], model_run['sos_model'], sos_models[0]['id']])
+        cursor.execute(
+            'INSERT INTO model_runs (name, sos_model, sos_model_id) VALUES (%s,%s,%s);',
+            [model_run['name'], model_run['sos_model'], sos_models[0]['id']])
 
         # write data to database
         self.database_connection.commit()
@@ -157,7 +160,8 @@ class DbConfigStore(ConfigStore):
             if 'sos_model' in model_run.keys():
 
                 # check the passed model exists
-                cursor.execute('SELECT id FROM sos_models WHERE name=%s;', [model_run['sos_model']])
+                cursor.execute(
+                    'SELECT id FROM sos_models WHERE name=%s;', [model_run['sos_model']])
 
                 # get result of query
                 sos_model_id = cursor.fetchall()
@@ -165,7 +169,9 @@ class DbConfigStore(ConfigStore):
                 # if only one model run id returned, make change
                 if len(sos_model_id) == 1:
                     # update table with new sos model
-                    cursor.execute('UPDATE model_runs SET sos_model=%s, sos_model_id=%s WHERE name=%s;', [model_run['sos_model'], sos_model_id[0]['id'],model_run_name])
+                    cursor.execute(
+                        'UPDATE model_runs SET sos_model=%s, sos_model_id=%s WHERE name=%s;',
+                        [model_run['sos_model'], sos_model_id[0]['id'], model_run_name])
 
                     # commit update to database
                     self.database_connection.commit()
@@ -269,7 +275,9 @@ class DbConfigStore(ConfigStore):
 
         if sos_model is not None:
             # get simulation models
-            cursor.execute('SELECT * FROM sos_model_simulation_models WHERE sos_model_name=%s;', [sos_model_name])
+            cursor.execute(
+                'SELECT * FROM sos_model_simulation_models WHERE sos_model_name=%s;',
+                [sos_model_name])
 
             # add all returned models to the sector models key in the sos_model definition
             sos_model['sector_models'] = []
@@ -277,7 +285,8 @@ class DbConfigStore(ConfigStore):
                 sos_model['sector_models'].append(model)
 
             # get scenario sets
-            cursor.execute('SELECT * FROM sos_model_scenarios WHERE sos_model_name=%s;', [sos_model_name])
+            cursor.execute(
+                'SELECT * FROM sos_model_scenarios WHERE sos_model_name=%s;', [sos_model_name])
 
             # add all returned models to the sector models key in the sos_model definition
             sos_model['scenario_sets'] = []
@@ -285,7 +294,9 @@ class DbConfigStore(ConfigStore):
                 sos_model['scenario_sets'].append(scenario)
 
             # get sos model dependencies
-            cursor.execute('SELECT * FROM sos_model_dependencies WHERE sos_model_name=%s;', [sos_model_name])
+            cursor.execute(
+                'SELECT * FROM sos_model_dependencies WHERE sos_model_name=%s;',
+                [sos_model_name])
 
             # add all returned dependencies to the dependencies key in the sos_model definition
             sos_model['dependencies'] = []
@@ -318,19 +329,20 @@ class DbConfigStore(ConfigStore):
             return
 
         # write sos model, return id
-        cursor.execute('INSERT INTO sos_models (name, description) VALUES (%s, %s) RETURNING id;', [sos_model['name'], sos_model['description']])
+        cursor.execute(
+            'INSERT INTO sos_models (name, description) VALUES (%s, %s) RETURNING id;',
+            [sos_model['name'], sos_model['description']])
 
         # write to database
         self.database_connection.commit()
-
-        # get returned model id
-        sos_model_id = cursor.fetchone()
 
         # write dependencies
         # loop through passed dependencies
         for dependency in sos_model['dependencies']:
             # check dependent models already exist in database - source model
-            cursor.execute('SELECT name FROM simulation_models WHERE name=%s;', [dependency['source_model']])
+            cursor.execute(
+                'SELECT name FROM simulation_models WHERE name=%s;',
+                [dependency['source_model']])
 
             # get returned data from query
             sos_models = cursor.fetchall()
@@ -341,7 +353,9 @@ class DbConfigStore(ConfigStore):
                 return
 
             # check dependent models already exist in database - sink model
-            cursor.execute('SELECT name FROM simulation_models WHERE name=%s;', [dependency['sink_model']])
+            cursor.execute(
+                'SELECT name FROM simulation_models WHERE name=%s;',
+                [dependency['sink_model']])
 
             # get returned data from query
             sos_models = cursor.fetchall()
@@ -352,7 +366,16 @@ class DbConfigStore(ConfigStore):
                 return
 
             # sql to write dependency to db
-            cursor.execute('INSERT INTO sos_model_dependencies (sos_model_name, source_model, source_output, sink_model, sink_input, lag) VALUES (%s,%s,%s,%s,%s,%s);', [sos_model['name'], dependency['source_model'], dependency['source_model_output'], dependency['sink_model'], dependency['sink_model_input'], dependency['lag']])
+            cursor.execute(
+                """INSERT INTO sos_model_dependencies
+                (sos_model_name, source_model, source_output, sink_model, sink_input, lag)
+                VALUES (%s,%s,%s,%s,%s,%s);""",
+                [
+                    sos_model['name'], dependency['source_model'],
+                    dependency['source_model_output'], dependency['sink_model'],
+                    dependency['sink_model_input'], dependency['lag']
+                ]
+            )
 
             # write to database
             self.database_connection.commit()
@@ -373,7 +396,15 @@ class DbConfigStore(ConfigStore):
                 return
 
             # write link between sos model and simulation models
-            cursor.execute('INSERT INTO sos_model_simulation_models (sos_model_name, simulation_model_name, simulation_model_id, sos_sim_model_id) VALUES (%s,%s,%s,%s);', [sos_model['name'], sector_model, simulation_models[0]['id'], sim_model_counter])
+            cursor.execute(
+                """INSERT INTO sos_model_simulation_models
+                (sos_model_name, simulation_model_name, simulation_model_id, sos_sim_model_id)
+                VALUES (%s,%s,%s,%s);""",
+                [
+                    sos_model['name'], sector_model, simulation_models[0]['id'],
+                    sim_model_counter
+                ]
+            )
 
             # iterate counter
             sim_model_counter += 1
@@ -395,7 +426,10 @@ class DbConfigStore(ConfigStore):
                 return
 
             # add data into database
-            cursor.execute('INSERT INTO sos_model_scenarios (sos_model_name, scenario_name) VALUES (%s,%s);', [sos_model['name'], scenario])
+            cursor.execute(
+                """INSERT INTO sos_model_scenarios
+                (sos_model_name, scenario_name) VALUES (%s,%s);""",
+                [sos_model['name'], scenario])
 
         # write to database
         self.database_connection.commit()
@@ -436,7 +470,9 @@ class DbConfigStore(ConfigStore):
 
                 if 'source_model' in dependency.keys():
                     # check dependent models already exist in database - source model
-                    cursor.execute('SELECT name FROM simulation_models WHERE name=%s;', [dependency['source_model']])
+                    cursor.execute(
+                        'SELECT name FROM simulation_models WHERE name=%s;',
+                        [dependency['source_model']])
 
                     # get returned data from query
                     sos_models = cursor.fetchall()
@@ -447,14 +483,18 @@ class DbConfigStore(ConfigStore):
                         return
 
                     # update
-                    cursor.execute('UPDATE dependencies SET source_model=%s WHERE name=%s;' [dependency['source_model'], sos_model_name])
+                    cursor.execute(
+                        'UPDATE dependencies SET source_model=%s WHERE name=%s;'
+                        [dependency['source_model'], sos_model_name])
 
                     # write to database
                     self.database_connection.commit()
 
                 if 'sink_model' in dependency.keys():
                     # check dependent models already exist in database - sink model
-                    cursor.execute('SELECT name FROM simulation_models WHERE name=%s;', [dependency['sink_model']])
+                    cursor.execute(
+                        'SELECT name FROM simulation_models WHERE name=%s;',
+                        [dependency['sink_model']])
 
                     # get returned data from query
                     sos_models = cursor.fetchall()
@@ -465,28 +505,36 @@ class DbConfigStore(ConfigStore):
                         return
 
                     # update
-                    cursor.execute('UPDATE dependencies SET sink_model=%s WHERE name=%s;', [dependency['source_model'], sos_model_name])
+                    cursor.execute(
+                        'UPDATE dependencies SET sink_model=%s WHERE name=%s;',
+                        [dependency['source_model'], sos_model_name])
 
                     # write to database
                     self.database_connection.commit()
 
                 if 'source_model_output' in dependency.keys():
                     # update
-                    cursor.execute('UPDATE dependencies SET source_model_output=%s WHERE name=%s;', [dependency['source_model_output'], sos_model['name']])
+                    cursor.execute(
+                        'UPDATE dependencies SET source_model_output=%s WHERE name=%s;',
+                        [dependency['source_model_output'], sos_model['name']])
 
                     # write to database
                     self.database_connection.commit()
 
                 if 'sink_model_input' in dependency.keys():
                     # update
-                    cursor.execute('UPDATE dependencies SET sink_model_input=%s WHERE name=%s;', [dependency['sink_model_input'], sos_model_name])
+                    cursor.execute(
+                        'UPDATE dependencies SET sink_model_input=%s WHERE name=%s;',
+                        [dependency['sink_model_input'], sos_model_name])
 
                     # write to database
                     self.database_connection.commit()
 
                 if 'lag' in dependency.keys():
                     # update
-                    cursor.execute('UPDATE dependencies SET lag=%s WHERE name=%s;', [dependency['lag'], sos_model_name])
+                    cursor.execute(
+                        'UPDATE dependencies SET lag=%s WHERE name=%s;',
+                        [dependency['lag'], sos_model_name])
 
                     # write to database
                     self.database_connection.commit()
@@ -499,7 +547,8 @@ class DbConfigStore(ConfigStore):
             for sector_model in sos_model['sector_models']:
 
                 # check simulation model already in database
-                cursor.execute('SELECT name FROM simulation_models WHERE name=%s;', [sector_model])
+                cursor.execute(
+                    'SELECT name FROM simulation_models WHERE name=%s;', [sector_model])
 
                 # get returned data from query
                 sos_models = cursor.fetchall()
@@ -509,10 +558,13 @@ class DbConfigStore(ConfigStore):
                     # return an error - simulation model does not exist
                     return
 
-            # if all simulation models in database, attempt to update the sos model sim model relation
+            # if all simulation models in database, attempt to update the sos model sim model
+            # relation
 
             # get what is already in the database
-            cursor.execute('SELECT *  FROM sos_model_simulation_models WHERE sos_model_name=%s;', [sos_model_name])
+            cursor.execute(
+                'SELECT *  FROM sos_model_simulation_models WHERE sos_model_name=%s;',
+                [sos_model_name])
 
             # get result from query
             sos_model_sim_models = cursor.fetchall()
@@ -527,13 +579,18 @@ class DbConfigStore(ConfigStore):
 
                 # if here, not in relation so add sim model to sos model sim model relation
                 # get max id count in relation
-                cursor.execute('SELECT max(sos_sim_model_id) FROM sos_model_simulation_models WHERE sos_model_name=%s;', [sos_model_name])
+                cursor.execute(
+                    'SELECT max(sos_sim_model_id) FROM sos_model_simulation_models \
+                    WHERE sos_model_name=%s;', [sos_model_name])
 
                 # get result of query
                 sos_sim_model_id = cursor.fetchone()
 
                 # write sim model to sos model sim models relation
-                cursor.execute('INSERT INTO sos_model_simulation_models (sos_model_name, simulation_model_name, sos_sim_model_id) VALUES (%s,%s,%s);', [sos_model_name, sector_model, sos_sim_model_id[0]])
+                cursor.execute(
+                    'INSERT INTO sos_model_simulation_models (sos_model_name, \
+                    simulation_model_name, sos_sim_model_id) VALUES (%s,%s,%s);',
+                    [sos_model_name, sector_model, sos_sim_model_id[0]])
 
                 # write update to database
                 self.database_connection.commit()
@@ -556,7 +613,9 @@ class DbConfigStore(ConfigStore):
                     return
 
                 # add data into database
-                cursor.execute('UPDATE sos_model_scenarios SET scenario_name=%s WHERE sos_model_name=%s;', [scenario, sos_model_name])
+                cursor.execute(
+                    'UPDATE sos_model_scenarios SET scenario_name=%s WHERE sos_model_name=%s;',
+                    [scenario, sos_model_name])
 
             # write to database
             self.database_connection.commit()
@@ -565,7 +624,9 @@ class DbConfigStore(ConfigStore):
         if 'description' in sos_model.keys():
 
             # sql to update description
-            cursor.execute('UPDATE sos_models SET description=%s WHERE name=%s;', [sos_model['description'], sos_model_name])
+            cursor.execute(
+                'UPDATE sos_models SET description=%s WHERE name=%s;',
+                [sos_model['description'], sos_model_name])
 
             # write to database
             self.database_connection.commit()
@@ -597,19 +658,25 @@ class DbConfigStore(ConfigStore):
             return
 
         # delete from sos_model_simulation_models
-        cursor.execute('DELETE FROM sos_model_simulation_models WHERE sos_model_name = %s;', [sos_model_name])
+        cursor.execute(
+            'DELETE FROM sos_model_simulation_models WHERE sos_model_name = %s;',
+            [sos_model_name])
 
         # run query to delete from db
         self.database_connection.commit()
 
         # delete from sos_model_scenarios
-        cursor.execute('DELETE FROM sos_model_scenarios WHERE sos_model_name = %s;', [sos_model_name])
+        cursor.execute(
+            'DELETE FROM sos_model_scenarios WHERE sos_model_name = %s;',
+            [sos_model_name])
 
         # run query to delete from db
         self.database_connection.commit()
 
         # delete from sos_model_dependencies
-        cursor.execute('DELETE FROM sos_model_dependencies WHERE sos_model_name = %s;', [sos_model_name])
+        cursor.execute(
+            'DELETE FROM sos_model_dependencies WHERE sos_model_name = %s;',
+            [sos_model_name])
 
         # run query to delete from db
         self.database_connection.commit()
@@ -654,7 +721,8 @@ class DbConfigStore(ConfigStore):
         for simulation_model in simulation_models:
 
             # get details of the models from the read call and add to list
-            simulation_model_list[simulation_model['name']] = self.read_model(simulation_model['name'])
+            simulation_model_list[simulation_model['name']] = \
+                self.read_model(simulation_model['name'])
 
         # return data to user
         return simulation_model_list
@@ -687,8 +755,12 @@ class DbConfigStore(ConfigStore):
             # run sql call
             for port_type in self.port_types:
 
-                # get specification details by joining sim model port and specification relation using the specification id (unique to each specification)
-                cursor.execute('SELECT s.* FROM simulation_model_port smp JOIN specifications s ON smp.specification_id=s.id WHERE smp.model_name=%s AND port_type=%s;', [model_name, port_type])
+                # get specification details by joining sim model port and specification
+                # relation using the specification id (unique to each specification)
+                cursor.execute(
+                    'SELECT s.* FROM simulation_model_port smp JOIN specifications \
+                    s ON smp.specification_id=s.id WHERE smp.model_name=%s AND port_type=%s;',
+                    [model_name, port_type])
 
                 # get returned data
                 port_data = cursor.fetchall()
@@ -713,7 +785,13 @@ class DbConfigStore(ConfigStore):
 
         # write model
         # write the model to the database
-        cursor.execute('INSERT INTO simulation_models (name, description, interventions, wrapper_location) VALUES (%s,%s,%s,%s) RETURNING id;', [model['name'], model['description'], json.dumps(model['interventions']), model['wrapper_location']])
+        cursor.execute(
+            'INSERT INTO simulation_models (name, description, interventions, \
+            wrapper_location) VALUES (%s,%s,%s,%s) RETURNING id;',
+            [
+                model['name'], model['description'], json.dumps(model['interventions']),
+                model['wrapper_location']
+            ])
 
         # commit changes to database
         self.database_connection.commit()
@@ -725,14 +803,22 @@ class DbConfigStore(ConfigStore):
 
         # loop through port types
         for port_type in self.port_types:
-            # if port type is a key in given model definition, add all specifications to database
+            # if port type is a key in given model definition, add all specifications to
+            # database
             if port_type in model.keys():
                 # loop through the specifications for the port type
                 for spec in model[port_type]:
                     # should probably check it is already not in the database first
 
                     # add specification to database
-                    cursor.execute('INSERT INTO specifications (name, description, dimensions, unit, suggested_range, absolute_range) VALUES (%s,%s,%s,%s,%s,%s) RETURNING id;', [spec['name'], spec['description'], spec['dimensions'], spec['unit'], spec['suggested_range'], spec['absolute_range']])
+                    cursor.execute(
+                        'INSERT INTO specifications (name, description, \
+                        dimensions, unit, suggested_range, absolute_range) VALUES \
+                        (%s,%s,%s,%s,%s,%s) RETURNING id;',
+                        [
+                            spec['name'], spec['description'], spec['dimensions'],
+                            spec['unit'], spec['suggested_range'], spec['absolute_range']
+                        ])
 
                     # commit changes to database
                     self.database_connection.commit()
@@ -741,8 +827,15 @@ class DbConfigStore(ConfigStore):
                     specification_id = cursor.fetchone()
 
                     # write to port
-                    # write model and specification to port table, including the specification id
-                    cursor.execute('INSERT INTO simulation_model_port (model_name, model_id, specification_name, specification_id, port_type) VALUES (%s, %s, %s, %s, %s);', [model['name'], simulation_model_id[0], spec['name'], specification_id[0], port_type])
+                    # write model and specification to port table, including the spec id
+                    cursor.execute(
+                        'INSERT INTO simulation_model_port (model_name, model_id, \
+                        specification_name, specification_id, port_type) VALUES \
+                        (%s, %s, %s, %s, %s);',
+                        [
+                            model['name'], simulation_model_id[0], spec['name'],
+                            specification_id[0], port_type
+                        ])
 
                     # commit changes to database
                     self.database_connection.commit()
@@ -766,15 +859,21 @@ class DbConfigStore(ConfigStore):
 
         # update the model description is passed
         if 'description' in model.keys():
-            cursor.execute('UPDATE simulation_models SET description=%s WHERE name=%s;', [model['description'], model_name])
+            cursor.execute(
+                'UPDATE simulation_models SET description=%s WHERE name=%s;',
+                [model['description'], model_name])
 
         # update the intervention list is passed
         if 'interventions' in model.keys():
-            cursor.execute('UPDATE simulation_models SET interventions=%s WHERE name=%s;', [json.dumps(model['interventions']), model_name])
+            cursor.execute(
+                'UPDATE simulation_models SET interventions=%s WHERE name=%s;',
+                [json.dumps(model['interventions']), model_name])
 
         # update the wrapper location if passed
         if 'wrapper_location' in model.keys():
-            cursor.execute('UPDATE simulation_models SET wrapper_location=%s WHERE name=%s;', [model['wrapper_location'], model_name])
+            cursor.execute(
+                'UPDATE simulation_models SET wrapper_location=%s WHERE name=%s;',
+                [model['wrapper_location'], model_name])
 
         # commit changes to database
         self.database_connection.commit()
@@ -790,7 +889,10 @@ class DbConfigStore(ConfigStore):
                 for spec in model[port_type]:
 
                     # get the id of the specification to update - based on name, model and port
-                    cursor.execute('SELECT specification_id FROM simulation_model_port WHERE port_type=%s and specification_name=%s and model_name=%s;', [port_type, spec['name'], model_name])
+                    cursor.execute(
+                        'SELECT specification_id FROM simulation_model_port WHERE \
+                            port_type=%s and specification_name=%s and model_name=%s;',
+                        [port_type, spec['name'], model_name])
 
                     # get result of query
                     spec_id = cursor.fetchall()
@@ -808,19 +910,29 @@ class DbConfigStore(ConfigStore):
                         continue
                     if 'description' in spec.keys():
                         # run update sql
-                        cursor.execute('UPDATE specifications SET description = %s WHERE id=%s', [spec['description'], spec_id])
+                        cursor.execute(
+                            'UPDATE specifications SET description = %s WHERE id=%s',
+                            [spec['description'], spec_id])
                     if 'dimensions' in spec.keys():
                         # run update sql
-                        cursor.execute('UPDATE specifications SET dimensions = %s WHERE id=%s',                                       [spec['dimensions'], spec_id])
+                        cursor.execute(
+                            'UPDATE specifications SET dimensions = %s WHERE id=%s',
+                            [spec['dimensions'], spec_id])
                     if 'unit' in spec.keys():
                         # run update sql
-                        cursor.execute('UPDATE specifications SET unit = %s WHERE id=%s', [spec['unit'], spec_id])
+                        cursor.execute(
+                            'UPDATE specifications SET unit = %s WHERE id=%s',
+                            [spec['unit'], spec_id])
                     if 'suggested_range' in spec.keys():
                         # run update sql
-                        cursor.execute('UPDATE specifications SET suggested_range = %s WHERE id=%s',[spec['suggested_range'], spec_id])
+                        cursor.execute(
+                            'UPDATE specifications SET suggested_range = %s WHERE id=%s',
+                            [spec['suggested_range'], spec_id])
                     if 'absolute_range' in spec.keys():
                         # run update sql
-                        cursor.execute('UPDATE specifications SET absolute_range = %s WHERE id=%s',[spec['absolute_range'], spec_id])
+                        cursor.execute(
+                            'UPDATE specifications SET absolute_range = %s WHERE id=%s',
+                            [spec['absolute_range'], spec_id])
 
                     # commit changes to database
                     self.database_connection.commit()
@@ -841,20 +953,24 @@ class DbConfigStore(ConfigStore):
 
         # delete specifications if unique to model
         # get a list of the specifications linked to the model name
-        cursor.execute('SELECT * FROM simulation_model_port WHERE model_name=%s;', [model_name])
+        cursor.execute(
+            'SELECT * FROM simulation_model_port WHERE model_name=%s;', [model_name])
 
         # loop through returned model specifications
         for specification in cursor.fetchall():
 
             # check if the specification is used by any other models
-            cursor.execute('SELECT COUNT(*) FROM simulation_model_port WHERE specification_id=%s;', [specification['id']])
+            cursor.execute(
+                'SELECT COUNT(*) FROM simulation_model_port WHERE specification_id=%s;',
+                [specification['id']])
 
             # get the count from the query
             specification_count = cursor.fetchone()
 
             # if the count is only 1, safe to delete specification, otherwise leave it
             if specification_count == 1:
-                cursor.execute('DELETE FROM specifications WHERE id=%s;', [specification['id']])
+                cursor.execute(
+                    'DELETE FROM specifications WHERE id=%s;', [specification['id']])
 
                 # commit changes to database
                 self.database_connection.commit()
@@ -871,10 +987,6 @@ class DbConfigStore(ConfigStore):
         # commit changes to database
         self.database_connection.commit()
 
-        # get the number of rows deleted and return
-        affected_rows = cursor.rowcount
-
-        return
     # endregion
 
     # region Scenarios
@@ -942,11 +1054,6 @@ class DbConfigStore(ConfigStore):
         # commit changes to database
         self.database_connection.commit()
 
-        # get id of new scenario - checks it has been written in
-        scenario_id = cursor.fetchone()
-
-        return
-
     def update_scenario(self, scenario_name, scenario):
         """Update a scenario
 
@@ -962,12 +1069,12 @@ class DbConfigStore(ConfigStore):
         cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
         # run sql call
-        cursor.execute('UPDATE scenarios SET description = %s WHERE name=%s', [scenario['description'], scenario_name])
+        cursor.execute(
+            'UPDATE scenarios SET description = %s WHERE name=%s',
+            [scenario['description'], scenario_name])
 
         # commit changes to database
         self.database_connection.commit()
-
-        return
 
     def delete_scenario(self, scenario_name):
         """Delete a scenario
@@ -988,8 +1095,10 @@ class DbConfigStore(ConfigStore):
 
         if len(scenario_id) > 0:
 
-            # need to check for and delete any scenario variants that are associated with this scenario
-            cursor.execute('DELETE FROM scenario_variants WHERE scenario_name=%s;', [scenario_name])
+            # need to check for and delete any scenario variants that are associated with this
+            # scenario
+            cursor.execute(
+                'DELETE FROM scenario_variants WHERE scenario_name=%s;', [scenario_name])
 
             # commit changes to database
             self.database_connection.commit()
@@ -1021,7 +1130,9 @@ class DbConfigStore(ConfigStore):
         cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
         # run sql call
-        cursor.execute('SELECT sv.*, v.description, v.data FROM scenario_variants sv JOIN variants v ON sv.variant_name = v.name WHERE sv.scenario_name=%s', [scenario_name])
+        cursor.execute(
+            'SELECT sv.*, v.description, v.data FROM scenario_variants sv JOIN variants v \
+                ON sv.variant_name = v.name WHERE sv.scenario_name=%s', [scenario_name])
 
         # get returned data
         scenario_variants = cursor.fetchall()
@@ -1048,7 +1159,10 @@ class DbConfigStore(ConfigStore):
         cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
         # run sql call
-        cursor.execute('SELECT sv.*, v.description, v.data FROM scenario_variants sv JOIN variants v ON sv.variant_name = v.name WHERE sv.scenario_name=%s AND sv.variant_name=%s', [scenario_name, variant_name])
+        cursor.execute(
+            'SELECT sv.*, v.description, v.data FROM scenario_variants sv JOIN variants v \
+                ON sv.variant_name = v.name WHERE sv.scenario_name=%s AND sv.variant_name=%s',
+            [scenario_name, variant_name])
 
         # get returned data
         scenario_variant = cursor.fetchall()
@@ -1075,7 +1189,8 @@ class DbConfigStore(ConfigStore):
         cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
         # here is a dependency on the given scenario name already existing
-        # - this can be enforced in the database by a foreign key, but should probably check here
+        # - this can be enforced in the database by a foreign key, but should probably check
+        #   here
         # - would also enable access to the scenario id
         cursor.execute('SELECT id FROM scenarios WHERE name=%s;', [scenario_name])
 
@@ -1086,17 +1201,18 @@ class DbConfigStore(ConfigStore):
         if len(scenario_id) == 1:
 
             # run sql to add data to variants to database
-            cursor.execute('INSERT INTO variants (name, description, data) VALUES (%s,%s,%s) RETURNING id;', [variant['variant_name'], variant['description'], json.dumps(variant['data'])])
+            cursor.execute(
+                'INSERT INTO variants (name, description, data) VALUES (%s,%s,%s);',
+                [variant['variant_name'], variant['description'], json.dumps(variant['data'])])
 
             # commit changes to database
             self.database_connection.commit()
 
-            # get returned data
-            variant_id = cursor.fetchone()
-
             # run sql call
-            sql = 'INSERT INTO scenario_variants (scenario_name, variant_name, scenario_id) VALUES (%s,%s,%s) RETURNING id;'
-            cursor.execute(sql, [variant['scenario_name'], variant['variant_name'], scenario_id[0]['id']])
+            sql = 'INSERT INTO scenario_variants (scenario_name, variant_name, scenario_id) \
+                VALUES (%s,%s,%s) RETURNING id;'
+            cursor.execute(
+                sql, [variant['scenario_name'], variant['variant_name'], scenario_id[0]['id']])
 
             # commit changes to database
             self.database_connection.commit()
@@ -1127,17 +1243,23 @@ class DbConfigStore(ConfigStore):
         if 'description' in variant.keys() and 'data' in variant.keys():
 
             # run sql call
-            cursor.execute('UPDATE variants SET description=%s AND data=%s WHERE name = %s RETURNING id;', [variant['description'], json.dumps(variant['data']), variant_name])
+            cursor.execute(
+                'UPDATE variants SET description=%s AND data=%s WHERE name = %s RETURNING id;',
+                [variant['description'], json.dumps(variant['data']), variant_name])
 
         elif 'description' in variant.keys() and 'data' not in variant.keys():
 
             # run sql call
-            cursor.execute('UPDATE variants SET description=%s WHERE name = %s RETURNING id;', [variant['description'], variant_name])
+            cursor.execute(
+                'UPDATE variants SET description=%s WHERE name = %s RETURNING id;',
+                [variant['description'], variant_name])
 
         elif 'description' not in variant.keys() and 'data' in variant.keys():
 
             # run sql call
-            cursor.execute('UPDATE variants SET data=%s WHERE name = %s RETURNING id;', [json.dumps(variant['data']), variant_name])
+            cursor.execute(
+                'UPDATE variants SET data=%s WHERE name = %s RETURNING id;',
+                [json.dumps(variant['data']), variant_name])
 
         # commit changes to database
         self.database_connection.commit()

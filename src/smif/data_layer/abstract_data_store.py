@@ -293,17 +293,17 @@ class DataStore(metaclass=ABCMeta):
 
         The 'timestep' dimension is treated as follows:
 
-        If a single timestep is specified, the spec MAY include 'timestep' as a dimension. If so,
-        the returned DataArray's spec will match the timestep requested. Otherwise, the DataArray
-        will not include timestep as a dimension.
+        If a single timestep is specified, the spec MAY include 'timestep' as a dimension. If
+        so, the returned DataArray's spec will match the timestep requested. Otherwise, the
+        DataArray will not include timestep as a dimension.
 
         If multiple timesteps are specified, the returned DataArray's spec will include a
         'timestep' dimension to match the timesteps requested.
 
         If timestep and timesteps are None, and the stored data has a timestep column, read all
         available timesteps. The returned DataArray's spec 'timestep' dimension will match the
-        timesteps requested. If the stored data does not have a timestep column, ignore and pass
-        through unchanged.
+        timesteps requested. If the stored data does not have a timestep column, ignore and
+        pass through unchanged.
         """
         if timestep is not None:
             dataframe = cls._check_timestep_column_exists(dataframe, spec, path)

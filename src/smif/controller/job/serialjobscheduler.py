@@ -3,15 +3,14 @@
 Runs a job graph by calling simulate() on the python Model
 objects in order.
 """
-from smif.data_layer import DataHandle
-from smif.model import ModelOperation
-from collections import defaultdict
-from datetime import datetime
-
-import traceback
-import networkx
 import itertools
 import logging
+import traceback
+from collections import defaultdict
+
+import networkx
+from smif.data_layer import DataHandle
+from smif.model import ModelOperation
 
 
 class SerialJobScheduler(object):

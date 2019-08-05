@@ -28,6 +28,7 @@ before_script:
   - psql -c 'create database test_smif;' -U postgres
 script:
   - cd $TRAVIS_BUILD_DIR && pytest --cov-report html --cov=smif tests/
+  - flake8
   - cd $TRAVIS_BUILD_DIR/src/smif/app && npm test
 after_success: $TRAVIS_BUILD_DIR/ci/coverage.sh
 

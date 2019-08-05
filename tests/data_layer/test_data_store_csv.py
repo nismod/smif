@@ -2,6 +2,7 @@
 """
 # pylint: disable=redefined-outer-name
 import csv
+import logging
 import os
 from tempfile import TemporaryDirectory
 
@@ -32,6 +33,38 @@ def get_scenario_data():
         },
         {
             'population_count': 150,
+            'county': 'oxford',
+            'season': 'spring_month',
+            'timestep': 2017
+        },
+        {
+            'population_count': 200,
+            'county': 'oxford',
+            'season': 'hot_month',
+            'timestep': 2017
+        },
+        {
+            'population_count': 210,
+            'county': 'oxford',
+            'season': 'fall_month',
+            'timestep': 2017
+        },
+    ]
+
+
+@fixture
+def get_missing_scenario_data():
+    """Return sample scenario_data
+    """
+    return [
+        {
+            'population_count': 100,
+            'county': 'oxford',
+            'season': 'cold_month',
+            'timestep': 2017
+        },
+        {
+            'population_count': '',
             'county': 'oxford',
             'season': 'spring_month',
             'timestep': 2017
@@ -239,6 +272,23 @@ class TestScenarios:
 
         actual = config_handler.read_scenario_variant_data(key, scenario_spec, 2015)
         assert actual == expected
+
+    def test_missing_data_gives_nan(self, setup_folder_structure, config_handler,
+                                    scenario_spec, get_missing_scenario_data, caplog):
+        key = _write_scenario_csv(setup_folder_structure, get_missing_scenario_data,
+                                  ('population_count', 'county', 'season', 'timestep'))
+
+        # read fills out NaN as expected
+        expected_data = np.array([[100, float('nan'), 200, 210]], dtype=float)
+        expected = DataArray(scenario_spec, expected_data)
+        actual = config_handler.read_scenario_variant_data(key, scenario_spec, 2017)
+        assert actual == expected
+
+        # a single warning is emitted
+        [message] = [
+            message for _, level, message in caplog.record_tuples if level == logging.WARNING
+        ]
+        assert "Data for 'population_count' had missing values" in message
 
 
 class TestNarrativeVariantData:

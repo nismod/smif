@@ -49,7 +49,8 @@ class Results:
         List of sector models for the given model run
         """
         return sorted(
-            self._store.read_sos_model(self._store.read_model_run(model_run_name)['sos_model'])['sector_models']
+            self._store.read_sos_model(
+                self._store.read_model_run(model_run_name)['sos_model'])['sector_models']
         )
 
     def list_scenarios(self, model_run_name: str):
@@ -76,7 +77,8 @@ class Results:
         -------
         List of outputs for the requested scenario
         """
-        return sorted([x['name'] for x in self._store.read_scenario(scenario_name)['provides']])
+        return sorted(
+            [x['name'] for x in self._store.read_scenario(scenario_name)['provides']])
 
     def list_outputs(self, sector_model_name: str):
         """Return a list of model run names.
@@ -89,7 +91,8 @@ class Results:
         -------
         List of outputs for the given sector model
         """
-        return sorted([x['name'] for x in self._store.read_model(sector_model_name)['outputs']])
+        return sorted(
+            [x['name'] for x in self._store.read_model(sector_model_name)['outputs']])
 
     def available_results(self, model_run_name):
         """Return the results available for a given model run.

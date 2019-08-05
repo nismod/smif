@@ -1,52 +1,50 @@
 """Schedulers are used to run models.
 
-The defaults provided allow model runs to be scheduled as subprocesses,
-or individual models to be called in series.
+The defaults provided allow model runs to be scheduled as subprocesses, or individual models to
+be called in series.
 
-Future implementations may interface with common schedulers to queue
-up models to run in parallel and/or distributed.
+Future implementations may interface with common schedulers to queue up models to run in
+parallel and/or distributed.
 
-The Dafni Scheduler currently only works while connected to
-the RAL vpn.
+The DAFNIRunScheduler currently only works while connected to the RAL vpn.
 
-Posts all of the model run information to the DAFNI API so that a 
-DAFNI worker can start the model run.
+Posts all of the model run information to the DAFNI API so that a DAFNI worker can start the
+model run.
 """
-import subprocess
-from ruamel.yaml import YAML  # type: ignore
-import time
 import json
 import os
-import requests
+import time
 from collections import defaultdict
-from datetime import datetime
-from smif.data_layer import Store
+
+import requests
 from minio import Minio
 from minio.error import ResponseError
+from ruamel.yaml import YAML  # type: ignore
 
 if "BACKEND_NISMOD_MINIO_SECRETS_FILE" in os.environ:
-    MINIO_CREDENTIALS_FILE=os.environ['BACKEND_NISMOD_MINIO_SECRETS_FILE']
-else: 
-    MINIO_CREDENTIALS_FILE=""
+    MINIO_CREDENTIALS_FILE = os.environ['BACKEND_NISMOD_MINIO_SECRETS_FILE']
+else:
+    MINIO_CREDENTIALS_FILE = ""
 if "BACKEND_SECRET_KEY" in os.environ:
-    SECRET_KEY=os.environ['BACKEND_SECRET_KEY']
-else: 
-    SECRET_KEY=""
+    SECRET_KEY = os.environ['BACKEND_SECRET_KEY']
+else:
+    SECRET_KEY = ""
 if "BACKEND_ACCESS_KEY" in os.environ:
-    ACCESS_KEY=os.environ['BACKEND_ACCESS_KEY']
-else: 
-    ACCESS_KEY=""
+    ACCESS_KEY = os.environ['BACKEND_ACCESS_KEY']
+else:
+    ACCESS_KEY = ""
 if "BACKEND_JOBSUBMISSION_API" in os.environ:
-    JOBSUBMISSION_API_URL=os.environ['BACKEND_JOBSUBMISSION_API']
-else: 
-    JOBSUBMISSION_API_URL=""
+    JOBSUBMISSION_API_URL = os.environ['BACKEND_JOBSUBMISSION_API']
+else:
+    JOBSUBMISSION_API_URL = ""
 if "BACKEND_MINIO_IP" in os.environ:
-    MINIO_IP=os.environ['BACKEND_MINIO_IP']
-else: 
-    MINIO_IP=""
+    MINIO_IP = os.environ['BACKEND_MINIO_IP']
+else:
+    MINIO_IP = ""
 
-URL_AUTH=JOBSUBMISSION_API_URL + "auth/obtain_token/"
-URL_JOBS=JOBSUBMISSION_API_URL + "nismod-model/jobs"
+URL_AUTH = JOBSUBMISSION_API_URL + "auth/obtain_token/"
+URL_JOBS = JOBSUBMISSION_API_URL + "nismod-model/jobs"
+
 
 class DAFNIRunScheduler(object):
     """The scheduler can run instances of smif as a subprocess
@@ -66,7 +64,7 @@ class DAFNIRunScheduler(object):
             URL_AUTH,
             json={
                 "username": self.username,
-                "password": self.password 
+                "password": self.password
             },
             allow_redirects=False
         )
@@ -75,7 +73,7 @@ class DAFNIRunScheduler(object):
         self.auth_header = json.loads('{ "Authorization": "JWT ' + token + '"}')
         response = requests.get(URL_JOBS, headers=self.auth_header)
         response.raise_for_status()
-        
+
     def add(self, model_run_name, args):
         """Add a model_run to the Modelrun scheduler.
 
@@ -94,21 +92,12 @@ class DAFNIRunScheduler(object):
         Notes
         -----
         DAFNI's queuing mechanism starts model runs in separate
-        container. This means that it is possible to run multiple 
+        container. This means that it is possible to run multiple
         modelruns concurrently. This will not cause conflicts.
         """
-        if self._status[model_run_name] is not 'running':
+        if self._status[model_run_name] != 'running':
             self._output[model_run_name] = ''
             self._status[model_run_name] = 'queing'
-
-            smif_call = (
-                'smif run ' +
-                '-'*(int(args['verbosity']) > 0) + 'v'*int(args['verbosity']) + ' ' +
-                model_run_name + ' ' +
-                '-d' + ' ' + args['directory'] + ' ' +
-                '-w'*args['warm_start'] + ' '*args['warm_start'] +
-                '-i' + ' ' + args['output_format']
-            )
 
             yaml_files = self.get_yamls(model_run_name, args)
             model_run_id = model_run_name.replace("_", "-")
@@ -121,7 +110,7 @@ class DAFNIRunScheduler(object):
                 secure=False
             )
             bucket_list = minio_client.list_buckets()
-            
+
             for bucket in bucket_list:
                 if bucket.name == model_run_id:
                     for obj in minio_client.list_objects(model_run_id, recursive=True):
@@ -134,16 +123,18 @@ class DAFNIRunScheduler(object):
                     local_path = args['directory'] + yml
                     with open(local_path, 'rb') as yml_data:
                         yml_stat = os.stat(local_path)
-                        minio_client.put_object(model_run_id, yml[1:], yml_data, yml_stat.st_size)
+                        minio_client.put_object(
+                            model_run_id, yml[1:], yml_data, yml_stat.st_size)
                 except ResponseError as err:
                     print(err)
 
             response = requests.get(URL_JOBS, headers=self.auth_header)
             response.raise_for_status()
 
-            for job in response.json():  
+            for job in response.json():
                 if job['job']['job_name'] == model_run_id:
-                    response = requests.delete(URL_JOBS + "/" + str(job['job']['id']), headers=self.auth_header)
+                    response = requests.delete(
+                        URL_JOBS + "/" + str(job['job']['id']), headers=self.auth_header)
                     response.raise_for_status()
 
             response = requests.post(
@@ -151,7 +142,7 @@ class DAFNIRunScheduler(object):
                 json={
                     "job_name": model_run_id,
                     "model_name": model_run_name,
-                    "minio_config_id": model_run_id 
+                    "minio_config_id": model_run_id
                 },
                 headers=self.auth_header
             )
@@ -167,7 +158,7 @@ class DAFNIRunScheduler(object):
         doc = YAML(typ='safe').load(f.read())
 
         yaml_files.append("/config/sos_models/" + doc['sos_model'] + ".yml")
-        
+
         sos_f = open(args['directory'] + yaml_files[1])
         sos_doc = YAML(typ='safe').load(sos_f.read())
 
@@ -222,16 +213,17 @@ class DAFNIRunScheduler(object):
         response = requests.get(URL_JOBS, headers=self.auth_header)
         response.raise_for_status()
 
-        for job in response.json():  
+        for job in response.json():
             if job['job']['job_name'] == model_run_id:
-                requests.delete(URL_JOBS + "/" + str(job['job']['id']), headers=self.auth_header)
+                requests.delete(
+                    URL_JOBS + "/" + str(job['job']['id']), headers=self.auth_header)
 
     def get_status(self, model_run_name):
         response = requests.get(URL_JOBS, headers=self.auth_header)
         response.raise_for_status()
         model_run_id = model_run_name.replace("_", "-")
         if len(response.json()) > 0:
-            for j in response.json():  
+            for j in response.json():
                 if j['job']['job_name'] == model_run_id:
                     job = j['job']
                     status = job['status']
@@ -244,4 +236,3 @@ class DAFNIRunScheduler(object):
             'status': self._status[model_run_name],
             'output': self._output[model_run_name]
         }
-
