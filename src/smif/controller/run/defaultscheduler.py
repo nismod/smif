@@ -6,13 +6,14 @@ or individual models to be called in series.
 Future implementations may interface with common schedulers to queue
 up models to run in parallel and/or distributed.
 
-Calls smif run ... on the selected model in a sub process, where ... 
-are the options set in the app for info/debug messages, warm start 
+Calls smif run ... on the selected model in a sub process, where ...
+are the options set in the app for info/debug messages, warm start
 and output format.
 """
 import subprocess
 from collections import defaultdict
 from datetime import datetime
+
 
 class SubProcessRunScheduler(object):
     """The scheduler can run instances of smif as a subprocess
@@ -50,7 +51,7 @@ class SubProcessRunScheduler(object):
         implementation whether a certain sector model / wrapper
         touches the filesystem or other shared resources.
         """
-        if self._status[model_run_name] is not 'running':
+        if self._status[model_run_name] != 'running':
             self._output[model_run_name] = ''
             self._status[model_run_name] = 'queing'
 
@@ -154,4 +155,3 @@ class SubProcessRunScheduler(object):
             'status': self._status[model_run_name],
             'output': self._output[model_run_name]
         }
-

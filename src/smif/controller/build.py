@@ -29,8 +29,8 @@ def get_model_run_definition(store, modelrun):
     try:
         model_run_config = store.read_model_run(modelrun)
     except SmifDataNotFoundError:
-        logging.error("Model run %s not found. Run 'smif list' to see available model runs.",
-                     modelrun)
+        logging.error(
+            "Model run %s not found. Run 'smif list' to see available model runs.", modelrun)
         exit(-1)
 
     logging.info("Running %s", model_run_config['name'])
