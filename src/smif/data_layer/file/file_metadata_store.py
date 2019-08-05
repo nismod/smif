@@ -155,15 +155,11 @@ class FileMetadataStore(MetadataStore):
     def _read_spatial_file(filepath) -> List[Dict]:
         try:
             with fiona.Env():
-                with fiona.open(filepath) as src:
-                    data = []
-                    for feature in src:
-                        element = {
-                            'name': feature['properties']['name'],
-                            'feature': feature
-                        }
-                        data.append(element)
-            return data
+                return _read_spatial_data(filepath)
+        except AttributeError:
+            # older fiona versions
+            with fiona.drivers():
+                return _read_spatial_data(filepath)
         except NameError as ex:
             msg = "Could not read spatial dimension definition '%s' " % (filepath)
             msg += "Please install fiona to read geographic data files. Try running: \n"
@@ -176,6 +172,18 @@ class FileMetadataStore(MetadataStore):
             msg += "Please verify that the path is correct and "
             msg += "that the file is present on this location."
             raise SmifDataNotFoundError(msg) from ex
+
+
+def _read_spatial_data(filepath):
+    data = []
+    with fiona.open(filepath) as src:
+        for feature in src:
+            element = {
+                'name': feature['properties']['name'],
+                'feature': feature
+            }
+            data.append(element)
+    return data
 
 
 def _read_yaml_file(directory, name):
