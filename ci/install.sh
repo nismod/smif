@@ -40,7 +40,6 @@ if [[ "$DISTRIB" == "conda" ]]; then
         python=$PYTHON_VERSION \
         pytest \
         pytest-cov \
-        flake8 \
         gdal \
         numpy \
         requests \
@@ -54,6 +53,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
     source activate testenv
 fi
 
+pip install 'flake8>=3.7'
 python setup.py develop
 
 # Install node and npm dependencies
