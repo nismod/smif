@@ -40,6 +40,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
         python=$PYTHON_VERSION \
         pytest \
         pytest-cov \
+        flake8 \
         gdal \
         numpy \
         requests \
@@ -51,8 +52,6 @@ if [[ "$DISTRIB" == "conda" ]]; then
         fiona
 
     source activate testenv
-
-    pip install minio
 fi
 
 python setup.py develop
