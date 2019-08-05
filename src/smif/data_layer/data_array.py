@@ -3,8 +3,7 @@
 from logging import getLogger
 
 import numpy as np  # type: ignore
-from smif.exception import (SmifDataError, SmifDataMismatchError,
-                            SmifDataNotFoundError)
+from smif.exception import SmifDataError, SmifDataMismatchError
 from smif.metadata.spec import Spec
 
 # Import pandas, xarray if available (optional dependencies)
