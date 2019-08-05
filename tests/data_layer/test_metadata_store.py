@@ -80,7 +80,10 @@ class TestDimensions():
         assert actual == intervals
 
     def test_update_dimension(self, handler, dimension, sample_dimensions):
-        another_dimension = {'name': 'category', 'elements': [{'name': 4}, {'name': 5}, {'name': 6}]}
+        another_dimension = {
+            'name': 'category',
+            'elements': [{'name': 4}, {'name': 5}, {'name': 6}]
+        }
         handler.update_dimension('category', another_dimension)
         actual = handler.read_dimensions()
         expected = [another_dimension] + sample_dimensions
