@@ -325,8 +325,13 @@ def run_model_runs(args):
     args
     """
     logger = logging.getLogger(__name__)
-    logger.profiling_start('run_model_runs', '{:s}, {:s}, {:s}'.format(
-        args.modelrun, args.interface, args.directory))
+    try:
+        logger.profiling_start('run_model_runs', '{:s}, {:s}, {:s}'.format(
+            args.modelrun, args.interface, args.directory))
+    except AttributeError:
+        logger.info('START run_model_runs', '{:s}, {:s}, {:s}'.format(
+            args.modelrun, args.interface, args.directory))
+
     if args.batchfile:
         with open(args.modelrun, 'r') as f:
             model_run_ids = f.read().splitlines()
@@ -335,9 +340,13 @@ def run_model_runs(args):
 
     store = _get_store(args)
     execute_model_run(model_run_ids, store, args.warm)
-    logger.profiling_stop('run_model_runs', '{:s}, {:s}, {:s}'.format(
-        args.modelrun, args.interface, args.directory))
-    logger.summary()
+    try:
+        logger.profiling_stop('run_model_runs', '{:s}, {:s}, {:s}'.format(
+            args.modelrun, args.interface, args.directory))
+        logger.summary()
+    except AttributeError:
+        logger.info('STOP run_model_runs', '{:s}, {:s}, {:s}'.format(
+            args.modelrun, args.interface, args.directory))
 
 
 def _get_store(args):

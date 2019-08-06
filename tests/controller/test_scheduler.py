@@ -15,7 +15,7 @@ class EmptySectorModel(SectorModel):
 
 
 class TestSubProcessRunScheduler():
-    @patch('smif.controller.run.defaultscheduler.subprocess.Popen')
+    @patch('smif.controller.run.subprocess_run_scheduler.subprocess.Popen')
     def test_single_modelrun(self, mock_popen):
         my_scheduler = SubProcessRunScheduler()
         my_scheduler.add('my_model_run', {
@@ -36,7 +36,7 @@ class TestSubProcessRunScheduler():
         status = my_scheduler.get_status('my_model_run')
         assert status['status'] == 'unstarted'
 
-    @patch('smif.controller.run.defaultscheduler.subprocess.Popen')
+    @patch('smif.controller.run.subprocess_run_scheduler.subprocess.Popen')
     def test_status_model_started(self, mock_popen):
         attrs = {
             'poll.return_value': None,
@@ -59,7 +59,7 @@ class TestSubProcessRunScheduler():
         status = my_scheduler.get_status('my_model_run')
         assert status['status'] == 'running'
 
-    @patch('smif.controller.run.defaultscheduler.subprocess.Popen')
+    @patch('smif.controller.run.subprocess_run_scheduler.subprocess.Popen')
     def test_status_model_done(self, mock_popen):
         attrs = {
             'poll.return_value': 0,
@@ -82,7 +82,7 @@ class TestSubProcessRunScheduler():
 
         assert response['status'] == 'done'
 
-    @patch('smif.controller.run.defaultscheduler.subprocess.Popen')
+    @patch('smif.controller.run.subprocess_run_scheduler.subprocess.Popen')
     def test_status_model_failed(self, mock_popen):
         attrs = {
             'poll.return_value': 1,
@@ -106,7 +106,7 @@ class TestSubProcessRunScheduler():
 
         assert response['status'] == 'failed'
 
-    @patch('smif.controller.run.defaultscheduler.subprocess.Popen')
+    @patch('smif.controller.run.subprocess_run_scheduler.subprocess.Popen')
     def test_status_model_stopped(self, mock_popen):
         attrs = {
             'poll.return_value': None,

@@ -79,37 +79,56 @@ class SerialJobScheduler(object):
         - sort the jobs into a single list
         - unpack model, data_handle and operation from each node
         """
-        self.logger.profiling_start('SerialJobScheduler._run()', 'graph_' + str(job_graph_id))
+        try:
+            self.logger.profiling_start(
+                'SerialJobScheduler._run()', 'graph_' + str(job_graph_id))
+        except AttributeError:
+            self.logger.info('START SerialJobScheduler._run():graph_' + str(job_graph_id))
+
         self._status[job_graph_id] = 'running'
 
         for job_node_id, job in self._get_run_order(job_graph):
-            self.logger.info("Job %s", job_node_id)
-            self.logger.profiling_start('SerialJobScheduler._run()', 'job_' + job_node_id)
-
-            model = job['model']
-            data_handle = DataHandle(
-                store=self.store,
-                model=model,
-                modelrun_name=job['modelrun_name'],
-                current_timestep=job['current_timestep'],
-                timesteps=job['timesteps'],
-                decision_iteration=job['decision_iteration']
-            )
-            operation = job['operation']
-            if operation is ModelOperation.BEFORE_MODEL_RUN:
-                # before_model_run may not be implemented by all jobs
-                if hasattr(model, "before_model_run"):
-                    model.before_model_run(data_handle)
-
-            elif operation is ModelOperation.SIMULATE:
-                model.simulate(data_handle)
-
-            else:
-                raise ValueError("Unrecognised operation: {}".format(operation))
-            self.logger.profiling_stop('SerialJobScheduler._run()', 'job_' + job_node_id)
+            self._run_job(job_node_id, job)
 
         self._status[job_graph_id] = 'done'
-        self.logger.profiling_stop('SerialJobScheduler._run()', 'graph_' + str(job_graph_id))
+        try:
+            self.logger.profiling_stop(
+                'SerialJobScheduler._run()', 'graph_' + str(job_graph_id))
+        except AttributeError:
+            self.logger.info(
+                'STOP SerialJobScheduler._run()', 'graph_' + str(job_graph_id))
+
+    def _run_job(self, job_node_id, job):
+        self.logger.info("Job %s", job_node_id)
+        try:
+            self.logger.profiling_start('SerialJobScheduler._run()', 'job_' + job_node_id)
+        except AttributeError:
+            self.logger.info('START SerialJobScheduler._run()', 'job_' + job_node_id)
+
+        model = job['model']
+        data_handle = DataHandle(
+            store=self.store,
+            model=model,
+            modelrun_name=job['modelrun_name'],
+            current_timestep=job['current_timestep'],
+            timesteps=job['timesteps'],
+            decision_iteration=job['decision_iteration']
+        )
+        operation = job['operation']
+        if operation is ModelOperation.BEFORE_MODEL_RUN:
+            # before_model_run may not be implemented by all jobs
+            if hasattr(model, "before_model_run"):
+                model.before_model_run(data_handle)
+
+        elif operation is ModelOperation.SIMULATE:
+            model.simulate(data_handle)
+        else:
+            raise ValueError("Unrecognised operation: {}".format(operation))
+
+        try:
+            self.logger.profiling_stop('SerialJobScheduler._run()', 'job_' + job_node_id)
+        except AttributeError:
+            self.logger.info('STOP SerialJobScheduler._run()', 'job_' + job_node_id)
 
     def _next_id(self):
         return next(self._id_counter)
