@@ -4,8 +4,8 @@ from unittest.mock import Mock, patch
 
 import networkx
 from pytest import fixture, raises
-from smif.controller.job.serialjobscheduler import SerialJobScheduler
-from smif.controller.run.defaultscheduler import SubProcessRunScheduler
+from smif.controller.job import SerialJobScheduler
+from smif.controller.run import SubProcessRunScheduler
 from smif.model import ModelOperation, ScenarioModel, SectorModel
 
 
