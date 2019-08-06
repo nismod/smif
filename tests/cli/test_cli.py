@@ -332,6 +332,17 @@ def test_confirm_repeat_message(mock_print, input):
     mock_print.assert_called_with('please enter y or n.')
 
 
+def test_help():
+    """Expect help from `smif` or `smif -h`
+    """
+    msg = "Command line tools for smif"
+    output = subprocess.run(['smif'], stdout=subprocess.PIPE)
+    assert msg in str(output.stdout)
+
+    output = subprocess.run(['smif', '-h'], stdout=subprocess.PIPE)
+    assert msg in str(output.stdout)
+
+
 def test_version_display():
     """Expect version number from `smif -V`
     """
