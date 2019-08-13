@@ -17,7 +17,7 @@ SmifDataReadError
 import itertools
 import logging
 import os
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from copy import deepcopy
 from operator import itemgetter
 from os.path import splitext
@@ -1112,12 +1112,89 @@ class Store():
     def available_results(self, model_run_name):
         """List available results from a model run
 
+        Parameters
+        ----------
+        model_run_name : str
+
         Returns
         -------
         list[tuple]
              Each tuple is (timestep, decision_iteration, model_name, output_name)
         """
         return self.data_store.available_results(model_run_name)
+
+    def completed_jobs(self, model_run_name):
+        """List completed jobs from a model run
+
+        Parameters
+        ----------
+        model_run_name : str
+
+        Returns
+        -------
+        list[tuple]
+             Each tuple is (timestep, decision_iteration, model_name)
+        """
+        available_results = self.available_results(model_run_name)  # {(t, d, model, output)}
+        model_outputs = self.expected_model_outputs(model_run_name)  # [(model, output)]
+        completed_jobs = self.filter_complete_available_results(
+            available_results, model_outputs)
+        return completed_jobs
+
+    @staticmethod
+    def filter_complete_available_results(available_results, expected_model_outputs):
+        """Filter available results from a model run to include only complete timestep/decision
+        iteration combinations
+
+        Parameters
+        ----------
+        available_results: list[tuple]
+            List of (timestep, decision_iteration, model_name, output_name)
+        expected_model_outputs: list[tuple]
+            List or set of (model_name, output_name)
+
+        Returns
+        -------
+        list[tuple]
+             Each tuple is (timestep, decision_iteration, model_name)
+        """
+        expected_model_outputs = set(expected_model_outputs)
+        model_names = {model_name for model_name, _ in expected_model_outputs}
+        model_outputs_by_td = defaultdict(set)
+        for timestep, decision, model_name, output_name in available_results:
+            model_outputs_by_td[(timestep, decision)].add((model_name, output_name))
+
+        completed_jobs = []
+        for (timestep, decision), td_model_outputs in model_outputs_by_td.items():
+            if td_model_outputs == expected_model_outputs:
+                for model_name in model_names:
+                    completed_jobs.append((timestep, decision, model_name))
+        return completed_jobs
+
+    def expected_model_outputs(self, model_run_name):
+        """List expected model outputs from a model run
+
+        Parameters
+        ----------
+        model_run_name : str
+
+        Returns
+        -------
+        list[tuple]
+             Each tuple is (model_name, output_name)
+        """
+        model_run = self.read_model_run(model_run_name)
+        sos_model_name = model_run['sos_model']
+        sos_config = self.read_sos_model(sos_model_name)
+
+        # For each model, get the outputs and create (model_name, output_name) tuples
+        expected_model_outputs = []
+        for model_name in sos_config['sector_models']:
+            model_config = self.read_model(model_name)
+            for output in model_config['outputs']:
+                expected_model_outputs.append((model_name, output['name']))
+
+        return expected_model_outputs
 
     def prepare_warm_start(self, model_run_name):
         """Copy the results from the previous model_run if available

@@ -483,6 +483,22 @@ def energy_supply_sector_model(hourly):
 
 
 @fixture
+def sample_gas_demand_results(lad, hourly):
+
+    spec = Spec.from_dict({
+        'name': 'gas_demand',
+        'dtype': 'float',
+        'dims': ['lad', 'hourly'],
+        'coords': {
+            'lad': lad,
+            'hourly': hourly
+        }
+    })
+    data = np.zeros(spec.shape, dtype=float)
+    return DataArray(spec, data)
+
+
+@fixture
 def water_supply_sector_model(hourly):
     """Return sample sector_model
     """

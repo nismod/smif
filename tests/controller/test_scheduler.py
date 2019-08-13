@@ -4,8 +4,8 @@ from unittest.mock import Mock, patch
 
 import networkx
 from pytest import fixture, raises
-from smif.controller.job.serialjobscheduler import SerialJobScheduler
-from smif.controller.run.defaultscheduler import SubProcessRunScheduler
+from smif.controller.job import SerialJobScheduler
+from smif.controller.run import SubProcessRunScheduler
 from smif.model import ModelOperation, ScenarioModel, SectorModel
 
 
@@ -15,7 +15,7 @@ class EmptySectorModel(SectorModel):
 
 
 class TestSubProcessRunScheduler():
-    @patch('smif.controller.run.defaultscheduler.subprocess.Popen')
+    @patch('smif.controller.run.subprocess_run_scheduler.subprocess.Popen')
     def test_single_modelrun(self, mock_popen):
         my_scheduler = SubProcessRunScheduler()
         my_scheduler.add('my_model_run', {
@@ -36,7 +36,7 @@ class TestSubProcessRunScheduler():
         status = my_scheduler.get_status('my_model_run')
         assert status['status'] == 'unstarted'
 
-    @patch('smif.controller.run.defaultscheduler.subprocess.Popen')
+    @patch('smif.controller.run.subprocess_run_scheduler.subprocess.Popen')
     def test_status_model_started(self, mock_popen):
         attrs = {
             'poll.return_value': None,
@@ -59,7 +59,7 @@ class TestSubProcessRunScheduler():
         status = my_scheduler.get_status('my_model_run')
         assert status['status'] == 'running'
 
-    @patch('smif.controller.run.defaultscheduler.subprocess.Popen')
+    @patch('smif.controller.run.subprocess_run_scheduler.subprocess.Popen')
     def test_status_model_done(self, mock_popen):
         attrs = {
             'poll.return_value': 0,
@@ -82,7 +82,7 @@ class TestSubProcessRunScheduler():
 
         assert response['status'] == 'done'
 
-    @patch('smif.controller.run.defaultscheduler.subprocess.Popen')
+    @patch('smif.controller.run.subprocess_run_scheduler.subprocess.Popen')
     def test_status_model_failed(self, mock_popen):
         attrs = {
             'poll.return_value': 1,
@@ -106,7 +106,7 @@ class TestSubProcessRunScheduler():
 
         assert response['status'] == 'failed'
 
-    @patch('smif.controller.run.defaultscheduler.subprocess.Popen')
+    @patch('smif.controller.run.subprocess_run_scheduler.subprocess.Popen')
     def test_status_model_stopped(self, mock_popen):
         attrs = {
             'poll.return_value': None,
@@ -173,8 +173,7 @@ class TestSerialJobScheduler():
             'scenario_dependencies': [],
             'model_dependencies': []
         })
-        scheduler = SerialJobScheduler()
-        scheduler.store = empty_store
+        scheduler = SerialJobScheduler(empty_store)
         return scheduler
 
     def test_add(self, job_graph, scheduler):

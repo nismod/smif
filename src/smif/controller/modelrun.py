@@ -20,7 +20,7 @@ ModeRun has attributes:
 from logging import getLogger
 
 import networkx as nx
-from smif.controller.job.serialjobscheduler import SerialJobScheduler
+from smif.controller.job import SerialJobScheduler
 from smif.decision.decision import DecisionManager
 from smif.exception import SmifModelRunError, SmifTimestepResolutionError
 from smif.metadata import RelativeTimestep
@@ -69,9 +69,8 @@ class ModelRun(object):
     def as_dict(self):
         """Serialises :class:`smif.controller.modelrun.ModelRun`
 
-        Returns a dictionary definition of a ModelRun which is
-        equivalent to that required by :class:`smif.controller.modelrun.ModelRunBuilder`
-        to construct a new model run
+        Returns a dictionary definition of a ModelRun which is equivalent to that required by
+        `from_dict` to construct a new model run
 
         Returns
         -------
@@ -88,6 +87,24 @@ class ModelRun(object):
             'strategies': self.strategies
         }
         return config
+
+    @classmethod
+    def from_dict(cls, config):
+        """Create a :class:`smif.controller.modelrun.ModelRun` from a dictionary
+        """
+        model_run = cls()
+        model_run.name = config['name']
+        model_run.description = config['description']
+        model_run.timestamp = config['stamp']
+        model_run.initialised = False
+        model_run.model_horizon = config['timesteps']
+        model_run.sos_model = config['sos_model']
+        model_run.scenarios = config['scenarios']
+        model_run.narratives = config['narratives']
+        model_run.strategies = config['strategies']
+        model_run.status = 'Built'
+        model_run.validate()
+        return model_run
 
     def validate(self):
         """Validate that this ModelRun has been set up with sufficient data
@@ -124,30 +141,38 @@ class ModelRun(object):
 
         """
         self.logger.debug("Running model run %s", self.name)
-        self.logger.profiling_start('modelrun.run', self.name)
+        try:
+            self.logger.profiling_start('modelrun.run', self.name)
+        except AttributeError:
+            self.logger.info('START modelrun.run', self.name)
 
         if self.status == 'Built':
             if not self.model_horizon:
                 raise SmifModelRunError("No timesteps specified for model run")
-            if warm_start_timestep:
+            warm_start = warm_start_timestep is not None
+            if warm_start:
                 idx = self.model_horizon.index(warm_start_timestep)
                 self.model_horizon = self.model_horizon[idx:]
             self.status = 'Running'
-            modelrunner = ModelRunner()
+            modelrunner = ModelRunner(warm_start)
             modelrunner.solve_model(self, store)
             self.status = 'Successful'
         else:
             raise SmifModelRunError("Model is not yet built.")
 
-        self.logger.profiling_stop('modelrun.run', self.name)
+        try:
+            self.logger.profiling_stop('modelrun.run', self.name)
+        except AttributeError:
+            self.logger.info('STOP modelrun.run', self.name)
 
 
 class ModelRunner(object):
     """The ModelRunner orchestrates the simulation of a SoSModel over decision iterations and
     timesteps as provided by a DecisionManager.
     """
-    def __init__(self):
+    def __init__(self, warm_start=False):
         self.logger = getLogger(__name__)
+        self.warm_start = warm_start
 
     def solve_model(self, model_run, store):
         """Solve a ModelRun
@@ -174,13 +199,17 @@ class ModelRunner(object):
 
         # Initialise the job scheduler
         self.logger.debug("Initialising the job scheduler")
-        job_scheduler = SerialJobScheduler()
-        job_scheduler.store = store
+        job_scheduler = SerialJobScheduler(store=store)
 
         for bundle in decision_manager.decision_loop():
             # each iteration is independent at this point, so the following loop is a
             # candidate for running in parallel
             job_graph = self.build_job_graph(model_run, bundle)
+
+            if self.warm_start:
+                # filter graph to exclude already-available results
+                complete_jobs = store.completed_jobs(model_run.name)
+                job_graph = self.filter_job_graph(job_graph, complete_jobs)
 
             job_id, err = job_scheduler.add(job_graph)
             self.logger.debug("Running job %s", job_id)
@@ -353,6 +382,17 @@ class ModelRunner(object):
         return job_graph
 
     @staticmethod
+    def filter_job_graph(modelrun_name, job_graph, complete_jobs):
+        filtered = job_graph.copy()
+        for timestep, decision_iteration, model_name in complete_jobs:
+            job_id = ModelRunner._make_job_id(
+                modelrun_name, model_name, ModelOperation.SIMULATE, timestep,
+                decision_iteration)
+            if job_id in filtered.nodes:
+                filtered.remove_node(job_id)
+        return filtered
+
+    @staticmethod
     def _make_before_model_run_job_nodes(modelrun_name, models, horizon):
         return [
             (
@@ -471,99 +511,3 @@ class ModelRunner(object):
             id_ = '%s_%s_%s_%s_%s' % (
                 modelrun_name, operation.value, timestep, decision_iteration, model_name)
         return id_
-
-
-class ModelRunBuilder(object):
-    """Builds the ModelRun object from the configuration
-    """
-    def __init__(self):
-        self.model_run = ModelRun()
-        self.logger = getLogger(__name__)
-
-    def construct(self, model_run_config):
-        """Set up the whole ModelRun
-
-        Arguments
-        ---------
-        model_run_config : dict
-            A valid model run configuration dictionary
-        """
-        self.model_run.name = model_run_config['name']
-        self.model_run.description = model_run_config['description']
-        self.model_run.timestamp = model_run_config['stamp']
-        self.model_run.initialised = False
-        self._add_timesteps(model_run_config['timesteps'])
-        self._add_sos_model(model_run_config['sos_model'])
-        self._add_scenarios(model_run_config['scenarios'])
-        self._add_narratives(model_run_config['narratives'])
-        self._add_strategies(model_run_config['strategies'])
-
-        self.model_run.status = 'Built'
-
-    def validate(self):
-        """Check and/or assert that the modelrun is correctly set up
-        - should raise errors if invalid
-        """
-        assert self.model_run is not None, "Sector model not loaded"
-        self.model_run.validate()
-        return True
-
-    def finish(self):
-        """Returns a configured model run ready for operation
-
-        """
-        if self.model_run.status == 'Built':
-            self.validate()
-            return self.model_run
-        else:
-            raise RuntimeError("Run construct() method before finish().")
-
-    def _add_sos_model(self, sos_model_object):
-        """
-
-        Arguments
-        ---------
-        sos_model_object : smif.model.sos_model.SosModel
-        """
-        self.model_run.sos_model = sos_model_object
-
-    def _add_timesteps(self, timesteps):
-        """Set the timesteps of the system-of-systems model
-
-        Arguments
-        ---------
-        timesteps : list
-            A list of timesteps
-        """
-        self.logger.info("Adding timesteps to model run")
-        self.model_run.model_horizon = timesteps
-
-    def _add_scenarios(self, scenarios):
-        """
-
-        Arguments
-        ---------
-        scenarios : dict
-            A dictionary of {scenario set: scenario name}, one for each scenario set
-        """
-        self.model_run.scenarios = scenarios
-
-    def _add_narratives(self, narratives):
-        """
-
-        Arguments
-        ---------
-        narratives : list
-            A list of smif.parameters.Narrative objects
-        """
-        self.model_run.narratives = narratives
-
-    def _add_strategies(self, strategies):
-        """
-
-        Arguments
-        ---------
-        narratives : list
-            A list of strategies
-        """
-        self.model_run.strategies = strategies

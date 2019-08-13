@@ -3,7 +3,7 @@ import os
 import sys
 import traceback
 
-from smif.controller.modelrun import ModelRunBuilder
+from smif.controller.modelrun import ModelRun
 from smif.data_layer.model_loader import ModelLoader
 from smif.exception import SmifDataNotFoundError
 from smif.model import ScenarioModel, SosModel
@@ -122,11 +122,13 @@ def build_model_run(model_run_config):
     `smif.controller.modelrun.ModelRun`
     """
     logger = logging.getLogger()
-    logger.profiling_start('build_model_run', model_run_config['name'])
     try:
-        builder = ModelRunBuilder()
-        builder.construct(model_run_config)
-        modelrun = builder.finish()
+        logger.profiling_start('build_model_run', model_run_config['name'])
+    except AttributeError:
+        logger.info('build_model_run', model_run_config['name'])
+
+    try:
+        model_run = ModelRun.from_dict(model_run_config)
     except AssertionError as error:
         err_type, err_value, err_traceback = sys.exc_info()
         traceback.print_exception(err_type, err_value, err_traceback)
@@ -137,5 +139,8 @@ def build_model_run(model_run_config):
             logger.error("An AssertionError occurred, see details above.")
         exit(-1)
 
-    logger.profiling_stop('build_model_run', model_run_config['name'])
-    return modelrun
+    try:
+        logger.profiling_stop('build_model_run', model_run_config['name'])
+    except AttributeError:
+        logger.info('build_model_run', model_run_config['name'])
+    return model_run
