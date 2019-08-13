@@ -69,9 +69,8 @@ class ModelRun(object):
     def as_dict(self):
         """Serialises :class:`smif.controller.modelrun.ModelRun`
 
-        Returns a dictionary definition of a ModelRun which is
-        equivalent to that required by :class:`smif.controller.modelrun.ModelRunBuilder`
-        to construct a new model run
+        Returns a dictionary definition of a ModelRun which is equivalent to that required by
+        `from_dict` to construct a new model run
 
         Returns
         -------
@@ -88,6 +87,24 @@ class ModelRun(object):
             'strategies': self.strategies
         }
         return config
+
+    @classmethod
+    def from_dict(cls, config):
+        """Create a :class:`smif.controller.modelrun.ModelRun` from a dictionary
+        """
+        model_run = cls()
+        model_run.name = config['name']
+        model_run.description = config['description']
+        model_run.timestamp = config['stamp']
+        model_run.initialised = False
+        model_run.model_horizon = config['timesteps']
+        model_run.sos_model = config['sos_model']
+        model_run.scenarios = config['scenarios']
+        model_run.narratives = config['narratives']
+        model_run.strategies = config['strategies']
+        model_run.status = 'Built'
+        model_run.validate()
+        return model_run
 
     def validate(self):
         """Validate that this ModelRun has been set up with sufficient data
@@ -477,99 +494,3 @@ class ModelRunner(object):
             id_ = '%s_%s_%s_%s_%s' % (
                 modelrun_name, operation.value, timestep, decision_iteration, model_name)
         return id_
-
-
-class ModelRunBuilder(object):
-    """Builds the ModelRun object from the configuration
-    """
-    def __init__(self):
-        self.model_run = ModelRun()
-        self.logger = getLogger(__name__)
-
-    def construct(self, model_run_config):
-        """Set up the whole ModelRun
-
-        Arguments
-        ---------
-        model_run_config : dict
-            A valid model run configuration dictionary
-        """
-        self.model_run.name = model_run_config['name']
-        self.model_run.description = model_run_config['description']
-        self.model_run.timestamp = model_run_config['stamp']
-        self.model_run.initialised = False
-        self._add_timesteps(model_run_config['timesteps'])
-        self._add_sos_model(model_run_config['sos_model'])
-        self._add_scenarios(model_run_config['scenarios'])
-        self._add_narratives(model_run_config['narratives'])
-        self._add_strategies(model_run_config['strategies'])
-
-        self.model_run.status = 'Built'
-
-    def validate(self):
-        """Check and/or assert that the modelrun is correctly set up
-        - should raise errors if invalid
-        """
-        assert self.model_run is not None, "Sector model not loaded"
-        self.model_run.validate()
-        return True
-
-    def finish(self):
-        """Returns a configured model run ready for operation
-
-        """
-        if self.model_run.status == 'Built':
-            self.validate()
-            return self.model_run
-        else:
-            raise RuntimeError("Run construct() method before finish().")
-
-    def _add_sos_model(self, sos_model_object):
-        """
-
-        Arguments
-        ---------
-        sos_model_object : smif.model.sos_model.SosModel
-        """
-        self.model_run.sos_model = sos_model_object
-
-    def _add_timesteps(self, timesteps):
-        """Set the timesteps of the system-of-systems model
-
-        Arguments
-        ---------
-        timesteps : list
-            A list of timesteps
-        """
-        self.logger.info("Adding timesteps to model run")
-        self.model_run.model_horizon = timesteps
-
-    def _add_scenarios(self, scenarios):
-        """
-
-        Arguments
-        ---------
-        scenarios : dict
-            A dictionary of {scenario set: scenario name}, one for each scenario set
-        """
-        self.model_run.scenarios = scenarios
-
-    def _add_narratives(self, narratives):
-        """
-
-        Arguments
-        ---------
-        narratives : list
-            A list of smif.parameters.Narrative objects
-        """
-        self.model_run.narratives = narratives
-
-    def _add_strategies(self, strategies):
-        """
-
-        Arguments
-        ---------
-        narratives : list
-            A list of strategies
-        """
-        self.model_run.strategies = strategies

@@ -2,7 +2,7 @@ from copy import copy
 from unittest.mock import Mock
 
 from pytest import fixture, raises
-from smif.controller.modelrun import ModelRunBuilder, ModelRunner
+from smif.controller.modelrun import ModelRun, ModelRunner
 from smif.exception import SmifModelRunError
 from smif.metadata import RelativeTimestep, Spec
 from smif.model import ScenarioModel, SectorModel, SosModel
@@ -55,9 +55,7 @@ def config_data():
 def model_run(config_data):
     """ModelRun built from config
     """
-    builder = ModelRunBuilder()
-    builder.construct(config_data)
-    return builder.finish()
+    return ModelRun.from_dict(config_data)
 
 
 @fixture(scope='function')
@@ -106,9 +104,7 @@ class TestModelRunBuilder:
     def test_builder(self, config_data):
         """Test basic properties
         """
-        builder = ModelRunBuilder()
-        builder.construct(config_data)
-        modelrun = builder.finish()
+        modelrun = ModelRun.from_dict(config_data)
 
         assert modelrun.name == 'unique_model_run_name'
         assert modelrun.timestamp == '2017-09-20T12:53:23+00:00'
@@ -125,11 +121,9 @@ class TestModelRunBuilder:
             'climate': 'RCP4.5',
             'population': 'high_population'
         }
-        builder = ModelRunBuilder()
-        builder.construct(config_data)
 
         with raises(SmifModelRunError) as ex:
-            builder.finish()
+            ModelRun.from_dict(config_data)
         assert "ScenarioSets {'population'} are selected in the ModelRun " \
                "configuration but not found in the SosModel configuration" in str(ex.value)
 
@@ -146,9 +140,7 @@ class TestModelRun:
         """should error that timesteps are empty
         """
         config_data['timesteps'] = []
-        builder = ModelRunBuilder()
-        builder.construct(config_data)
-        model_run = builder.finish()
+        model_run = ModelRun.from_dict(config_data)
         store = Mock()
         with raises(SmifModelRunError) as ex:
             model_run.run(store)
@@ -157,9 +149,7 @@ class TestModelRun:
     def test_serialize(self, config_data):
         """Serialise back to config dict
         """
-        builder = ModelRunBuilder()
-        builder.construct(config_data)
-        model_run = builder.finish()
+        model_run = ModelRun.from_dict(config_data)
 
         expected = copy(config_data)
         expected['sos_model'] = config_data['sos_model'].name  # expect a reference by name
