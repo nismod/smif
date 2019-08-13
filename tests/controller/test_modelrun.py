@@ -383,3 +383,51 @@ class TestModelRunnerJobGraphs():
         actual = list(job_graph.successors('test_simulate_1_0_model_a'))
         expected = []
         assert actual == expected
+
+    def test_filter_jobgraph(self, mock_model_run):
+        """
+        Filter completed jobs (here: a[sim], t=1]) out of job graph
+
+        a[before]
+        x        |
+        x        V
+        x[xxx]   a[sim]
+        x=x xxx> t=2
+        """
+        model_a = EmptySectorModel('model_a')
+        model_a.add_input(Spec('input', dtype='float'))
+        model_a.add_output(Spec('output', dtype='float'))
+
+        mock_model_run.sos_model.add_model(model_a)
+        mock_model_run.sos_model.add_dependency(
+            model_a, 'output',
+            model_a, 'input',
+            RelativeTimestep.PREVIOUS)
+
+        mock_model_run.model_horizon = [1, 2]
+
+        runner = ModelRunner()
+        bundle = {
+            'decision_iterations': [0],
+            'timesteps': [1, 2]
+        }
+
+        # full job graph
+        job_graph = runner.build_job_graph(mock_model_run, bundle)
+        assert sorted(list(job_graph.nodes)) == [
+            'test_before_model_run_model_a',
+            'test_simulate_1_0_model_a',
+            'test_simulate_2_0_model_a'
+        ]
+
+        complete_jobs = [(1, 0, 'model_a')]
+        job_graph = runner.filter_job_graph(mock_model_run.name, job_graph, complete_jobs)
+
+        # filtered job graph
+        assert sorted(list(job_graph.nodes)) == [
+            'test_before_model_run_model_a',
+            'test_simulate_2_0_model_a'
+        ]
+        assert list(job_graph.edges) == [
+            ('test_before_model_run_model_a', 'test_simulate_2_0_model_a')
+        ]
