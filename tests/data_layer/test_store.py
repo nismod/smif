@@ -30,6 +30,20 @@ def store():
     )
 
 
+@fixture
+def full_store(store, get_sos_model, get_sector_model, energy_supply_sector_model,
+               sample_scenarios, model_run, sample_dimensions):
+    for dim in sample_dimensions:
+        store.write_dimension(dim)
+    store.write_model(get_sector_model)
+    store.write_model(energy_supply_sector_model)
+    for scenario in sample_scenarios:
+        store.write_scenario(scenario)
+    store.write_sos_model(get_sos_model)
+    store.write_model_run(model_run)
+    return store
+
+
 class TestStoreConfig():
     def test_model_runs(self, store, minimal_model_run):
         # write
@@ -624,6 +638,45 @@ class TestStoreData():
         assert store.available_results('model_run_name') == [
             (0, None, 'model_name', spec.name)
         ]
+
+    def test_no_completed_jobs(self, full_store):
+        expected = []
+        actual = full_store.completed_jobs('unique_model_run_name')
+        assert actual == expected
+
+    def test_expected_model_outputs(self, full_store):
+        actual = full_store.expected_model_outputs('unique_model_run_name')
+        expected = [('energy_demand', 'gas_demand')]
+        assert actual == expected
+
+    def test_some_completed_jobs(self, full_store, sample_gas_demand_results):
+        expected = [
+            (2015, 0, 'energy_demand'),
+            (2020, 0, 'energy_demand'),
+        ]
+        full_store.write_results(
+            sample_gas_demand_results, 'unique_model_run_name', 'energy_demand', 2015, 0)
+        full_store.write_results(
+            sample_gas_demand_results, 'unique_model_run_name', 'energy_demand', 2020, 0)
+        actual = full_store.completed_jobs('unique_model_run_name')
+        assert actual == expected
+
+    def test_filter_complete_available_results(self, store):
+        available_results = [
+            (2020, 0, 'test_model', 'output_a'),
+            (2020, 0, 'test_model', 'output_b'),
+            (2025, 0, 'test_model', 'output_a'),
+            (2030, 0, 'other_model', 'output_other'),
+        ]
+        model_outputs = [
+            ('test_model', 'output_a'),
+            ('test_model', 'output_b'),
+        ]
+        expected = [
+            (2020, 0, 'test_model')
+        ]
+        actual = store.filter_complete_available_results(available_results, model_outputs)
+        assert actual == expected
 
     def test_warm_start(self, store, sample_results):
         assert store.prepare_warm_start('test_model_run') is None
