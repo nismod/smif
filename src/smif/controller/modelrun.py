@@ -149,11 +149,12 @@ class ModelRun(object):
         if self.status == 'Built':
             if not self.model_horizon:
                 raise SmifModelRunError("No timesteps specified for model run")
-            if warm_start_timestep:
+            warm_start = warm_start_timestep is not None
+            if warm_start:
                 idx = self.model_horizon.index(warm_start_timestep)
                 self.model_horizon = self.model_horizon[idx:]
             self.status = 'Running'
-            modelrunner = ModelRunner()
+            modelrunner = ModelRunner(warm_start)
             modelrunner.solve_model(self, store)
             self.status = 'Successful'
         else:
@@ -169,8 +170,9 @@ class ModelRunner(object):
     """The ModelRunner orchestrates the simulation of a SoSModel over decision iterations and
     timesteps as provided by a DecisionManager.
     """
-    def __init__(self):
+    def __init__(self, warm_start=False):
         self.logger = getLogger(__name__)
+        self.warm_start = warm_start
 
     def solve_model(self, model_run, store):
         """Solve a ModelRun
@@ -203,6 +205,11 @@ class ModelRunner(object):
             # each iteration is independent at this point, so the following loop is a
             # candidate for running in parallel
             job_graph = self.build_job_graph(model_run, bundle)
+
+            if self.warm_start:
+                # filter graph to exclude already-available results
+                complete_jobs = store.completed_jobs(model_run.name)
+                job_graph = self.filter_job_graph(job_graph, complete_jobs)
 
             job_id, err = job_scheduler.add(job_graph)
             self.logger.debug("Running job %s", job_id)
@@ -373,6 +380,17 @@ class ModelRunner(object):
                 "SosModel dependency graphs must not contain within-timestep cycles")
 
         return job_graph
+
+    @staticmethod
+    def filter_job_graph(modelrun_name, job_graph, complete_jobs):
+        filtered = job_graph.copy()
+        for timestep, decision_iteration, model_name in complete_jobs:
+            job_id = ModelRunner._make_job_id(
+                modelrun_name, model_name, ModelOperation.SIMULATE, timestep,
+                decision_iteration)
+            if job_id in filtered.nodes:
+                filtered.remove_node(job_id)
+        return filtered
 
     @staticmethod
     def _make_before_model_run_job_nodes(modelrun_name, models, horizon):
