@@ -197,8 +197,7 @@ class ModelRunner(object):
 
         # Initialise the job scheduler
         self.logger.debug("Initialising the job scheduler")
-        job_scheduler = SerialJobScheduler()
-        job_scheduler.store = store
+        job_scheduler = SerialJobScheduler(store=store)
 
         for bundle in decision_manager.decision_loop():
             # each iteration is independent at this point, so the following loop is a

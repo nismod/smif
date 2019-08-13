@@ -173,8 +173,7 @@ class TestSerialJobScheduler():
             'scenario_dependencies': [],
             'model_dependencies': []
         })
-        scheduler = SerialJobScheduler()
-        scheduler.store = empty_store
+        scheduler = SerialJobScheduler(empty_store)
         return scheduler
 
     def test_add(self, job_graph, scheduler):

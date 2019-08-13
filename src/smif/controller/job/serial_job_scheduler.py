@@ -16,11 +16,11 @@ from smif.model import ModelOperation
 class SerialJobScheduler(object):
     """Run JobGraphs produced by a :class:`~smif.controller.modelrun.ModelRun`
     """
-    def __init__(self):
+    def __init__(self, store=None):
         self._status = defaultdict(lambda: 'unstarted')
         self._id_counter = itertools.count()
         self.logger = logging.getLogger(__name__)
-        self.store = None
+        self.store = store
 
     def add(self, job_graph):
         """Add a JobGraph to the SerialJobScheduler and run directly
