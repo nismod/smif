@@ -13,6 +13,8 @@ authors:
     given-names: Fergus
   - family-names: Lestang
     given-names: Thibault
+  - family-names: Dickinson
+    given-names: Rose
 title: "smif: simulation modelling integration framework"
 version: 1.1.0
 date-released: 2019-05-07
