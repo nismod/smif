@@ -149,10 +149,16 @@ class ModelRun(object):
         if self.status == 'Built':
             if not self.model_horizon:
                 raise SmifModelRunError("No timesteps specified for model run")
+
+            # Either avoid rework (if warm_start) or else make sure to clear stale results
             warm_start = warm_start_timestep is not None
             if warm_start:
                 idx = self.model_horizon.index(warm_start_timestep)
                 self.model_horizon = self.model_horizon[idx:]
+            else:
+                self.logger.debug("Clearing results for %s", self.name)
+                store.clear_results(self.name)
+
             self.status = 'Running'
             modelrunner = ModelRunner(warm_start)
             modelrunner.solve_model(self, store)

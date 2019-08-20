@@ -46,6 +46,19 @@ class DataStore(metaclass=ABCMeta):
         """
 
     @abstractmethod
+    def scenario_variant_data_exists(self, key) -> bool:
+        """Test if scenario variant data exists
+
+        Parameters
+        ----------
+        key : str
+
+        Returns
+        -------
+        bool
+        """
+
+    @abstractmethod
     def write_scenario_variant_data(self, key, data_array):
         """Write data array
 
@@ -274,6 +287,20 @@ class DataStore(metaclass=ABCMeta):
         model_name : str
         timestep : int, optional
         decision_iteration : int, optional
+        """
+
+    @abstractmethod
+    def delete_results(self, model_run_name, model_name, output_name, timestep=None,
+                       decision_iteration=None):
+        """Delete results for a single timestep/iteration of a model output in a model run
+
+        Parameters
+        ----------
+        model_run_name : str
+        model_name : str
+        output_name : str
+        timestep : int, default=None
+        decision_iteration : int, default=None
         """
 
     @abstractmethod

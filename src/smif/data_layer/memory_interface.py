@@ -400,6 +400,14 @@ class MemoryDataStore(DataStore):
         key = (modelrun_name, model_name, data_array.spec.name, timestep, decision_iteration)
         self._results[key] = data_array.as_ndarray()
 
+    def delete_results(self, model_run_name, model_name, output_name, timestep=None,
+                       decision_iteration=None):
+        key = (model_run_name, model_name, output_name, timestep, decision_iteration)
+        try:
+            del self._results[key]
+        except KeyError:
+            pass
+
     def available_results(self, model_run_name):
         results_keys = [
             (timestep, decision_iteration, model_name, output_name)
