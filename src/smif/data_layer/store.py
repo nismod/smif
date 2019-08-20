@@ -21,7 +21,7 @@ from collections import OrderedDict, defaultdict
 from copy import deepcopy
 from operator import itemgetter
 from os.path import splitext
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 import numpy as np  # type: ignore
 from smif.data_layer import DataArray
@@ -629,7 +629,7 @@ class Store():
     def read_scenario_variant_data(
             self, scenario_name: str, variant_name: str, variable: str,
             timestep: Optional[int] = None, timesteps: Optional[List[int]] = None,
-            assert_exists: bool = False) -> DataArray:
+            assert_exists: bool = False) -> Union[DataArray, bool]:
         """Read scenario data file
 
         Parameters
