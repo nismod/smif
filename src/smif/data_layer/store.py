@@ -1109,6 +1109,33 @@ class Store():
         self.data_store.write_results(
             data_array, model_run_name, model_name, timestep, decision_iteration)
 
+    def delete_results(self, model_run_name, model_name, output_name, timestep=None,
+                       decision_iteration=None):
+        """Delete results for a single timestep/iteration of a model output in a model run
+
+        Parameters
+        ----------
+        model_run_name : str
+        model_name : str
+        output_name : str
+        timestep : int, default=None
+        decision_iteration : int, default=None
+        """
+        self.data_store.delete_results(
+            model_run_name, model_name, output_name, timestep, decision_iteration)
+
+    def clear_results(self, model_run_name):
+        """Clear all results from a single model run
+
+        Parameters
+        ----------
+        model_run_name : str
+        """
+        available = self.available_results(model_run_name)
+        for timestep, decision_iteration, model_name, output_name in available:
+            self.data_store.delete_results(
+                model_run_name, model_name, output_name, timestep, decision_iteration)
+
     def available_results(self, model_run_name):
         """List available results from a model run
 

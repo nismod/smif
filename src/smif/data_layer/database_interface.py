@@ -1407,6 +1407,10 @@ class DbDataStore(DataStore):
                       decision_iteration=None):
         raise NotImplementedError()
 
+    def delete_results(self, model_run_name, model_name, output_name, timestep=None,
+                       decision_iteration=None):
+        raise NotImplementedError()
+
     def prepare_warm_start(self, modelrun_id):
         raise NotImplementedError()
     # endregion

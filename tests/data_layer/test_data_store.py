@@ -220,10 +220,28 @@ class TestResults():
         """
         assert handler.available_results('test_modelrun') == []
         handler.write_results(sample_results, 'test_modelrun', 'energy', 2010, 0)
+        handler.write_results(sample_results, 'test_modelrun', 'energy', 2015, 0)
+        handler.write_results(sample_results, 'test_modelrun', 'energy', 2015, 1)
 
         # keys should be (timestep, decision_iteration, model_name, output_name)
-        assert handler.available_results('test_modelrun') == \
-            [(2010, 0, 'energy', sample_results.spec.name)]
+        assert handler.available_results('test_modelrun') == [
+            (2010, 0, 'energy', sample_results.spec.name),
+            (2015, 0, 'energy', sample_results.spec.name),
+            (2015, 1, 'energy', sample_results.spec.name)
+        ]
+
+        # delete one
+        handler.delete_results('test_modelrun', 'energy', sample_results.spec.name, 2010, 0)
+        assert handler.available_results('test_modelrun') == [
+            (2015, 0, 'energy', sample_results.spec.name),
+            (2015, 1, 'energy', sample_results.spec.name)
+        ]
+
+        # clear all (no error if re-deleting)
+        handler.delete_results('test_modelrun', 'energy', sample_results.spec.name, 2010, 0)
+        handler.delete_results('test_modelrun', 'energy', sample_results.spec.name, 2015, 0)
+        handler.delete_results('test_modelrun', 'energy', sample_results.spec.name, 2015, 1)
+        assert not handler.available_results('test_modelrun')
 
     def test_read_results_raises(self, handler, sample_results):
         modelrun_name = 'test_modelrun'

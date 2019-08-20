@@ -305,6 +305,26 @@ class FileDataStore(DataStore):
         os.makedirs(os.path.dirname(results_path), exist_ok=True)
         self._write_data_array(results_path, data_array)
 
+    def delete_results(self, model_run_name, model_name, output_name, timestep=None,
+                       decision_iteration=None):
+        if timestep is None:
+            raise NotImplementedError()
+
+        if timestep:
+            assert isinstance(timestep, int), "Timestep must be an integer"
+        if decision_iteration:
+            assert isinstance(decision_iteration, int), "Decision iteration must be an integer"
+
+        results_path = self._get_results_path(
+            model_run_name, model_name, output_name,
+            timestep, decision_iteration
+        )
+        try:
+            os.remove(results_path)
+        except OSError as ex:
+            self.logger.info("Ignored error deleting results {} - {}".format(
+                ex.filename, ex.strerror))
+
     def available_results(self, modelrun_name):
         """List available results for a given model run
 

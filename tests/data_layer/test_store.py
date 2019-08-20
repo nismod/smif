@@ -638,6 +638,9 @@ class TestStoreData():
         assert store.available_results('model_run_name') == [
             (0, None, 'model_name', spec.name)
         ]
+        # delete
+        store.clear_results('mdel_run_name')
+        assert not store.available_results('model_run_name')
 
     def test_no_completed_jobs(self, full_store):
         expected = []
