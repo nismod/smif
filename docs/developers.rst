@@ -99,32 +99,36 @@ Releases
 `smif`_ is deployed as a package on the Python Package Index, PyPI. A full guide
 to `packaging`_ and distributing projects is available online.
 
-Deployment to PyPI is handled by Travis CI, and versions are controlled by git tags.
+Deployment to PyPI is handled by Travis CI, and versions are controlled by git tags. Deployment
+to conda is via the conda-forge smif feedstock.
 
-First update the ``CHANGELOG.rst`` with a short summary of fixes and new features. Commit
+To make a release:
+
+- [ ] create a release branch
+- [ ] update CHANGELOG with notes on features and fixes since last release.
+- [ ] update AUTHORS if necessary
+- [ ] create and push an annotated tag
+- [ ] open a pull request
+- [ ] wait (~15 minutes) for tests to pass
+- [ ] check that deploy stage ran as expected, new version available on https://pypi.org/project/smif/#history
+- [ ] create a GitHub release for the tag
+- [ ] wait (~1 day) for conda bot to open PR on https://github.com/conda-forge/smif-feedstock
+- [ ] check dependencies/versions/lints and merge to release conda package
+
+
+To  update the ``CHANGELOG.rst`` with a short summary of fixes and new features. Commit
 message summaries should give a reasonable starting point:
 
     git log v1.1.0..HEAD --oneline
 
-To make a release, create an annotated tag::
+To create and push a tag:
 
-    git tag -a v0.2.0       # create annotated tag (will need a message)
-    git describe            # show current commit in relation to tags
+    git tag -a v0.2.0         # create annotated tag (will need a message)
+    git describe              # show current commit in relation to tags
+    git push upstream v0.2.0  # push the tag to a remote (typically upstream or origin)
 
-You'll need to specify you tag to push either using the ``--tags`` flag or
-the tag name::
-
-    git push upstream master --tags
-    git push upstream v0.2.0        # alternatively
-
-This will trigger the Travis ``deploy`` stage which publishes to PyPI.
-
-Create a release on GitHub: go to https://github.com/nismod/smif/releases/new and enter the
+To create a release on GitHub: go to https://github.com/nismod/smif/releases/new and enter the
 same tag name as above. Reuse the CHANGELOG text for the description.
-
-Release smif on Conda Forge: within a few hours of a PyPI release, a bot will open a pull
-request in the smif conda-forge feedstock repo, https://github.com/conda-forge/smif-feedstock
-Check for updates to dependency versions and merge.
 
 
 Code style
