@@ -333,20 +333,37 @@ def _validate_dependency(idx, dependency, conf_key, source, source_key, sink,
     # Source_output and sink_input must have matching specs
     source_model_output = source_model_outputs[0]
     sink_model_input = sink_model_inputs[0]
-    if sorted(source_model_output['dims']) != sorted(sink_model_input['dims']):
-        errors.append(
-            SmifDataInputError(
-                conf_key,
-                '(Dependency %s) Source `%s` has different dimensions than sink ' % (
-                    idx + 1,
-                    source_model_output['name']
-                ) +
-                '`%s` (%s != %s).' % (
-                    sink_model_input['name'],
-                    source_model_output['dims'],
-                    sink_model_input['dims']
-                ),
-                'Dependencies must have matching dimensions.'))
+    if 'dims' in source_model_output and 'dims' in sink_model_input:
+        if sorted(source_model_output['dims']) != sorted(sink_model_input['dims']):
+            errors.append(
+                SmifDataInputError(
+                    conf_key,
+                    '(Dependency %s) Source `%s` has different dimensions than sink ' % (
+                        idx + 1,
+                        source_model_output['name']
+                    ) +
+                    '`%s` (%s != %s).' % (
+                        sink_model_input['name'],
+                        source_model_output['dims'],
+                        sink_model_input['dims']
+                    ),
+                    'Dependencies must have matching dimensions.'))
+    else:
+        if 'dims' in source_model_output or 'dims' in sink_model_input:
+            errors.append(
+                SmifDataInputError(
+                    conf_key,
+                    '(Dependency %s) Source `%s` has different dimensions than sink ' % (
+                        idx + 1,
+                        source_model_output['name']
+                    ) +
+                    '`%s` (%s != %s).' % (
+                        sink_model_input['name'],
+                        source_model_output,
+                        sink_model_input
+                    ),
+                    'Dependencies must have matching dimensions.'))
+
     if source_model_output['dtype'] != sink_model_input['dtype']:
         errors.append(
             SmifDataInputError(
