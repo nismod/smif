@@ -377,10 +377,52 @@ class TestValidateSosModel:
                 get_sos_model,
                 [get_sector_model, energy_supply_sector_model],
                 sample_scenarios)
-            assert False
         except SmifDataError as ex:
             assert len(ex.args[0]) == 2
             assert ex.args[0][0].component == 'model_dependencies'
             assert 'Sink input `input_a` is driven by multiple sources' in ex.args[0][0].error
             assert ex.args[0][1].component == 'model_dependencies'
             assert 'Sink input `input_a` is driven by multiple sources' in ex.args[0][0].error
+
+    def test_dependencies_with_no_dims_spec(
+            self, get_sos_model, get_sector_model, energy_supply_sector_model,
+            sample_scenarios):
+        """Expect error when sink input is driven by multiple
+        sources
+        """
+        get_sos_model['model_dependencies'] = [
+            {
+                "source": "energy_demand",
+                "source_output": "output_a",
+                "sink": "energy_supply",
+                "sink_input": "input_a"
+            }
+        ]
+        get_sector_model['outputs'] = [
+            {
+                "name": "output_a",
+                "dims": [
+                    "dim_a"
+                ],
+                "dtype": "dtype_a",
+                "unit": "unit_a"
+            }
+        ]
+        energy_supply_sector_model['inputs'] = [
+            {
+                "name": "input_a",
+                "dtype": "dtype_a",
+                "unit": "unit_a"
+            }
+        ]
+
+        try:
+            validate_sos_model_config(
+                get_sos_model,
+                [get_sector_model, energy_supply_sector_model],
+                sample_scenarios)
+        except SmifDataError as ex:
+            assert len(ex.args[0]) == 1
+            assert ex.args[0][0].component == 'model_dependencies'
+            assert 'Source `output_a` has different dimensions than sink `input_a`' \
+                in ex.args[0][0].error
