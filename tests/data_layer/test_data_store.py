@@ -224,7 +224,7 @@ class TestResults():
         handler.write_results(sample_results, 'test_modelrun', 'energy', 2015, 1)
 
         # keys should be (timestep, decision_iteration, model_name, output_name)
-        assert handler.available_results('test_modelrun') == [
+        assert sorted(handler.available_results('test_modelrun')) == [
             (2010, 0, 'energy', sample_results.spec.name),
             (2015, 0, 'energy', sample_results.spec.name),
             (2015, 1, 'energy', sample_results.spec.name)
@@ -232,7 +232,7 @@ class TestResults():
 
         # delete one
         handler.delete_results('test_modelrun', 'energy', sample_results.spec.name, 2010, 0)
-        assert handler.available_results('test_modelrun') == [
+        assert sorted(handler.available_results('test_modelrun')) == [
             (2015, 0, 'energy', sample_results.spec.name),
             (2015, 1, 'energy', sample_results.spec.name)
         ]
