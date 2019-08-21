@@ -52,8 +52,19 @@ class Mock(MagicMock):
 
 # mock modules which we can avoid installing for docs-building
 mock_modules = [
+    'dateutil',
+    'dateutil.parser',
     'fiona',
+    'flask',
+    'flask.views',
+    'isodate',
+    'networkx',
+    'numpy',
+    'requests',
+    'pint',
+    'pyarrow',
     'rtree',
+    'ruamel.yaml',
     'shapely',
     'shapely.geometry',
     'shapely.validation',
@@ -179,7 +190,8 @@ html_theme = 'alabaster'
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
 try:
-    from smif import __version__ as version
+    from smif import __version__
+    version = __version__
 except ImportError:
     pass
 else:
@@ -290,12 +302,9 @@ latex_documents = [
 # -- External mapping ------------------------------------------------------------
 python_version = '.'.join(map(str, sys.version_info[0:2]))
 intersphinx_mapping = {
-    'matplotlib': ('http://matplotlib.org/', None),
     'numpy': ('https://docs.scipy.org/doc/numpy/', None),
     'pandas': ('http://pandas.pydata.org/pandas-docs/stable/', None),
     'python': ('https://docs.python.org/' + python_version, None),
-    'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
-    'sklearn': ('http://scikit-learn.org/stable/', None),
     'sphinx': ('http://www.sphinx-doc.org/en/stable/', None),
     'xarray': ('http://xarray.pydata.org/en/stable/', None),
 }
