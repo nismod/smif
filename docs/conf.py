@@ -58,6 +58,7 @@ mock_modules = [
     'flask',
     'flask.views',
     'isodate',
+    'minio',
     'networkx',
     'numpy',
     'requests',
