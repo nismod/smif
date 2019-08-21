@@ -2,6 +2,30 @@
 Changelog
 =========
 
+Version 1.2
+===========
+
+Features:
+
+- Warm start avoids re-running models within a partially-complete timestep
+- DAFNI scheduler plugin
+- Convert CSV to Parquet store
+- Create model runs corresponding to all variants in a scenario
+- Results object gives access to all model run results (helper wrapper around a Store)
+
+Fixes:
+
+- Handle missing dims in dependency validation
+- Clear results before new run
+- Update pytest and fix testing for error messages
+- Fix spec/data mismatch when reading scenario data
+
+Config update may be required:
+
+- Data file references in YAML configs should not include extensions (`.csv` or `.parquet`) in
+  order to support conversion between data store implementations.
+
+
 Version 1.1
 ===========
 
