@@ -62,7 +62,6 @@ mock_modules = [
     'minio.error',
     'networkx',
     'numpy',
-    'requests',
     'pint',
     'pyarrow',
     'rtree',
