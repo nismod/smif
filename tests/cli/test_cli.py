@@ -79,13 +79,22 @@ def test_fixture_single_run_warm(tmp_sample_project):
     """Test running the (default) single_run fixture with warm setting enabled
     """
     config_dir = tmp_sample_project
-    output = subprocess.run(["smif", "run", "-v", "-w", "-d", config_dir,
-                             "energy_central"],
-                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    print(output.stdout.decode("utf-8"))
-    print(output.stderr.decode("utf-8"), file=sys.stderr)
-    assert "Running energy_central" in str(output.stderr)
-    assert "Model run 'energy_central' complete" in str(output.stdout)
+    cold_output = subprocess.run(
+        ["smif", "run", "-v", "-d", config_dir, "energy_central"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
+    print(cold_output.stdout.decode("utf-8"))
+    print(cold_output.stderr.decode("utf-8"), file=sys.stderr)
+
+    warm_output = subprocess.run(
+        ["smif", "run", "-v", "-w", "-d", config_dir, "energy_central"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
+    print(warm_output.stdout.decode("utf-8"))
+    print(warm_output.stderr.decode("utf-8"), file=sys.stderr)
+
+    assert "Job energy_central_simulate_2010_1_energy_demand" in str(cold_output.stderr)
+    assert "Job energy_central_simulate_2010_1_energy_demand" not in str(warm_output.stderr)
 
 
 def test_fixture_batch_run(tmp_sample_project):

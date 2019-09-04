@@ -215,7 +215,7 @@ class ModelRunner(object):
             if self.warm_start:
                 # filter graph to exclude already-available results
                 complete_jobs = store.completed_jobs(model_run.name)
-                job_graph = self.filter_job_graph(job_graph, complete_jobs)
+                job_graph = self.filter_job_graph(model_run.name, job_graph, complete_jobs)
 
             job_id, err = job_scheduler.add(job_graph)
             self.logger.debug("Running job %s", job_id)
