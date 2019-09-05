@@ -2,6 +2,16 @@
 Changelog
 =========
 
+Version 1.2.1
+=============
+
+Fixes:
+
+- Fix warm start re-run
+- Update npm module dependencies in React app
+- Fix docs build
+
+
 Version 1.2
 ===========
 
