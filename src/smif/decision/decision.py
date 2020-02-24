@@ -53,7 +53,8 @@ class DecisionManager(object):
     def __init__(self, store: Store,
                  timesteps: List[int],
                  modelrun_name: str,
-                 sos_model):
+                 sos_model,
+                 decision: int = 0):
 
         self.logger = getLogger(__name__)
 
