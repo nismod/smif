@@ -26,8 +26,6 @@ The key functions include:
   approaches
 
 """
-from abc import ABCMeta, abstractmethod
-
 from smif.model.model import Model
 
 __author__ = "Will Usher, Tom Russell"
@@ -35,7 +33,7 @@ __copyright__ = "Will Usher, Tom Russell"
 __license__ = "mit"
 
 
-class SectorModel(Model, metaclass=ABCMeta):
+class SectorModel(Model):
     """A representation of the sector model with inputs and outputs
 
     Implement this class to enable integration of the wrapped simulation model
@@ -76,9 +74,7 @@ class SectorModel(Model, metaclass=ABCMeta):
             input data or state is guaranteed to be available)
             Access decision/system state (i.e. initial_conditions)
         """
-        pass
 
-    @abstractmethod
     def simulate(self, data):
         """Implement this method to run the model
 
@@ -117,5 +113,4 @@ class SectorModel(Model, metaclass=ABCMeta):
         of intervention dict for the current timestep
         :meth:`~smif.data_layer.data_handle.DataHandle.get_current_interventions`
         returns a list of dict where each dict is an intervention
-
         """
