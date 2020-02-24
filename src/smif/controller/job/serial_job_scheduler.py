@@ -9,8 +9,7 @@ import traceback
 from collections import defaultdict
 
 import networkx
-from smif.data_layer import DataHandle
-from smif.model import ModelOperation
+from smif.controller import execute_model_step
 
 
 class SerialJobScheduler(object):
@@ -105,25 +104,14 @@ class SerialJobScheduler(object):
         except AttributeError:
             self.logger.info('START SerialJobScheduler._run()', 'job_' + job_node_id)
 
-        model = job['model']
-        data_handle = DataHandle(
-            store=self.store,
-            model=model,
-            modelrun_name=job['modelrun_name'],
-            current_timestep=job['current_timestep'],
-            timesteps=job['timesteps'],
-            decision_iteration=job['decision_iteration']
+        execute_model_step(
+            job['modelrun_name'],
+            job['model'].name,
+            job['current_timestep'],
+            job['decision_iteration'],
+            self.store,
+            job['operation']
         )
-        operation = job['operation']
-        if operation is ModelOperation.BEFORE_MODEL_RUN:
-            # before_model_run may not be implemented by all jobs
-            if hasattr(model, "before_model_run"):
-                model.before_model_run(data_handle)
-
-        elif operation is ModelOperation.SIMULATE:
-            model.simulate(data_handle)
-        else:
-            raise ValueError("Unrecognised operation: {}".format(operation))
 
         try:
             self.logger.profiling_stop('SerialJobScheduler._run()', 'job_' + job_node_id)

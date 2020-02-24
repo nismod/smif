@@ -4,9 +4,8 @@ import sys
 import traceback
 
 from smif.controller.modelrun import ModelRun
-from smif.data_layer.model_loader import ModelLoader
 from smif.exception import SmifDataNotFoundError
-from smif.model import ScenarioModel, SosModel
+from smif.model import ScenarioModel, SectorModel, SosModel
 
 
 def get_model_run_definition(store, modelrun):
@@ -96,7 +95,6 @@ def get_sector_models(sector_model_names, handler):
     list of SectorModel implementations
     """
     sector_models = []
-    loader = ModelLoader()
     for sector_model_name in sector_model_names:
         sector_model_config = handler.read_model(sector_model_name)
 
@@ -104,7 +102,7 @@ def get_sector_models(sector_model_names, handler):
         sector_model_config['path'] = os.path.normpath(
             os.path.join(handler.model_base_folder, sector_model_config['path'])
         )
-        sector_model = loader.load(sector_model_config)
+        sector_model = SectorModel.from_dict(sector_model_config)
         sector_models.append(sector_model)
     return sector_models
 
