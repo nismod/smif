@@ -292,7 +292,7 @@ class ModelRunner(object):
                 job_graph.add_nodes_from(
                     self._make_simulate_job_nodes(
                         model_run.name,
-                        model_run.sos_model.models,
+                        model_run.sos_model.sector_models,
                         decision_iteration,
                         timestep,
                         model_run.model_horizon
@@ -302,7 +302,7 @@ class ModelRunner(object):
                 job_graph.add_edges_from(
                     self._make_current_simulate_job_edges(
                         model_run.name,
-                        model_run.sos_model.dependencies,
+                        model_run.sos_model.model_dependencies,
                         timestep,
                         decision_iteration
                     )
@@ -321,7 +321,7 @@ class ModelRunner(object):
                         job_graph.add_edges_from(
                             self._make_between_bundle_previous_simulate_job_edges(
                                 model_run.name,
-                                model_run.sos_model.dependencies,
+                                model_run.sos_model.model_dependencies,
                                 timestep,
                                 previous_timestep,
                                 decision_iteration,
@@ -334,7 +334,7 @@ class ModelRunner(object):
                         job_graph.add_edges_from(
                             self._make_initial_previous_simulate_job_edges(
                                 model_run.name,
-                                model_run.sos_model.dependencies,
+                                model_run.sos_model.model_dependencies,
                                 timestep,
                                 decision_iteration
                             )
@@ -346,7 +346,7 @@ class ModelRunner(object):
                     job_graph.add_edges_from(
                         self._make_within_bundle_previous_simulate_job_edges(
                             model_run.name,
-                            model_run.sos_model.dependencies,
+                            model_run.sos_model.model_dependencies,
                             timestep,
                             previous_timestep,
                             decision_iteration
@@ -359,7 +359,7 @@ class ModelRunner(object):
             job_graph.add_nodes_from(
                 self._make_before_model_run_job_nodes(
                     model_run.name,
-                    model_run.sos_model.models,
+                    model_run.sos_model.sector_models,
                     model_run.model_horizon
                 )
             )
@@ -369,7 +369,7 @@ class ModelRunner(object):
                     job_graph.add_edges_from(
                         self._make_before_model_run_job_edges(
                             model_run.name,
-                            model_run.sos_model.models,
+                            model_run.sos_model.sector_models,
                             timestep,
                             decision_iteration
                         )
