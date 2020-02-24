@@ -9,11 +9,24 @@ from smif.data_layer import DataHandle
 from smif.data_layer.model_loader import ModelLoader
 from smif.decision.decision import DecisionManager
 from smif.exception import SmifDataNotFoundError
-from smif.model import ModelOperation
 
 
-def execute_model_step(model_run_id, model_name, timestep, decision, store,
-                       operation=ModelOperation.SIMULATE):
+def execute_model_before_step(model_run_id, model_name, store, dry_run=False):
+    """Runs model initialisation
+
+    This method
+    """
+    if dry_run:
+        print("    smif before_step {} --model {}".format(model_run_id, model_name))
+    else:
+        model, data_handle = _get_model_and_handle(store, model_run_id, model_name)
+
+        # before_model_run may not be implemented by all jobs
+        if hasattr(model, "before_model_run"):
+            model.before_model_run(data_handle)
+
+
+def execute_model_step(model_run_id, model_name, timestep, decision, store, dry_run=False):
     """Runs a single step of a model run
 
     This method is designed to be the single place where smif actually calls wrapped models.
@@ -37,8 +50,18 @@ def execute_model_step(model_run_id, model_name, timestep, decision, store,
     decision: int
         Decision to run
     store: Store
-    operation: ModelOperation, optional
-        Model operation to execute, either before_model_run or simulate
+    """
+    if dry_run:
+        print("    smif step {} --model {} --timestep {} --decision {}".format(
+              model_run_id, model_name, timestep, decision))
+    else:
+        model, data_handle = _get_model_and_handle(
+            store, model_run_id, model_name, timestep, decision)
+        model.simulate(data_handle)
+
+
+def _get_model_and_handle(store, model_run_id, model_name, timestep=None, decision=None):
+    """Helper method to read model and set up appropriate data handle
     """
     try:
         model_run_config = store.read_model_run(model_run_id)
@@ -68,18 +91,7 @@ def execute_model_step(model_run_id, model_name, timestep, decision, store,
         timesteps=model_run_config['timesteps'],
         decision_iteration=decision
     )
-
-    if operation is ModelOperation.BEFORE_MODEL_RUN:
-        # before_model_run may not be implemented by all jobs
-        if hasattr(model, "before_model_run"):
-            model.before_model_run(data_handle)
-
-    elif operation is ModelOperation.SIMULATE:
-        # run the model
-        model.simulate(data_handle)
-
-    else:
-        raise ValueError("Unrecognised operation: {}".format(operation))
+    return model, data_handle
 
 
 def execute_decision_step(model_run_id, decision, store):
