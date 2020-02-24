@@ -44,8 +44,8 @@ def summary(self, *args, **kws):
             profile_data = logging.Logger._profile[profile]
             diff = profile_data['stop'] - profile_data['start']
             s = diff.total_seconds()
-            time_spent = '{:02d}:{:02d}:{:02d}'.format(
-                int(s // 3600), int(s % 3600 // 60), int(s % 60))
+            time_spent = '{:02d}:{:02d}:{:05.2f}'.format(
+                int(s // 3600), int(s % 3600 // 60), s % 60)
 
             # trunctuate long lines
             if len(profile[0]) > columns[0]-2:
