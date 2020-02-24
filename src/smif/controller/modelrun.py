@@ -20,7 +20,6 @@ ModeRun has attributes:
 from logging import getLogger
 
 import networkx as nx
-from smif.controller.job import SerialJobScheduler
 from smif.decision.decision import DecisionManager
 from smif.exception import SmifModelRunError, SmifTimestepResolutionError
 from smif.metadata import RelativeTimestep
@@ -133,7 +132,7 @@ class ModelRun(object):
     def model_horizon(self, value):
         self._model_horizon = sorted(list(set(value)))
 
-    def run(self, store, warm_start_timestep=None):
+    def run(self, store, job_scheduler, warm_start_timestep=None):
         """Builds all the objects and passes them to the ModelRunner
 
         The idea is that this will add ModelRuns to a queue for asychronous
@@ -161,7 +160,7 @@ class ModelRun(object):
 
             self.status = 'Running'
             modelrunner = ModelRunner(warm_start)
-            modelrunner.solve_model(self, store)
+            modelrunner.solve_model(self, store, job_scheduler)
             self.status = 'Successful'
         else:
             raise SmifModelRunError("Model is not yet built.")
@@ -180,7 +179,7 @@ class ModelRunner(object):
         self.logger = getLogger(__name__)
         self.warm_start = warm_start
 
-    def solve_model(self, model_run, store):
+    def solve_model(self, model_run, job_scheduler, store):
         """Solve a ModelRun
 
         This method steps through the model horizon, building
@@ -202,10 +201,6 @@ class ModelRunner(object):
                                            model_run.model_horizon,
                                            model_run.name,
                                            model_run.sos_model)
-
-        # Initialise the job scheduler
-        self.logger.debug("Initialising the job scheduler")
-        job_scheduler = SerialJobScheduler(store=store)
 
         for bundle in decision_manager.decision_loop():
             # each iteration is independent at this point, so the following loop is a

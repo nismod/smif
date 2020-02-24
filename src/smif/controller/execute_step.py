@@ -1,45 +1,15 @@
+"""Execute a single step directly
+"""
 import logging
 import os
 import sys
 
-from smif.controller.build import build_model_run, get_model_run_definition
+from smif.controller.build import get_model_run_definition
 from smif.data_layer import DataHandle
 from smif.data_layer.model_loader import ModelLoader
-from smif.exception import SmifDataNotFoundError, SmifModelRunError
+from smif.decision.decision import DecisionManager
+from smif.exception import SmifDataNotFoundError
 from smif.model import ModelOperation
-
-
-def execute_model_run(model_run_ids, store, warm=False):
-    """Runs the model run
-
-    Parameters
-    ----------
-    modelrun_ids: list
-        Modelrun ids that should be executed sequentially
-    """
-    model_run_definitions = []
-    for model_run in model_run_ids:
-        logging.info("Getting model run definition for '%s'", model_run)
-        model_run_definitions.append(get_model_run_definition(store, model_run))
-
-    for model_run_config in model_run_definitions:
-
-        logging.info("Build model run from configuration data")
-        modelrun = build_model_run(model_run_config)
-
-        logging.info("Running model run %s", modelrun.name)
-
-        try:
-            if warm:
-                modelrun.run(store, store.prepare_warm_start(modelrun.name))
-            else:
-                modelrun.run(store)
-        except SmifModelRunError as ex:
-            logging.exception(ex)
-            exit(1)
-
-        print("Model run '%s' complete" % modelrun.name)
-        sys.stdout.flush()
 
 
 def execute_model_step(model_run_id, model_name, timestep, decision, store,
@@ -76,7 +46,7 @@ def execute_model_step(model_run_id, model_name, timestep, decision, store,
         logging.error(
             "Model run %s not found. Run 'smif list' to see available model runs.",
             model_run_id)
-        exit(1)
+        sys.exit(1)
 
     loader = ModelLoader()
     sector_model_config = store.read_model(model_name)

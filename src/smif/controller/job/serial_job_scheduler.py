@@ -1,7 +1,6 @@
-""" Job Schedulers are used to run job graphs.
+"""Job Schedulers are used to run job graphs.
 
-Runs a job graph by calling simulate() on the python Model
-objects in order.
+Runs a job graph by calling execute_model_step for each operation in order
 """
 import itertools
 import logging
@@ -9,7 +8,7 @@ import traceback
 from collections import defaultdict
 
 import networkx
-from smif.controller import execute_model_step
+from smif.controller.execute_step import execute_model_step
 
 
 class SerialJobScheduler(object):
