@@ -80,3 +80,45 @@ def execute_model_step(model_run_id, model_name, timestep, decision, store,
 
     else:
         raise ValueError("Unrecognised operation: {}".format(operation))
+
+
+def execute_decision_step(model_run_id, decision, store):
+    """Request the next set of decisions from the decision manager, including the bundle of
+    timesteps and decision iterations to simulate next.
+
+    Parameters
+    ----------
+    model_run_id: str
+        Modelrun id of overarching model run
+    decision: int
+        Decision to run - should be 0 to start, or n+1 where n is the max decision executed so
+        far
+    store: Store
+    """
+    # get model run with sos model and all models loaded
+    # DecisionManager needs a SosModel
+    # - uses list of model names to read available interventions per model
+    # - passes SosModel to create ResultsHandle
+    #   - uses any given Model as object to look at outputs to find appropriate Spec to
+    #     read
+    model_run = get_model_run_definition(store, model_run_id)
+
+    # decision loop gets and saves decisions into "state" files
+    decision_manager = DecisionManager(
+        store,
+        model_run['timesteps'],
+        model_run_id,
+        model_run['sos_model'],
+        decision
+    )
+    bundle = next(decision_manager.decision_loop())
+
+    # print report
+    print("Got decision bundle")
+    print("    decision iterations", bundle['decision_iterations'])
+    print("    timesteps", bundle['timesteps'])
+    print("Run each model in order with commands like:")
+    print("    smif step {} --model <model> --decision <d> --timestep <t>".format(
+        model_run_id))
+    print("To see a viable order, dry-run the whole model:")
+    print("    smif run {} --dry-run".format(model_run_id))
