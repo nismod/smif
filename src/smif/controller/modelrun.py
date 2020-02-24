@@ -171,6 +171,32 @@ class ModelRun(object):
         except AttributeError:
             self.logger.info('STOP modelrun.run', self.name)
 
+    def run_step(self, store, timestep, decision_iteration, model_name):
+        """Directly run a single step
+        """
+        self.logger.debug("Initialising the job scheduler")
+        job_scheduler = SerialJobScheduler(store=store)
+
+        job_graph = nx.DiGraph()
+        job_id = ModelRunner._make_job_id(
+            self.name, model_name, ModelOperation.SIMULATE, timestep, decision_iteration)
+        job_graph.add_node(
+            job_id,
+            **{
+                'model': self.sos_model.get_model(model_name),
+                'modelrun_name': self.name,
+                'current_timestep': timestep,
+                'timesteps': self.model_horizon,
+                'decision_iteration': decision_iteration,
+                'operation': ModelOperation.SIMULATE
+            })
+        job_id, err = job_scheduler.add(job_graph)
+        self.logger.debug("Running job %s", job_id)
+        if err is not None:
+            status = job_scheduler.get_status(job_id)
+            self.logger.debug("Job %s %s", job_id, status['status'])
+            raise err
+
 
 class ModelRunner(object):
     """The ModelRunner orchestrates the simulation of a SoSModel over decision iterations and
