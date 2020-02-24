@@ -8,7 +8,9 @@ import traceback
 from collections import defaultdict
 
 import networkx
-from smif.controller.execute_step import execute_model_step
+from smif.controller.execute_step import (execute_model_before_step,
+                                          execute_model_step)
+from smif.model import ModelOperation
 
 
 class SerialJobScheduler(object):
@@ -20,16 +22,18 @@ class SerialJobScheduler(object):
         self.logger = logging.getLogger(__name__)
         self.store = store
 
-    def add(self, job_graph):
+    def add(self, job_graph, dry_run=False):
         """Add a JobGraph to the SerialJobScheduler and run directly
 
         Arguments
         ---------
         job_graph: :class:`networkx.graph`
+        dry_run: boolean, optional
+            If True, print job steps without running
         """
         job_graph_id = self._next_id()
         try:
-            self._run(job_graph, job_graph_id)
+            self._run(job_graph, job_graph_id, dry_run)
         except Exception as ex:
             self._status[job_graph_id] = 'failed'
             traceback.print_exc()
@@ -72,7 +76,7 @@ class SerialJobScheduler(object):
         """
         return {'status': self._status[job_graph_id]}
 
-    def _run(self, job_graph, job_graph_id):
+    def _run(self, job_graph, job_graph_id, dry_run=False):
         """Run a job graph
         - sort the jobs into a single list
         - unpack model, data_handle and operation from each node
@@ -86,7 +90,7 @@ class SerialJobScheduler(object):
         self._status[job_graph_id] = 'running'
 
         for job_node_id, job in self._get_run_order(job_graph):
-            self._run_job(job_node_id, job)
+            self._run_job(job_node_id, job, dry_run)
 
         self._status[job_graph_id] = 'done'
         try:
@@ -96,21 +100,29 @@ class SerialJobScheduler(object):
             self.logger.info(
                 'STOP SerialJobScheduler._run()', 'graph_' + str(job_graph_id))
 
-    def _run_job(self, job_node_id, job):
+    def _run_job(self, job_node_id, job, dry_run=False):
         self.logger.info("Job %s", job_node_id)
         try:
             self.logger.profiling_start('SerialJobScheduler._run()', 'job_' + job_node_id)
         except AttributeError:
             self.logger.info('START SerialJobScheduler._run()', 'job_' + job_node_id)
 
-        execute_model_step(
-            job['modelrun_name'],
-            job['model'].name,
-            job['current_timestep'],
-            job['decision_iteration'],
-            self.store,
-            job['operation']
-        )
+        if job['operation'] == ModelOperation.SIMULATE:
+            execute_model_step(
+                job['modelrun_name'],
+                job['model'].name,
+                job['current_timestep'],
+                job['decision_iteration'],
+                self.store,
+                dry_run
+            )
+        else:
+            execute_model_before_step(
+                job['modelrun_name'],
+                job['model'].name,
+                self.store,
+                dry_run
+            )
 
         try:
             self.logger.profiling_stop('SerialJobScheduler._run()', 'job_' + job_node_id)
