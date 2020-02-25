@@ -47,6 +47,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
         xarray \
         pandas \
         psycopg2 \
+        pyarrow \
         shapely \
         fiona
 
