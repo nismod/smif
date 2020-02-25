@@ -218,6 +218,100 @@ class TestDataFrameInterop():
         da_to_df = da.as_df()
         pd.testing.assert_frame_equal(da_to_df, df)
 
+    def test_single_dim_order(self):
+        spec = Spec(
+            name='test',
+            dims=['technology_type'],
+            coords={'technology_type': ['water_meter', 'electricity_meter', 'other', 'aaa']},
+            dtype='float'
+        )
+        df = pd.DataFrame([
+            {'technology_type': 'water_meter', 'test': 5},
+            {'technology_type': 'electricity_meter', 'test': 6},
+            {'technology_type': 'other', 'test': 7},
+            {'technology_type': 'aaa', 'test': 8},
+        ])
+        da = DataArray(spec, numpy.array([5., 6., 7., 8.]))
+        da_from_df = DataArray.from_df(spec, df)
+        da_from_df_2 = DataArray.from_df(spec, df)
+        assert da == da_from_df
+        assert da == da_from_df_2
+
+    def test_from_multiindex(self):
+        spec = Spec(
+            name='test',
+            dims=['multi'],
+            coords={'multi': ['b', 'a', 'c']},
+            dtype='float'
+        )
+        index = pd.MultiIndex.from_product(
+            [['b', 'a', 'c']],
+            names=['multi']
+        )
+        df = pd.DataFrame({'test': [1, 2, 3]}, index=index)
+        da_from_df = DataArray.from_df(spec, df)
+        da = DataArray(spec, numpy.array([1, 2, 3]))
+        assert da == da_from_df
+
+    def test_df_round_trip(self):
+        spec = Spec.from_dict({
+            'name': 'multi_savings',
+            'description': 'The savings from various technologies',
+            'dims': ['technology_type'],
+            'coords': {
+                'technology_type': [
+                    'water_meter',
+                    'electricity_meter',
+                    'other',
+                    'aaa'
+                ]
+            },
+            'dtype': 'float',
+            'abs_range': (0, 100),
+            'exp_range': (3, 10),
+            'unit': '%'
+        })
+        da = DataArray(spec, numpy.array([5., 6., 7., 8.]))
+        df = pd.DataFrame([
+            {'technology_type': 'water_meter', 'multi_savings': 5.},
+            {'technology_type': 'electricity_meter', 'multi_savings': 6.},
+            {'technology_type': 'other', 'multi_savings': 7.},
+            {'technology_type': 'aaa', 'multi_savings': 8.},
+        ])
+        df = df.set_index(spec.dims)
+        df_from_da = da.as_df()
+
+        da_from_df = DataArray.from_df(spec, df_from_da)
+        assert_array_equal(da.data, da_from_df.data)
+
+    def test_df_round_trip_2d(self):
+        spec = Spec.from_dict({
+            'name': 'two_d',
+            'dims': ['a', 'z'],
+            'coords': {
+                'a': ['q', 'p'],
+                'z': ['a', 'c', 'b'],
+            },
+            'dtype': 'float'
+        })
+        da = DataArray(spec, numpy.array([
+            [5., 6., 7.],
+            [8., 9., 0.],
+        ]))
+        df = pd.DataFrame([
+            {'z': 'a', 'a': 'p', 'two_d': 8.},
+            {'z': 'c', 'a': 'q', 'two_d': 6.},
+            {'z': 'a', 'a': 'q', 'two_d': 5.},
+            {'z': 'b', 'a': 'q', 'two_d': 7.},
+            {'z': 'b', 'a': 'p', 'two_d': 0.},
+            {'z': 'c', 'a': 'p', 'two_d': 9.},
+        ])
+        df = df.set_index(spec.dims)
+        df_from_da = da.as_df()
+
+        da_from_df = DataArray.from_df(spec, df_from_da)
+        assert_array_equal(da.data, da_from_df.data)
+
     def test_multi_dim_order(self):
         spec = Spec(
             name='test',
