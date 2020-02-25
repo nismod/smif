@@ -365,7 +365,7 @@ def run(args):
     try:
         logger.profiling_start('run_model_runs', msg)
     except AttributeError:
-        logger.info('START run_model_runs', msg)
+        logger.info('START run_model_runs %s', msg)
 
     if args.batchfile:
         with open(args.modelrun, 'r') as f:
@@ -381,7 +381,7 @@ def run(args):
         if not args.dry_run:
             logger.summary()
     except AttributeError:
-        logger.info('STOP run_model_runs', msg)
+        logger.info('STOP run_model_runs %s', msg)
 
 
 def _get_store(args):

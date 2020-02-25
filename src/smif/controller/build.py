@@ -123,7 +123,7 @@ def build_model_run(model_run_config):
     try:
         logger.profiling_start('build_model_run', model_run_config['name'])
     except AttributeError:
-        logger.info('build_model_run', model_run_config['name'])
+        logger.info('build_model_run %s', model_run_config['name'])
 
     try:
         model_run = ModelRun.from_dict(model_run_config)
@@ -140,5 +140,5 @@ def build_model_run(model_run_config):
     try:
         logger.profiling_stop('build_model_run', model_run_config['name'])
     except AttributeError:
-        logger.info('build_model_run', model_run_config['name'])
+        logger.info('build_model_run %s', model_run_config['name'])
     return model_run

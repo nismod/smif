@@ -143,7 +143,7 @@ class ModelRun(object):
         try:
             self.logger.profiling_start('modelrun.run', self.name)
         except AttributeError:
-            self.logger.info('START modelrun.run', self.name)
+            self.logger.info('START modelrun.run %s', self.name)
 
         if self.status == 'Built':
             if not self.model_horizon:
@@ -168,7 +168,7 @@ class ModelRun(object):
         try:
             self.logger.profiling_stop('modelrun.run', self.name)
         except AttributeError:
-            self.logger.info('STOP modelrun.run', self.name)
+            self.logger.info('STOP modelrun.run %s', self.name)
 
 
 class ModelRunner(object):

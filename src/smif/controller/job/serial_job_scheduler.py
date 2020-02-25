@@ -85,7 +85,7 @@ class SerialJobScheduler(object):
             self.logger.profiling_start(
                 'SerialJobScheduler._run()', 'graph_' + str(job_graph_id))
         except AttributeError:
-            self.logger.info('START SerialJobScheduler._run():graph_' + str(job_graph_id))
+            self.logger.info('START SerialJobScheduler._run():graph_%s', job_graph_id)
 
         self._status[job_graph_id] = 'running'
 
@@ -98,14 +98,14 @@ class SerialJobScheduler(object):
                 'SerialJobScheduler._run()', 'graph_' + str(job_graph_id))
         except AttributeError:
             self.logger.info(
-                'STOP SerialJobScheduler._run()', 'graph_' + str(job_graph_id))
+                'STOP SerialJobScheduler._run():graph_%s', job_graph_id)
 
     def _run_job(self, job_node_id, job, dry_run=False):
         self.logger.info("Job %s", job_node_id)
         try:
             self.logger.profiling_start('SerialJobScheduler._run()', 'job_' + job_node_id)
         except AttributeError:
-            self.logger.info('START SerialJobScheduler._run()', 'job_' + job_node_id)
+            self.logger.info('START SerialJobScheduler._run():job_%s', job_node_id)
 
         if job['operation'] == ModelOperation.SIMULATE:
             execute_model_step(
@@ -127,7 +127,7 @@ class SerialJobScheduler(object):
         try:
             self.logger.profiling_stop('SerialJobScheduler._run()', 'job_' + job_node_id)
         except AttributeError:
-            self.logger.info('STOP SerialJobScheduler._run()', 'job_' + job_node_id)
+            self.logger.info('STOP SerialJobScheduler._run():job_%s', job_node_id)
 
     def _next_id(self):
         return next(self._id_counter)
