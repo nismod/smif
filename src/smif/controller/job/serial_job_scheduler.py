@@ -116,13 +116,15 @@ class SerialJobScheduler(object):
                 self.store,
                 dry_run
             )
-        else:
+        elif job['operation'] == ModelOperation.BEFORE_MODEL_RUN:
             execute_model_before_step(
                 job['modelrun_name'],
                 job['model'].name,
                 self.store,
                 dry_run
             )
+        else:
+            raise ValueError("Model operarion not recognised", job)
 
         try:
             self.logger.profiling_stop('SerialJobScheduler._run()', 'job_' + job_node_id)
