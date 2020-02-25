@@ -56,7 +56,7 @@ fi
 
 pip install 'flake8>=3.7'
 
-if [[ "$PYTHON_VERSION" == "3.5"]]; then
+if [[ "$PYTHON_VERSION" == "3.5" ]]; then
     pip install 'Pint==0.9'
     pip install 'jinja~=2'
 fi
