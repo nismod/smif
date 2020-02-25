@@ -37,6 +37,7 @@ install:
         shapely \
         xarray"
   - activate testenv
+  - pip install psycopg2-binary
   - python setup.py develop
 before_test:
   - PATH=C:\Program Files\PostgreSQL\9.6\bin\;%PATH%
