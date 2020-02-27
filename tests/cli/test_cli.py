@@ -2,6 +2,7 @@
 """
 
 import os
+import shutil
 import subprocess
 import sys
 from itertools import product
@@ -16,13 +17,11 @@ from smif.cli import confirm, parse_arguments, setup_project_folder
 
 @fixture
 def tmp_sample_project(tmpdir_factory):
-    test_folder = tmpdir_factory.mktemp("smif")
-    subprocess.run(
-        ["smif", "setup", "-d", str(test_folder), "-v"],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
-    )
-    return str(test_folder)
+    # copy sample_project folder to temporary directory, ignoring results
+    dst = tmpdir_factory.mktemp("smif")
+    src = os.path.join(os.path.dirname(smif.__file__), 'sample_project')
+    shutil.copytree(src, dst, ignore=lambda _dir, _contents: ['results'], dirs_exist_ok=True)
+    return dst
 
 
 def get_args(args):
