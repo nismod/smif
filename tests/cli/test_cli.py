@@ -3,7 +3,6 @@
 
 import os
 import shutil
-import subprocess
 import sys
 from itertools import product
 from tempfile import TemporaryDirectory
@@ -11,8 +10,9 @@ from time import sleep
 from unittest.mock import call, patch
 
 import smif
-from pytest import fixture
-from smif.cli import confirm, parse_arguments, setup_project_folder
+from pytest import fixture, raises
+from smif.cli import confirm, main, parse_arguments, setup_project_folder
+from smif.exception import SmifDataNotFoundError
 
 
 @fixture
@@ -21,7 +21,7 @@ def tmp_sample_project(tmpdir_factory):
     dst = tmpdir_factory.mktemp("smif")
     src = os.path.join(os.path.dirname(smif.__file__), 'sample_project')
     shutil.copytree(src, dst, ignore=lambda _dir, _contents: ['results'], dirs_exist_ok=True)
-    return dst
+    return str(dst)
 
 
 def get_args(args):
@@ -46,71 +46,60 @@ def test_parse_arguments():
         assert args.func.__name__ == 'setup_project_folder'
 
 
-def test_fixture_single_run(tmp_sample_project):
+def test_fixture_single_run(capsys, tmp_sample_project):
     """Test running the (default) binary-filesystem-based single_run fixture
     """
-    config_dir = tmp_sample_project
-    output = subprocess.run(
-        ["smif", "run", "-d", config_dir, "energy_central", "-v"],
-        capture_output=True)
-    print(output.stdout.decode("utf-8"))
-    print(output.stderr.decode("utf-8"), file=sys.stderr)
-    assert "Running energy_central" in str(output.stderr)
-    assert "Model run 'energy_central' complete" in str(output.stdout)
+    main(["run", "-d", tmp_sample_project, "energy_central", "-v"])
+    output = capsys.readouterr()
+    print(output.out)
+    print(output.err, file=sys.stderr)
+    assert "Running energy_central" in output.err
+    assert "Model run 'energy_central' complete" in output.out
 
 
-def test_fixture_single_run_csv(tmp_sample_project):
+def test_fixture_single_run_csv(capsys, tmp_sample_project):
     """Test running the csv-filesystem-based single_run fixture
     """
-    output = subprocess.run(
-        ["smif", "run", "-i", "local_csv", "-d", tmp_sample_project, "energy_central", "-v"],
-        capture_output=True)
-    print(output.stdout.decode("utf-8"))
-    print(output.stderr.decode("utf-8"), file=sys.stderr)
-    assert "Running energy_central" in str(output.stderr)
-    assert "Model run 'energy_central' complete" in str(output.stdout)
+    main(["run", "-i", "local_csv", "-d", tmp_sample_project, "energy_central",
+          "-v"])
+    output = capsys.readouterr()
+    print(output.out)
+    print(output.err, file=sys.stderr)
+    assert "Running energy_central" in output.err
+    assert "Model run 'energy_central' complete" in output.out
 
 
-def test_fixture_single_run_warm(tmp_sample_project):
+def test_fixture_single_run_warm(capsys, tmp_sample_project):
     """Test running the (default) single_run fixture with warm setting enabled
     """
-    config_dir = tmp_sample_project
-    cold_output = subprocess.run(
-        ["smif", "run", "-v", "-d", config_dir, "energy_central"],
-        capture_output=True)
-    print(cold_output.stdout.decode("utf-8"))
-    print(cold_output.stderr.decode("utf-8"), file=sys.stderr)
+    main(["run", "-v", "-d", tmp_sample_project, "energy_central"])
+    output = capsys.readouterr()
+    print(output.out)
+    print(output.err, file=sys.stderr)
+    assert "Job energy_central_simulate_2010_1_energy_demand" in output.err
 
-    warm_output = subprocess.run(
-        ["smif", "run", "-v", "-w", "-d", config_dir, "energy_central"],
-        capture_output=True)
-    print(warm_output.stdout.decode("utf-8"))
-    print(warm_output.stderr.decode("utf-8"), file=sys.stderr)
-
-    assert "Job energy_central_simulate_2010_1_energy_demand" in str(cold_output.stderr)
-    assert "Job energy_central_simulate_2010_1_energy_demand" not in str(warm_output.stderr)
+    main(["run", "-v", "-w", "-d", tmp_sample_project, "energy_central"])
+    output = capsys.readouterr()
+    print(output.out)
+    print(output.err, file=sys.stderr)
+    assert output.err.count("Job energy_central_simulate_2010_1_energy_demand") == 1
 
 
-def test_fixture_run_step_no_decision(tmp_sample_project):
+def test_fixture_run_step_no_decision(capsys, tmp_sample_project):
     """Test running model at single timestep
 
     Run:
         smif step -vv energy_water_cp_cr -m energy_demand -t 2010 -dn 0
 
     """
-    output = subprocess.run(
-        ["smif", "step",  "-d", tmp_sample_project, "energy_water_cp_cr", "-m",
-         "energy_demand", "-t", "2010", "-dn", "0"],
-        capture_output=True)
+    with raises(SmifDataNotFoundError) as ex:
+        main(["step",  "-d", tmp_sample_project, "energy_water_cp_cr", "-m", "energy_demand",
+              "-t", "2010", "-dn", "0"])
 
-    print(output.stdout.decode("utf-8"))
-    print(output.stderr.decode("utf-8"), file=sys.stderr)
-    assert output.returncode == 1
-    assert "Decision state file not found for timestep 2010, decision 0" in \
-        str(output.stderr)
+    assert "Decision state file not found for timestep 2010, decision 0" in str(ex)
 
 
-def test_fixture_run_step_after_decision(tmp_sample_project):
+def test_fixture_run_step_after_decision(capsys, tmp_sample_project):
     """Test running model at single timestep
 
     Run:
@@ -118,76 +107,65 @@ def test_fixture_run_step_after_decision(tmp_sample_project):
         smif step -vv energy_water_cp_cr -m energy_demand -t 2010 -dn 0
 
     """
-    output = subprocess.run(
-        ["smif", "decide",  "-d", tmp_sample_project, "energy_water_cp_cr"],
-        capture_output=True)
+    main(["decide",  "-d", tmp_sample_project, "energy_water_cp_cr"])
+    output = capsys.readouterr()
+    print(output.out)
+    print(output.err, file=sys.stderr)
 
-    print(output.stdout.decode("utf-8"))
-    print(output.stderr.decode("utf-8"), file=sys.stderr)
+    assert "Got decision bundle" in output.out
+    assert "decision iterations [0]" in output.out
+    assert "timesteps [2010, 2015, 2020]" in output.out
+    output_len = len(output.out)
 
-    assert output.returncode == 0
-    assert "Got decision bundle" in str(output.stdout)
-    assert "decision iterations [0]" in str(output.stdout)
-    assert "timesteps [2010, 2015, 2020]" in str(output.stdout)
+    main(["step",  "-d", tmp_sample_project, "energy_water_cp_cr", "-m", "energy_demand",
+          "-t", "2010", "-dn", "0"])
+    output = capsys.readouterr()
+    print(output.out)
+    print(output.err, file=sys.stderr)
 
-    output = subprocess.run(
-        ["smif", "step",  "-d", tmp_sample_project, "energy_water_cp_cr", "-m",
-         "energy_demand", "-t", "2010", "-dn", "0"],
-        capture_output=True)
-
-    print(output.stdout.decode("utf-8"))
-    print(output.stderr.decode("utf-8"), file=sys.stderr)
-
-    assert output.returncode == 0
-    assert "" == str(output.stdout.decode("utf-8"))
-    assert "" == str(output.stderr.decode("utf-8"))
+    assert len(output.out) == output_len + 1  # one extra char for newline
+    assert "\n" == output.err
 
 
-def test_fixture_batch_run(tmp_sample_project):
+def test_fixture_batch_run(capsys, tmp_sample_project):
     """Test running the multiple modelruns using the batch_run option
     """
-    config_dir = tmp_sample_project
-    output = subprocess.run(
-        ["smif", "run", "-v", "-b", "-d", config_dir, os.path.join(config_dir, "batchfile")],
-        capture_output=True)
+    main(["run", "-v", "-b", "-d", tmp_sample_project,
+          os.path.join(tmp_sample_project, "batchfile")])
+    output = capsys.readouterr()
+    print(output.out)
+    print(output.err, file=sys.stderr)
 
-    print(output.stdout.decode("utf-8"))
-    print(output.stderr.decode("utf-8"), file=sys.stderr)
-
-    assert "Running energy_water_cp_cr" in str(output.stderr)
-    assert "Model run 'energy_water_cp_cr' complete" in str(output.stdout)
-    assert "Running energy_central" in str(output.stderr)
-    assert "Model run 'energy_central' complete" in str(output.stdout)
+    assert "Running energy_water_cp_cr" in output.err
+    assert "Model run 'energy_water_cp_cr' complete" in output.out
+    assert "Running energy_central" in output.err
+    assert "Model run 'energy_central' complete" in output.out
 
 
-def test_fixture_list_runs(tmp_sample_project):
+def test_fixture_list_runs(capsys, tmp_sample_project):
     """Test running the filesystem-based single_run fixture
     """
-    config_dir = tmp_sample_project
-    output = subprocess.run(
-        ["smif", "list", "-d", config_dir],
-        capture_output=True)
+    main(["list", "-d", tmp_sample_project])
+    output = capsys.readouterr()
 
-    assert "energy_water_cp_cr" in str(output.stdout)
-    assert "energy_central" in str(output.stdout)
+    assert "energy_water_cp_cr" in output.out
+    assert "energy_central" in output.out
 
     # Run energy_central and re-check output with optional flag for completed results
-    subprocess.run(["smif", "run", "energy_central", "-d", config_dir])
-    output = subprocess.run(
-        ["smif", "list", "-c", "-d", config_dir],
-        capture_output=True)
-    assert "energy_central *" in str(output.stdout)
+    main(["run", "energy_central", "-d", tmp_sample_project])
+    main(["list", "-c", "-d", tmp_sample_project])
+    output = capsys.readouterr()
+
+    assert "energy_central *" in output.out
 
 
-def test_fixture_available_results(tmp_sample_project):
+def test_fixture_available_results(capsys, tmp_sample_project):
     """Test cli for listing available results
     """
-    config_dir = tmp_sample_project
-    output = subprocess.run(
-        ["smif", "available_results", "energy_central", "-d", config_dir],
-        capture_output=True)
+    main(["available_results", "energy_central", "-d", tmp_sample_project])
+    output = capsys.readouterr()
 
-    out_str = str(output.stdout)
+    out_str = output.out
     assert out_str.count('model run: energy_central') == 1
     assert out_str.count('sos model: energy') == 1
     assert out_str.count('sector model:') == 1
@@ -198,12 +176,11 @@ def test_fixture_available_results(tmp_sample_project):
     assert out_str.count('decision') == 0
 
     # Run energy_central and re-check output with optional flag for completed results
-    subprocess.run(["smif", "run", "energy_central", "-d", config_dir])
-    output = subprocess.run(
-        ["smif", "available_results", "energy_central", "-d", config_dir],
-        capture_output=True)
+    main(["run", "energy_central", "-d", tmp_sample_project])
+    main(["available_results", "energy_central", "-d", tmp_sample_project])
+    output = capsys.readouterr()
 
-    out_str = str(output.stdout)
+    out_str = output.out
     assert out_str.count('model run: energy_central') == 1
     assert out_str.count('sos model: energy') == 1
     assert out_str.count('sector model:') == 1
@@ -221,15 +198,13 @@ def test_fixture_available_results(tmp_sample_project):
     assert out_str.count(': 2020') == 2
 
 
-def test_fixture_missing_results(tmp_sample_project):
+def test_fixture_missing_results(capsys, tmp_sample_project):
     """Test cli for listing missing results
     """
-    config_dir = tmp_sample_project
-    output = subprocess.run(
-        ["smif", "missing_results", "energy_central", "-d", config_dir],
-        capture_output=True)
+    main(["missing_results", "energy_central", "-d", tmp_sample_project])
+    output = capsys.readouterr()
 
-    out_str = str(output.stdout)
+    out_str = output.out
     assert out_str.count('model run: energy_central') == 1
     assert out_str.count('sos model: energy') == 1
     assert out_str.count('sector model:') == 1
@@ -240,12 +215,11 @@ def test_fixture_missing_results(tmp_sample_project):
     assert out_str.count('results missing for:') == 2
 
     # Run energy_central and re-check output with optional flag for completed results
-    subprocess.run(["smif", "run", "energy_central", "-d", config_dir])
-    output = subprocess.run(
-        ["smif", "missing_results", "energy_central", "-d", config_dir],
-        capture_output=True)
+    main(["run", "energy_central", "-d", tmp_sample_project])
+    main(["missing_results", "energy_central", "-d", tmp_sample_project])
+    output = capsys.readouterr()
 
-    out_str = str(output.stdout)
+    out_str = output.out
     assert out_str.count('model run: energy_central') == 1
     assert out_str.count('sos model: energy') == 1
     assert out_str.count('sector model:') == 1
@@ -256,39 +230,42 @@ def test_fixture_missing_results(tmp_sample_project):
     assert out_str.count('results missing for:') == 0
 
 
-def test_fixture_prepare_model_runs(tmp_sample_project):
+def test_fixture_prepare_model_runs(capsys, tmp_sample_project):
     """Test cli for preparing model runs from template
     referencing scenario with 1 or more variants
     """
-    config_dir = tmp_sample_project
     pop_variants = ['low', 'med', 'high']
     nb_variants = len(pop_variants)
 
-    clear_model_runs(config_dir)
+    clear_model_runs(tmp_sample_project)
 
-    subprocess.run(["smif", "prepare-run", "population", "energy_central", "-d", config_dir])
+    main(["prepare-run", "population", "energy_central", "-d", tmp_sample_project])
 
     for suffix in pop_variants:
         filename = 'energy_central_population_' + suffix + '.yml'
-        assert os.path.isfile(os.path.join(config_dir, 'config/model_runs', filename))
+        assert os.path.isfile(os.path.join(tmp_sample_project, 'config/model_runs', filename))
 
     variant_range = range(0, nb_variants)
     for s, e in product(variant_range, variant_range):
-        clear_model_runs(config_dir)
-        subprocess.run(
-            ["smif", "prepare-run", "population", "energy_central", "-s", str(s), "-e", str(e),
-             "-d", config_dir])
+        if e < s:
+            # skip variant ranges where end is less than start
+            continue
+        clear_model_runs(tmp_sample_project)
+        main(["prepare-run", "population", "energy_central", "-s", str(s), "-e", str(e),
+              "-d", tmp_sample_project])
         for suffix in pop_variants[s:e + 1]:
             filename = 'energy_central_population_' + suffix + '.yml'
-            assert os.path.isfile(os.path.join(config_dir, 'config/model_runs', filename))
+            assert os.path.isfile(
+                os.path.join(tmp_sample_project, 'config/model_runs', filename))
         for suffix in pop_variants[0:s]:
             filename = 'energy_central_population_' + suffix + '.yml'
-            assert not os.path.isfile(os.path.join(config_dir, 'config/model_runs', filename))
+            assert not os.path.isfile(
+                os.path.join(tmp_sample_project, 'config/model_runs', filename))
         if e < variant_range[-1]:
             for suffix in pop_variants[e + 1:]:
                 filename = 'energy_central_population_' + suffix + '.yml'
                 assert not os.path.isfile(
-                    os.path.join(config_dir, 'config/model_runs', filename))
+                    os.path.join(tmp_sample_project, 'config/model_runs', filename))
 
 
 def clear_model_runs(config_dir):
@@ -318,11 +295,9 @@ def test_setup_project_folder():
 
 
 def test_prepare_convert(tmp_sample_project):
-    project_folder = tmp_sample_project
-    print(project_folder)
     # clean up
     # r=root, d=directories, f = files
-    path = os.path.join(project_folder, 'data')
+    path = os.path.join(tmp_sample_project, 'data')
     for r, d, f in os.walk(path):
         for filename in f:
             if '.parquet' in filename:
@@ -339,12 +314,11 @@ def test_prepare_convert(tmp_sample_project):
         'strategies': ['build_nuke'],
         }
 
-    subprocess.run(
-        ["smif", "prepare-convert", "energy_central", "-d", project_folder, "-i", "local_csv"])
+    main(["prepare-convert", "energy_central", "-d", tmp_sample_project, "-i", "local_csv"])
     # assert that correct files have been generated
     for folder in list_of_files.keys():
         for filename in list_of_files[folder]:
-            path = os.path.join(project_folder, 'data', folder, filename)
+            path = os.path.join(tmp_sample_project, 'data', folder, filename)
             path = "{}.parquet".format(path)
             assert os.path.isfile(path)
 
@@ -352,13 +326,12 @@ def test_prepare_convert(tmp_sample_project):
 
     # Now call prepare-convert with the --noclobber option
     # all previously generated parquet files should not be modified
-    subprocess.run(
-        ["smif", "prepare-convert", "energy_central", "--noclobber", "-d", project_folder,
-         "-i", "local_csv"])
+    main(["prepare-convert", "energy_central", "--noclobber", "-d", tmp_sample_project,
+          "-i", "local_csv"])
     # assert that files have not been modified
     for folder in list_of_files.keys():
         for filename in list_of_files[folder]:
-            path = os.path.join(project_folder, 'data', folder, filename)
+            path = os.path.join(tmp_sample_project, 'data', folder, filename)
             path = "{}.parquet".format(path)
             assert (os.path.getmtime(path) > 2)
 
@@ -400,33 +373,40 @@ def test_confirm_repeat_message(mock_print, input):
     mock_print.assert_called_with('please enter y or n.')
 
 
-def test_help():
+@patch('sys.exit')
+def test_help(_, capsys):
     """Expect help from `smif` or `smif -h`
     """
     msg = "Command line tools for smif"
-    output = subprocess.run(['smif'], stdout=subprocess.PIPE)
-    assert msg in str(output.stdout)
+    main([])
+    output = capsys.readouterr()
+    assert msg in output.out
 
-    output = subprocess.run(['smif', '-h'], stdout=subprocess.PIPE)
-    assert msg in str(output.stdout)
+    main(['-h'])
+    output = capsys.readouterr()
+    assert msg in output.out
 
 
-def test_version_display():
+@patch('sys.exit')
+def test_version_display(_, capsys):
     """Expect version number from `smif -V`
     """
-    output = subprocess.run(['smif', '-V'], stdout=subprocess.PIPE)
-    assert smif.__version__ in str(output.stdout)
+    main(['-V'])
+    output = capsys.readouterr()
+    assert smif.__version__ in output.out
 
 
-def test_verbose_debug():
+def test_verbose_debug(capsys, tmp_sample_project):
     """Expect debug message from `smif -vv`
     """
-    output = subprocess.run(['smif', 'list', '-vv'], stderr=subprocess.PIPE)
-    assert 'DEBUG' in str(output.stderr)
+    main(['list', '-vv', '-d', tmp_sample_project])
+    output = capsys.readouterr()
+    assert 'DEBUG' in output.err
 
 
-def test_verbose_debug_alt():
+def test_verbose_debug_alt(capsys, tmp_sample_project):
     """Expect debug message from `smif --verbose --verbose`
     """
-    output = subprocess.run(['smif', 'list', '--verbose', '--verbose'], stderr=subprocess.PIPE)
-    assert 'DEBUG' in str(output.stderr)
+    main(['list', '--verbose', '--verbose', '-d', tmp_sample_project])
+    output = capsys.readouterr()
+    assert 'DEBUG' in output.err
