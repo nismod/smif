@@ -727,7 +727,7 @@ def main(arguments=None):
         if args.verbose:
             debug_hook(exception_type, exception, traceback)
         else:
-            print("{}: {}".format(exception_type.__name__, exception))
+            print("{}: {}".format(exception_type.__name__, exception), file=sys.stderr)
 
     sys.excepthook = exception_handler
     if 'func' in args:

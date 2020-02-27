@@ -91,6 +91,58 @@ def test_fixture_single_run_warm(tmp_sample_project):
     assert "Job energy_central_simulate_2010_1_energy_demand" not in str(warm_output.stderr)
 
 
+def test_fixture_run_step_no_decision(tmp_sample_project):
+    """Test running model at single timestep
+
+    Run:
+        smif step -vv energy_water_cp_cr -m energy_demand -t 2010 -dn 0
+
+    """
+    output = subprocess.run(
+        ["smif", "step",  "-d", tmp_sample_project, "energy_water_cp_cr", "-m",
+         "energy_demand", "-t", "2010", "-dn", "0"],
+        capture_output=True)
+
+    print(output.stdout.decode("utf-8"))
+    print(output.stderr.decode("utf-8"), file=sys.stderr)
+    assert output.returncode == 1
+    assert "Decision state file not found for timestep 2010, decision 0" in \
+        str(output.stderr)
+
+
+def test_fixture_run_step_after_decision(tmp_sample_project):
+    """Test running model at single timestep
+
+    Run:
+        smif decide energy_water_cp_cr -dn 0
+        smif step -vv energy_water_cp_cr -m energy_demand -t 2010 -dn 0
+
+    """
+    output = subprocess.run(
+        ["smif", "decide",  "-d", tmp_sample_project, "energy_water_cp_cr"],
+        capture_output=True)
+
+    print(output.stdout.decode("utf-8"))
+    print(output.stderr.decode("utf-8"), file=sys.stderr)
+
+    assert output.returncode == 0
+    assert "Got decision bundle" in str(output.stdout)
+    assert "decision iterations [0]" in str(output.stdout)
+    assert "timesteps [2010, 2015, 2020]" in str(output.stdout)
+
+    output = subprocess.run(
+        ["smif", "step",  "-d", tmp_sample_project, "energy_water_cp_cr", "-m",
+         "energy_demand", "-t", "2010", "-dn", "0"],
+        capture_output=True)
+
+    print(output.stdout.decode("utf-8"))
+    print(output.stderr.decode("utf-8"), file=sys.stderr)
+
+    assert output.returncode == 0
+    assert "" == str(output.stdout.decode("utf-8"))
+    assert "" == str(output.stderr.decode("utf-8"))
+
+
 def test_fixture_batch_run(tmp_sample_project):
     """Test running the multiple modelruns using the batch_run option
     """
