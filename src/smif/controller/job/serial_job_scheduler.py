@@ -124,7 +124,7 @@ class SerialJobScheduler(object):
                 dry_run
             )
         else:
-            raise ValueError("Model operarion not recognised", job)
+            raise ValueError("Model operation not recognised", job)
 
         try:
             self.logger.profiling_stop('SerialJobScheduler._run()', 'job_' + job_node_id)
