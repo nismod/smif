@@ -50,9 +50,9 @@ def test_fixture_single_run(tmp_sample_project):
     """Test running the (default) binary-filesystem-based single_run fixture
     """
     config_dir = tmp_sample_project
-    output = subprocess.run(["smif", "run", "-d", config_dir,
-                             "energy_central", "-v"],
-                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    output = subprocess.run(
+        ["smif", "run", "-d", config_dir, "energy_central", "-v"],
+        capture_output=True)
     print(output.stdout.decode("utf-8"))
     print(output.stderr.decode("utf-8"), file=sys.stderr)
     assert "Running energy_central" in str(output.stderr)
@@ -63,11 +63,8 @@ def test_fixture_single_run_csv(tmp_sample_project):
     """Test running the csv-filesystem-based single_run fixture
     """
     output = subprocess.run(
-        ["smif", "run", "-i", "local_csv", "-d", tmp_sample_project,
-         "energy_central", "-v"],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
-    )
+        ["smif", "run", "-i", "local_csv", "-d", tmp_sample_project, "energy_central", "-v"],
+        capture_output=True)
     print(output.stdout.decode("utf-8"))
     print(output.stderr.decode("utf-8"), file=sys.stderr)
     assert "Running energy_central" in str(output.stderr)
@@ -80,15 +77,13 @@ def test_fixture_single_run_warm(tmp_sample_project):
     config_dir = tmp_sample_project
     cold_output = subprocess.run(
         ["smif", "run", "-v", "-d", config_dir, "energy_central"],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE)
+        capture_output=True)
     print(cold_output.stdout.decode("utf-8"))
     print(cold_output.stderr.decode("utf-8"), file=sys.stderr)
 
     warm_output = subprocess.run(
         ["smif", "run", "-v", "-w", "-d", config_dir, "energy_central"],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE)
+        capture_output=True)
     print(warm_output.stdout.decode("utf-8"))
     print(warm_output.stderr.decode("utf-8"), file=sys.stderr)
 
@@ -100,11 +95,13 @@ def test_fixture_batch_run(tmp_sample_project):
     """Test running the multiple modelruns using the batch_run option
     """
     config_dir = tmp_sample_project
-    output = subprocess.run(["smif", "run", "-v", "-b", "-d", config_dir,
-                             os.path.join(config_dir, "batchfile")],
-                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    output = subprocess.run(
+        ["smif", "run", "-v", "-b", "-d", config_dir, os.path.join(config_dir, "batchfile")],
+        capture_output=True)
+
     print(output.stdout.decode("utf-8"))
     print(output.stderr.decode("utf-8"), file=sys.stderr)
+
     assert "Running energy_water_cp_cr" in str(output.stderr)
     assert "Model run 'energy_water_cp_cr' complete" in str(output.stdout)
     assert "Running energy_central" in str(output.stderr)
@@ -115,13 +112,18 @@ def test_fixture_list_runs(tmp_sample_project):
     """Test running the filesystem-based single_run fixture
     """
     config_dir = tmp_sample_project
-    output = subprocess.run(["smif", "list", "-d", config_dir], stdout=subprocess.PIPE)
+    output = subprocess.run(
+        ["smif", "list", "-d", config_dir],
+        capture_output=True)
+
     assert "energy_water_cp_cr" in str(output.stdout)
     assert "energy_central" in str(output.stdout)
 
     # Run energy_central and re-check output with optional flag for completed results
-    subprocess.run(["smif", "run", "energy_central", "-d", config_dir], stdout=subprocess.PIPE)
-    output = subprocess.run(["smif", "list", "-c", "-d", config_dir], stdout=subprocess.PIPE)
+    subprocess.run(["smif", "run", "energy_central", "-d", config_dir])
+    output = subprocess.run(
+        ["smif", "list", "-c", "-d", config_dir],
+        capture_output=True)
     assert "energy_central *" in str(output.stdout)
 
 
@@ -129,8 +131,9 @@ def test_fixture_available_results(tmp_sample_project):
     """Test cli for listing available results
     """
     config_dir = tmp_sample_project
-    output = subprocess.run(["smif", "available_results", "energy_central", "-d", config_dir],
-                            stdout=subprocess.PIPE)
+    output = subprocess.run(
+        ["smif", "available_results", "energy_central", "-d", config_dir],
+        capture_output=True)
 
     out_str = str(output.stdout)
     assert out_str.count('model run: energy_central') == 1
@@ -143,9 +146,10 @@ def test_fixture_available_results(tmp_sample_project):
     assert out_str.count('decision') == 0
 
     # Run energy_central and re-check output with optional flag for completed results
-    subprocess.run(["smif", "run", "energy_central", "-d", config_dir], stdout=subprocess.PIPE)
-    output = subprocess.run(["smif", "available_results", "energy_central", "-d", config_dir],
-                            stdout=subprocess.PIPE)
+    subprocess.run(["smif", "run", "energy_central", "-d", config_dir])
+    output = subprocess.run(
+        ["smif", "available_results", "energy_central", "-d", config_dir],
+        capture_output=True)
 
     out_str = str(output.stdout)
     assert out_str.count('model run: energy_central') == 1
@@ -169,8 +173,9 @@ def test_fixture_missing_results(tmp_sample_project):
     """Test cli for listing missing results
     """
     config_dir = tmp_sample_project
-    output = subprocess.run(["smif", "missing_results", "energy_central", "-d", config_dir],
-                            stdout=subprocess.PIPE)
+    output = subprocess.run(
+        ["smif", "missing_results", "energy_central", "-d", config_dir],
+        capture_output=True)
 
     out_str = str(output.stdout)
     assert out_str.count('model run: energy_central') == 1
@@ -183,9 +188,10 @@ def test_fixture_missing_results(tmp_sample_project):
     assert out_str.count('results missing for:') == 2
 
     # Run energy_central and re-check output with optional flag for completed results
-    subprocess.run(["smif", "run", "energy_central", "-d", config_dir], stdout=subprocess.PIPE)
-    output = subprocess.run(["smif", "missing_results", "energy_central", "-d", config_dir],
-                            stdout=subprocess.PIPE)
+    subprocess.run(["smif", "run", "energy_central", "-d", config_dir])
+    output = subprocess.run(
+        ["smif", "missing_results", "energy_central", "-d", config_dir],
+        capture_output=True)
 
     out_str = str(output.stdout)
     assert out_str.count('model run: energy_central') == 1
@@ -208,8 +214,8 @@ def test_fixture_prepare_model_runs(tmp_sample_project):
 
     clear_model_runs(config_dir)
 
-    subprocess.run(["smif", "prepare-run", "population", "energy_central", "-d", config_dir],
-                   stdout=subprocess.PIPE)
+    subprocess.run(["smif", "prepare-run", "population", "energy_central", "-d", config_dir])
+
     for suffix in pop_variants:
         filename = 'energy_central_population_' + suffix + '.yml'
         assert os.path.isfile(os.path.join(config_dir, 'config/model_runs', filename))
@@ -217,8 +223,9 @@ def test_fixture_prepare_model_runs(tmp_sample_project):
     variant_range = range(0, nb_variants)
     for s, e in product(variant_range, variant_range):
         clear_model_runs(config_dir)
-        subprocess.run(["smif", "prepare-run", "population", "energy_central", "-s", str(s),
-                        "-e", str(e), "-d", config_dir], stdout=subprocess.PIPE)
+        subprocess.run(
+            ["smif", "prepare-run", "population", "energy_central", "-s", str(s), "-e", str(e),
+             "-d", config_dir])
         for suffix in pop_variants[s:e + 1]:
             filename = 'energy_central_population_' + suffix + '.yml'
             assert os.path.isfile(os.path.join(config_dir, 'config/model_runs', filename))
@@ -280,8 +287,8 @@ def test_prepare_convert(tmp_sample_project):
         'strategies': ['build_nuke'],
         }
 
-    subprocess.run(["smif", "prepare-convert", "energy_central", "-d", project_folder, "-i",
-                    "local_csv"], stdout=subprocess.PIPE)
+    subprocess.run(
+        ["smif", "prepare-convert", "energy_central", "-d", project_folder, "-i", "local_csv"])
     # assert that correct files have been generated
     for folder in list_of_files.keys():
         for filename in list_of_files[folder]:
@@ -293,8 +300,9 @@ def test_prepare_convert(tmp_sample_project):
 
     # Now call prepare-convert with the --noclobber option
     # all previously generated parquet files should not be modified
-    subprocess.run(["smif", "prepare-convert", "energy_central", "--noclobber", "-d",
-                    project_folder, "-i", "local_csv"], stdout=subprocess.PIPE)
+    subprocess.run(
+        ["smif", "prepare-convert", "energy_central", "--noclobber", "-d", project_folder,
+         "-i", "local_csv"])
     # assert that files have not been modified
     for folder in list_of_files.keys():
         for filename in list_of_files[folder]:
