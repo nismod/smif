@@ -2,8 +2,8 @@
 """
 
 import os
-import shutil
 import sys
+from distutils.dir_util import copy_tree, remove_tree
 from itertools import product
 from tempfile import TemporaryDirectory
 from time import sleep
@@ -17,11 +17,13 @@ from smif.exception import SmifDataNotFoundError
 
 @fixture
 def tmp_sample_project(tmpdir_factory):
-    # copy sample_project folder to temporary directory, ignoring results
-    dst = tmpdir_factory.mktemp("smif")
+    """Copy sample_project folder to temporary directory, ignoring any results
+    """
+    dst = str(tmpdir_factory.mktemp("smif"))
     src = os.path.join(os.path.dirname(smif.__file__), 'sample_project')
-    shutil.copytree(src, dst, ignore=lambda _dir, _contents: ['results'], dirs_exist_ok=True)
-    return str(dst)
+    copy_tree(src, dst)
+    remove_tree(os.path.join(dst, 'results'))
+    return dst
 
 
 def get_args(args):
