@@ -1,12 +1,14 @@
 """Test SubProcessRunScheduler and SerialJobScheduler
 """
+from copy import copy
 from unittest.mock import Mock, patch
 
 import networkx
+import smif
 from pytest import fixture, raises
 from smif.controller.job import SerialJobScheduler
 from smif.controller.run import SubProcessRunScheduler
-from smif.model import ModelOperation, ScenarioModel, SectorModel
+from smif.model import ModelOperation, SectorModel
 
 
 class EmptySectorModel(SectorModel):
@@ -136,7 +138,7 @@ class TestSerialJobScheduler():
     @fixture
     def job_graph(self):
         G = networkx.DiGraph()
-        a_model = ScenarioModel('a')
+        a_model = EmptySectorModel('a')
 
         G.add_node(
             'a',
@@ -166,13 +168,27 @@ class TestSerialJobScheduler():
             'name': 'test',
             'narratives': {},
             'scenarios': {},
-            'sos_model': 'test_sos_model'
+            'sos_model': 'test_sos_model',
+            'timesteps': []
         })
         empty_store.write_sos_model({
             'name': 'test_sos_model',
             'scenario_dependencies': [],
             'model_dependencies': []
         })
+        model = {
+            'description': '',
+            'inputs': [],
+            'outputs': [],
+            'parameters': [],
+            'path': smif.model.__file__,
+            'classname': 'Model',
+        }
+        for name in ['a', 'b', 'c']:
+            m = copy(model)
+            m['name'] = name
+            empty_store.write_model(m)
+
         scheduler = SerialJobScheduler(empty_store)
         return scheduler
 

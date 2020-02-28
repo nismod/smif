@@ -76,7 +76,7 @@ def init_handler(request, setup_empty_folder_structure):
     return handler
 
 
-@SKIP_ON_APPVEYOR
+@mark.skip
 def test_db_connection():
     """Test that we can connect to a database in the test environment
     """

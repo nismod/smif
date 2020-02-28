@@ -1,7 +1,6 @@
 """Model abstract class
 """
 import sys
-from abc import ABCMeta, abstractmethod
 from enum import Enum
 from logging import getLogger
 
@@ -15,7 +14,7 @@ class ModelOperation(Enum):
     SIMULATE = 'simulate'
 
 
-class Model(metaclass=ABCMeta):
+class Model():
     """Abstract class represents the interface used to implement the model classes
     `SectorModel` and `ScenarioModel`.
 
@@ -125,7 +124,6 @@ class Model(metaclass=ABCMeta):
         """
         self.outputs[spec.name] = spec
 
-    @abstractmethod
     def simulate(self, data):
         """Override to implement the generation of model results
 

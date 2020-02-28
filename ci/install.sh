@@ -47,6 +47,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
         xarray \
         pandas \
         psycopg2 \
+        pyarrow \
         shapely \
         fiona
 
@@ -54,6 +55,12 @@ if [[ "$DISTRIB" == "conda" ]]; then
 fi
 
 pip install 'flake8>=3.7'
+
+if [[ "$PYTHON_VERSION" == "3.5" ]]; then
+    pip install 'Pint==0.9'
+    pip install 'jinja2>=2,<3'
+fi
+
 python setup.py develop
 
 # Install node and npm dependencies

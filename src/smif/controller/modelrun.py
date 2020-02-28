@@ -20,7 +20,6 @@ ModeRun has attributes:
 from logging import getLogger
 
 import networkx as nx
-from smif.controller.job import SerialJobScheduler
 from smif.decision.decision import DecisionManager
 from smif.exception import SmifModelRunError, SmifTimestepResolutionError
 from smif.metadata import RelativeTimestep
@@ -133,7 +132,7 @@ class ModelRun(object):
     def model_horizon(self, value):
         self._model_horizon = sorted(list(set(value)))
 
-    def run(self, store, warm_start_timestep=None):
+    def run(self, store, job_scheduler, warm_start_timestep=None, dry_run=False):
         """Builds all the objects and passes them to the ModelRunner
 
         The idea is that this will add ModelRuns to a queue for asychronous
@@ -144,7 +143,7 @@ class ModelRun(object):
         try:
             self.logger.profiling_start('modelrun.run', self.name)
         except AttributeError:
-            self.logger.info('START modelrun.run', self.name)
+            self.logger.info('START modelrun.run %s', self.name)
 
         if self.status == 'Built':
             if not self.model_horizon:
@@ -161,7 +160,7 @@ class ModelRun(object):
 
             self.status = 'Running'
             modelrunner = ModelRunner(warm_start)
-            modelrunner.solve_model(self, store)
+            modelrunner.solve_model(self, job_scheduler, store, dry_run)
             self.status = 'Successful'
         else:
             raise SmifModelRunError("Model is not yet built.")
@@ -169,7 +168,7 @@ class ModelRun(object):
         try:
             self.logger.profiling_stop('modelrun.run', self.name)
         except AttributeError:
-            self.logger.info('STOP modelrun.run', self.name)
+            self.logger.info('STOP modelrun.run %s', self.name)
 
 
 class ModelRunner(object):
@@ -180,7 +179,7 @@ class ModelRunner(object):
         self.logger = getLogger(__name__)
         self.warm_start = warm_start
 
-    def solve_model(self, model_run, store):
+    def solve_model(self, model_run, job_scheduler, store, dry_run=False):
         """Solve a ModelRun
 
         This method steps through the model horizon, building
@@ -203,10 +202,6 @@ class ModelRunner(object):
                                            model_run.name,
                                            model_run.sos_model)
 
-        # Initialise the job scheduler
-        self.logger.debug("Initialising the job scheduler")
-        job_scheduler = SerialJobScheduler(store=store)
-
         for bundle in decision_manager.decision_loop():
             # each iteration is independent at this point, so the following loop is a
             # candidate for running in parallel
@@ -217,7 +212,7 @@ class ModelRunner(object):
                 complete_jobs = store.completed_jobs(model_run.name)
                 job_graph = self.filter_job_graph(model_run.name, job_graph, complete_jobs)
 
-            job_id, err = job_scheduler.add(job_graph)
+            job_id, err = job_scheduler.add(job_graph, dry_run)
             self.logger.debug("Running job %s", job_id)
             if err is not None:
                 status = job_scheduler.get_status(job_id)
@@ -297,7 +292,7 @@ class ModelRunner(object):
                 job_graph.add_nodes_from(
                     self._make_simulate_job_nodes(
                         model_run.name,
-                        model_run.sos_model.models,
+                        model_run.sos_model.sector_models,
                         decision_iteration,
                         timestep,
                         model_run.model_horizon
@@ -307,7 +302,7 @@ class ModelRunner(object):
                 job_graph.add_edges_from(
                     self._make_current_simulate_job_edges(
                         model_run.name,
-                        model_run.sos_model.dependencies,
+                        model_run.sos_model.model_dependencies,
                         timestep,
                         decision_iteration
                     )
@@ -326,7 +321,7 @@ class ModelRunner(object):
                         job_graph.add_edges_from(
                             self._make_between_bundle_previous_simulate_job_edges(
                                 model_run.name,
-                                model_run.sos_model.dependencies,
+                                model_run.sos_model.model_dependencies,
                                 timestep,
                                 previous_timestep,
                                 decision_iteration,
@@ -339,7 +334,7 @@ class ModelRunner(object):
                         job_graph.add_edges_from(
                             self._make_initial_previous_simulate_job_edges(
                                 model_run.name,
-                                model_run.sos_model.dependencies,
+                                model_run.sos_model.model_dependencies,
                                 timestep,
                                 decision_iteration
                             )
@@ -351,7 +346,7 @@ class ModelRunner(object):
                     job_graph.add_edges_from(
                         self._make_within_bundle_previous_simulate_job_edges(
                             model_run.name,
-                            model_run.sos_model.dependencies,
+                            model_run.sos_model.model_dependencies,
                             timestep,
                             previous_timestep,
                             decision_iteration
@@ -364,7 +359,7 @@ class ModelRunner(object):
             job_graph.add_nodes_from(
                 self._make_before_model_run_job_nodes(
                     model_run.name,
-                    model_run.sos_model.models,
+                    model_run.sos_model.sector_models,
                     model_run.model_horizon
                 )
             )
@@ -374,7 +369,7 @@ class ModelRunner(object):
                     job_graph.add_edges_from(
                         self._make_before_model_run_job_edges(
                             model_run.name,
-                            model_run.sos_model.models,
+                            model_run.sos_model.sector_models,
                             timestep,
                             decision_iteration
                         )

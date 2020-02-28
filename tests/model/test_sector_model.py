@@ -1,7 +1,7 @@
 """Test SectorModel and SectorModelBuilder
 """
 import smif.sample_project.models.water_supply
-from pytest import fixture, raises
+from pytest import fixture
 from smif.metadata import Spec
 from smif.model.sector_model import SectorModel
 from smif.sample_project.models.water_supply import WaterSupplySectorModel
@@ -127,10 +127,10 @@ class TestSectorModel():
     """A SectorModel has inputs, outputs, and an implementation
     of simulate
     """
-    def test_abstract(self):
-        with raises(TypeError) as ex:
-            SectorModel('cannot_instantiate')
-        assert "Can't instantiate abstract class" in str(ex.value)
+    def test_concrete(self):
+        """Simple instantiation is possible
+        """
+        SectorModel('cannot_instantiate')
 
     def test_construct(self, sector_model):
         assert sector_model.description == 'a description'

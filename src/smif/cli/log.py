@@ -44,8 +44,8 @@ def summary(self, *args, **kws):
             profile_data = logging.Logger._profile[profile]
             diff = profile_data['stop'] - profile_data['start']
             s = diff.total_seconds()
-            time_spent = '{:02d}:{:02d}:{:02d}'.format(
-                int(s // 3600), int(s % 3600 // 60), int(s % 60))
+            time_spent = '{:02d}:{:02d}:{:05.2f}'.format(
+                int(s // 3600), int(s % 3600 // 60), s % 60)
 
             # trunctuate long lines
             if len(profile[0]) > columns[0]-2:
@@ -96,7 +96,11 @@ def setup_logging(loglevel):
         'root': {
             'handlers': ['file', 'stream'],
             'level': 'DEBUG'
-        }
+        },
+        # disable_existing_loggers defaults to True, which causes problems with class/module
+        # -specific loggers, especially in unit tests when this method might be called multiple
+        # times
+        'disable_existing_loggers': False
     }
 
     if loglevel is None:

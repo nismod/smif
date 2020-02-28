@@ -214,7 +214,7 @@ class FileDataStore(DataStore):
         try:
             state = self._read_list_of_dicts(path)
         except FileNotFoundError:
-            msg = "State file does not exist for timestep {} and iteration {}"
+            msg = "Decision state file not found for timestep {}, decision {}"
             raise SmifDataNotFoundError(msg.format(timestep, decision_iteration))
         return state
 

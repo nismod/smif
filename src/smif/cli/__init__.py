@@ -76,7 +76,9 @@ import pkg_resources
 import pandas
 import smif
 import smif.cli.log
-from smif.controller import copy_project_folder, execute_model_run
+from smif.controller import (copy_project_folder, execute_decision_step,
+                             execute_model_before_step, execute_model_run,
+                             execute_model_step)
 from smif.controller.run import DAFNIRunScheduler, SubProcessRunScheduler
 from smif.data_layer import Store
 from smif.data_layer.file import (CSVDataStore, FileMetadataStore,
@@ -316,7 +318,40 @@ def prepare_model_runs(args):
                              var_start, var_end)
 
 
-def run_model_runs(args):
+def before_step(args):
+    """Prepare a single model to run (call once before calling `smif step`)
+
+    Parameters
+    ----------
+    args
+    """
+    store = _get_store(args)
+    execute_model_before_step(args.modelrun, args.model, store)
+
+
+def step(args):
+    """Run a single model for a single timestep
+
+    Parameters
+    ----------
+    args
+    """
+    store = _get_store(args)
+    execute_model_step(args.modelrun, args.model, args.timestep, args.decision, store)
+
+
+def decide(args):
+    """Run a decision step for a model run
+
+    Parameters
+    ----------
+    args
+    """
+    store = _get_store(args)
+    execute_decision_step(args.modelrun, args.decision, store)
+
+
+def run(args):
     """Run the model runs as requested. Check if results exist and asks
     user for permission to overwrite
 
@@ -325,12 +360,12 @@ def run_model_runs(args):
     args
     """
     logger = logging.getLogger(__name__)
+    msg = '{:s}, {:s}, {:s}'.format(args.modelrun, args.interface, args.directory)
+
     try:
-        logger.profiling_start('run_model_runs', '{:s}, {:s}, {:s}'.format(
-            args.modelrun, args.interface, args.directory))
+        logger.profiling_start('run_model_runs', msg)
     except AttributeError:
-        logger.info('START run_model_runs', '{:s}, {:s}, {:s}'.format(
-            args.modelrun, args.interface, args.directory))
+        logger.info('START run_model_runs %s', msg)
 
     if args.batchfile:
         with open(args.modelrun, 'r') as f:
@@ -339,14 +374,14 @@ def run_model_runs(args):
         model_run_ids = [args.modelrun]
 
     store = _get_store(args)
-    execute_model_run(model_run_ids, store, args.warm)
+    execute_model_run(model_run_ids, store, args.warm, args.dry_run)
+
     try:
-        logger.profiling_stop('run_model_runs', '{:s}, {:s}, {:s}'.format(
-            args.modelrun, args.interface, args.directory))
-        logger.summary()
+        logger.profiling_stop('run_model_runs', msg)
+        if not args.dry_run:
+            logger.summary()
     except AttributeError:
-        logger.info('STOP run_model_runs', '{:s}, {:s}, {:s}'.format(
-            args.modelrun, args.interface, args.directory))
+        logger.info('STOP run_model_runs %s', msg)
 
 
 def _get_store(args):
@@ -559,8 +594,8 @@ def parse_arguments():
 
     # RUN
     parser_run = subparsers.add_parser(
-        'run', help='Run a model', parents=[parent_parser])
-    parser_run.set_defaults(func=run_model_runs)
+        'run', help='Run a modelrun', parents=[parent_parser])
+    parser_run.set_defaults(func=run)
     parser_run.add_argument('-w', '--warm',
                             action='store_true',
                             help="Use intermediate results from the last modelrun \
@@ -571,6 +606,52 @@ def parse_arguments():
                                   list of modelrun names)")
     parser_run.add_argument('modelrun',
                             help="Name of the model run to run")
+    parser_run.add_argument('-n', '--dry-run',
+                            action='store_true',
+                            help="Do not execute individual models, print steps instead")
+
+    # BEFORE RUN
+    parser_before_step = subparsers.add_parser(
+        'before_step',
+        help='Initialise a model before stepping through',
+        parents=[parent_parser])
+    parser_before_step.set_defaults(func=before_step)
+    parser_before_step.add_argument('modelrun',
+                                    help="Name of the model run")
+    parser_before_step.add_argument('-m', '--model',
+                                    required=True,
+                                    help="The individual model to run.")
+
+    # DECIDE
+    parser_decide = subparsers.add_parser(
+        'decide', help='Run a decision step', parents=[parent_parser])
+    parser_decide.set_defaults(func=decide)
+    parser_decide.add_argument('modelrun',
+                               help="Name of the model run")
+    parser_decide.add_argument('-dn', '--decision',
+                               type=int,
+                               default=0,
+                               help="The decision step to run: either 0 to start a run, or "
+                                    "n+1 where n is the maximum previous decision iteration "
+                                    "for which all steps have been simulated")
+
+    # STEP
+    parser_step = subparsers.add_parser(
+        'step', help='Run a model step', parents=[parent_parser])
+    parser_step.set_defaults(func=step)
+    parser_step.add_argument('modelrun',
+                             help="Name of the model run")
+    parser_step.add_argument('-m', '--model',
+                             required=True,
+                             help="The individual model to run.")
+    parser_step.add_argument('-t', '--timestep',
+                             type=int,
+                             required=True,
+                             help="The single timestep to run.")
+    parser_step.add_argument('-dn', '--decision',
+                             type=int,
+                             required=True,
+                             help="The decision step to run.")
 
     return parser
 
@@ -646,7 +727,7 @@ def main(arguments=None):
         if args.verbose:
             debug_hook(exception_type, exception, traceback)
         else:
-            print("{}: {}".format(exception_type.__name__, exception))
+            print("{}: {}".format(exception_type.__name__, exception), file=sys.stderr)
 
     sys.excepthook = exception_handler
     if 'func' in args:

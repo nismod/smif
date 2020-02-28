@@ -138,7 +138,10 @@ class DataArray():
 
         try:
             if dims and coords:
-                index = pandas.MultiIndex.from_product(coords, names=dims)
+                if len(dims) == 1:
+                    index = pandas.Index(coords[0], name=dims[0])
+                else:
+                    index = pandas.MultiIndex.from_product(coords, names=dims)
                 return pandas.DataFrame(
                     {self.name: np.reshape(self.data, self.data.size)}, index=index)
             else:
@@ -166,6 +169,11 @@ class DataArray():
                 dataframe = dataframe.set_index(dims)
                 data_columns = dataframe.columns.values.tolist()
                 index_names = dataframe.index.names
+
+        if len(dims) == 1 and isinstance(dataframe.index, pandas.MultiIndex):
+            # case with one-level MultiIndex which xarray seems to reorder unless cast to
+            # simple Index
+            dataframe = dataframe.reset_index().set_index(dims[0])
 
         if name not in data_columns or (dims and set(dims) != set(index_names)):
             msg = "Data for '{name}' expected a data column called '{name}' and index " + \

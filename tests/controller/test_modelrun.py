@@ -98,6 +98,18 @@ def mock_store():
     return store
 
 
+@fixture(scope='function')
+def mock_scheduler(mock_store):
+    """Scheduler using mock store
+    """
+    scheduler = Mock()
+    scheduler.add = Mock(return_value=(
+        'job_id',
+        None
+    ))
+    return scheduler
+
+
 class TestModelRunBuilder:
     """Build from config
     """
@@ -131,19 +143,18 @@ class TestModelRunBuilder:
 class TestModelRun:
     """Core ModelRun
     """
-    def test_run_static(self, model_run, mock_store):
+    def test_run_static(self, model_run, mock_store, mock_scheduler):
         """Call run
         """
-        model_run.run(mock_store)
+        model_run.run(mock_store, mock_scheduler)
 
     def test_run_timesteps(self, config_data):
         """should error that timesteps are empty
         """
         config_data['timesteps'] = []
         model_run = ModelRun.from_dict(config_data)
-        store = Mock()
         with raises(SmifModelRunError) as ex:
-            model_run.run(store)
+            model_run.run(Mock(), Mock())
         assert 'No timesteps specified' in str(ex.value)
 
     def test_serialize(self, config_data):

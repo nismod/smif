@@ -1,7 +1,6 @@
-""" Job Schedulers are used to run job graphs.
+"""Job Schedulers are used to run job graphs.
 
-Runs a job graph by calling simulate() on the python Model
-objects in order.
+Runs a job graph by calling execute_model_step for each operation in order
 """
 import itertools
 import logging
@@ -9,7 +8,8 @@ import traceback
 from collections import defaultdict
 
 import networkx
-from smif.data_layer import DataHandle
+from smif.controller.execute_step import (execute_model_before_step,
+                                          execute_model_step)
 from smif.model import ModelOperation
 
 
@@ -22,16 +22,18 @@ class SerialJobScheduler(object):
         self.logger = logging.getLogger(__name__)
         self.store = store
 
-    def add(self, job_graph):
+    def add(self, job_graph, dry_run=False):
         """Add a JobGraph to the SerialJobScheduler and run directly
 
         Arguments
         ---------
         job_graph: :class:`networkx.graph`
+        dry_run: boolean, optional
+            If True, print job steps without running
         """
         job_graph_id = self._next_id()
         try:
-            self._run(job_graph, job_graph_id)
+            self._run(job_graph, job_graph_id, dry_run)
         except Exception as ex:
             self._status[job_graph_id] = 'failed'
             traceback.print_exc()
@@ -74,7 +76,7 @@ class SerialJobScheduler(object):
         """
         return {'status': self._status[job_graph_id]}
 
-    def _run(self, job_graph, job_graph_id):
+    def _run(self, job_graph, job_graph_id, dry_run=False):
         """Run a job graph
         - sort the jobs into a single list
         - unpack model, data_handle and operation from each node
@@ -83,12 +85,12 @@ class SerialJobScheduler(object):
             self.logger.profiling_start(
                 'SerialJobScheduler._run()', 'graph_' + str(job_graph_id))
         except AttributeError:
-            self.logger.info('START SerialJobScheduler._run():graph_' + str(job_graph_id))
+            self.logger.info('START SerialJobScheduler._run():graph_%s', job_graph_id)
 
         self._status[job_graph_id] = 'running'
 
         for job_node_id, job in self._get_run_order(job_graph):
-            self._run_job(job_node_id, job)
+            self._run_job(job_node_id, job, dry_run)
 
         self._status[job_graph_id] = 'done'
         try:
@@ -96,39 +98,38 @@ class SerialJobScheduler(object):
                 'SerialJobScheduler._run()', 'graph_' + str(job_graph_id))
         except AttributeError:
             self.logger.info(
-                'STOP SerialJobScheduler._run()', 'graph_' + str(job_graph_id))
+                'STOP SerialJobScheduler._run():graph_%s', job_graph_id)
 
-    def _run_job(self, job_node_id, job):
-        self.logger.info("Job %s", job_node_id)
+    def _run_job(self, job_node_id, job, dry_run=False):
+        self.logger.info("Job %s", job_node_id)  # Call root logger to satisfy CLI test
         try:
             self.logger.profiling_start('SerialJobScheduler._run()', 'job_' + job_node_id)
         except AttributeError:
-            self.logger.info('START SerialJobScheduler._run()', 'job_' + job_node_id)
+            self.logger.info('START SerialJobScheduler._run():job_%s', job_node_id)
 
-        model = job['model']
-        data_handle = DataHandle(
-            store=self.store,
-            model=model,
-            modelrun_name=job['modelrun_name'],
-            current_timestep=job['current_timestep'],
-            timesteps=job['timesteps'],
-            decision_iteration=job['decision_iteration']
-        )
-        operation = job['operation']
-        if operation is ModelOperation.BEFORE_MODEL_RUN:
-            # before_model_run may not be implemented by all jobs
-            if hasattr(model, "before_model_run"):
-                model.before_model_run(data_handle)
-
-        elif operation is ModelOperation.SIMULATE:
-            model.simulate(data_handle)
+        if job['operation'] == ModelOperation.SIMULATE:
+            execute_model_step(
+                job['modelrun_name'],
+                job['model'].name,
+                job['current_timestep'],
+                job['decision_iteration'],
+                self.store,
+                dry_run
+            )
+        elif job['operation'] == ModelOperation.BEFORE_MODEL_RUN:
+            execute_model_before_step(
+                job['modelrun_name'],
+                job['model'].name,
+                self.store,
+                dry_run
+            )
         else:
-            raise ValueError("Unrecognised operation: {}".format(operation))
+            raise ValueError("Model operation not recognised", job)
 
         try:
             self.logger.profiling_stop('SerialJobScheduler._run()', 'job_' + job_node_id)
         except AttributeError:
-            self.logger.info('STOP SerialJobScheduler._run()', 'job_' + job_node_id)
+            self.logger.info('STOP SerialJobScheduler._run():job_%s', job_node_id)
 
     def _next_id(self):
         return next(self._id_counter)
