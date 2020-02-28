@@ -96,7 +96,11 @@ def setup_logging(loglevel):
         'root': {
             'handlers': ['file', 'stream'],
             'level': 'DEBUG'
-        }
+        },
+        # disable_existing_loggers defaults to True, which causes problems with class/module
+        # -specific loggers, especially in unit tests when this method might be called multiple
+        # times
+        'disable_existing_loggers': False
     }
 
     if loglevel is None:

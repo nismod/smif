@@ -101,7 +101,7 @@ class SerialJobScheduler(object):
                 'STOP SerialJobScheduler._run():graph_%s', job_graph_id)
 
     def _run_job(self, job_node_id, job, dry_run=False):
-        logging.info("Job %s", job_node_id)  # Call root logger to satisfy CLI test
+        self.logger.info("Job %s", job_node_id)  # Call root logger to satisfy CLI test
         try:
             self.logger.profiling_start('SerialJobScheduler._run()', 'job_' + job_node_id)
         except AttributeError:
