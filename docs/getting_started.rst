@@ -18,16 +18,30 @@ Setup
 First, check smif has installed correctly by typing on the command line::
 
     $ smif
-    usage: smif [-h] [-V] {setup,list,app,run} ...
+    usage: smif [-h] [-V]
+                {setup,list,available_results,missing_results,prepare-convert,prepare-scenario,prepare-run,csv2parquet,app,run,before_step,decide,step}
+                ...
 
     Command line tools for smif
 
     positional arguments:
-    {setup,list,app,run}  available commands
+    {setup,list,available_results,missing_results,prepare-convert,prepare-scenario,prepare-run,csv2parquet,app,run,before_step,decide,step}
+                            available commands
         setup               Setup the project folder
         list                List available model runs
+        available_results   List available results
+        missing_results     List missing results
+        prepare-convert     Convert data from one format to another
+        prepare-scenario    Prepare scenario configuration file with multiple
+                            variants
+        prepare-run         Prepare model runs based on scenario variants
+        csv2parquet         Convert CSV to Parquet. Pass a filename or a directory
+                            to search recurisvely
         app                 Open smif app
-        run                 Run a model
+        run                 Run a modelrun
+        before_step         Initialise a model before stepping through
+        decide              Run a decision step
+        step                Run a model step
 
     optional arguments:
     -h, --help            show this help message and exit
@@ -160,6 +174,42 @@ Or, in the app, go to the "Job Runner" screen.
     [C] Save the console output to disk
 
     [D] Click on the down-arrow button to follow the console output as the job runs
+
+
+Run models step-by-step
+-----------------------
+
+Try dry-running a model to see the steps that would be taken, without actually running any
+simulations or decisions::
+
+    $ smif run energy_water_cp_cr --dry-run
+    Dry run, stepping through model run without execution:
+        smif decide energy_water_cp_cr
+        smif before_step energy_water_cp_cr --model energy_demand
+        smif step energy_water_cp_cr --model energy_demand --timestep 2020 --decision 0
+        smif step energy_water_cp_cr --model energy_demand --timestep 2015 --decision 0
+        smif step energy_water_cp_cr --model energy_demand --timestep 2010 --decision 0
+        smif before_step energy_water_cp_cr --model water_supply
+        smif step energy_water_cp_cr --model water_supply --timestep 2010 --decision 0
+        smif step energy_water_cp_cr --model water_supply --timestep 2015 --decision 0
+        smif step energy_water_cp_cr --model water_supply --timestep 2020 --decision 0
+
+Each of these commands can be run individually to step through the simulation.
+
+``smif decide`` first sets up the pre-planned interventions. In another model set-up it would
+run the decision agent - for more details, see decisions_.
+
+``smif before_step`` initialises each model before it is run.
+
+``smif step`` runs a single component of the model for a single timestep, with a single set of
+decisions.
+
+The order of operations matters. In this example, the ``energy_demand`` model must run first
+because it provides outputs to the ``water_supply`` model. The order of timesteps doesn't
+matter for ``energy_demand`` because it calculates demand directly from scenario data. The
+order of timesteps does matter for ``water_supply`` because it calculates and outputs reservoir
+levels at the end of each timestep, which it then reads as an input at the beginning of the
+next timestep.
 
 
 View results
