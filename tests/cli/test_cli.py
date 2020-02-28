@@ -6,7 +6,6 @@ import sys
 from distutils.dir_util import copy_tree, remove_tree
 from itertools import product
 from tempfile import TemporaryDirectory
-from textwrap import dedent
 from time import sleep
 from unittest.mock import call, patch
 
@@ -141,19 +140,21 @@ def test_dry_run(capsys, tmp_sample_project):
     print(out)
     print(err, file=sys.stderr)
 
-    expected = dedent("""\
-    Dry run, stepping through model run without execution:
-        smif decide energy_water_cp_cr
-        smif before_step energy_water_cp_cr --model energy_demand
-        smif step energy_water_cp_cr --model energy_demand --timestep 2020 --decision 0
-        smif step energy_water_cp_cr --model energy_demand --timestep 2015 --decision 0
-        smif step energy_water_cp_cr --model energy_demand --timestep 2010 --decision 0
-        smif before_step energy_water_cp_cr --model water_supply
-        smif step energy_water_cp_cr --model water_supply --timestep 2010 --decision 0
-        smif step energy_water_cp_cr --model water_supply --timestep 2015 --decision 0
-        smif step energy_water_cp_cr --model water_supply --timestep 2020 --decision 0
-    """)
-    assert out == expected
+    assert "smif decide energy_water_cp_cr" in out
+    assert "smif before_step energy_water_cp_cr --model energy_demand" in out
+    assert "smif step energy_water_cp_cr --model energy_demand --timestep 2020 --decision 0" \
+        in out
+    assert "smif step energy_water_cp_cr --model energy_demand --timestep 2015 --decision 0" \
+        in out
+    assert "smif step energy_water_cp_cr --model energy_demand --timestep 2010 --decision 0" \
+        in out
+    assert "smif before_step energy_water_cp_cr --model water_supply" in out
+    assert "smif step energy_water_cp_cr --model water_supply --timestep 2010 --decision 0" \
+        in out
+    assert "smif step energy_water_cp_cr --model water_supply --timestep 2015 --decision 0" \
+        in out
+    assert "smif step energy_water_cp_cr --model water_supply --timestep 2020 --decision 0" \
+        in out
 
 
 def test_fixture_batch_run(capsys, tmp_sample_project):
