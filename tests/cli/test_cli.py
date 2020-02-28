@@ -22,7 +22,10 @@ def tmp_sample_project(tmpdir_factory):
     dst = str(tmpdir_factory.mktemp("smif"))
     src = os.path.join(os.path.dirname(smif.__file__), 'sample_project')
     copy_tree(src, dst)
-    remove_tree(os.path.join(dst, 'results'))
+    try:
+        remove_tree(os.path.join(dst, 'results'))
+    except FileNotFoundError:
+        pass
     return dst
 
 
