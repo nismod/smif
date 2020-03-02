@@ -117,11 +117,11 @@ To make a release:
 
 
 To  update the ``CHANGELOG.rst`` with a short summary of fixes and new features. Commit
-message summaries should give a reasonable starting point:
+message summaries should give a reasonable starting point::
 
     git log v1.1.0..HEAD --oneline
 
-To create and push a tag:
+To create and push a tag::
 
     git tag -a v0.2.0         # create annotated tag (will need a message)
     git describe              # show current commit in relation to tags
