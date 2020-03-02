@@ -2,6 +2,25 @@
 Changelog
 =========
 
+Version 1.3
+===========
+
+Features:
+
+- Add smif CLI subcommands: decide, before_step, step
+- Add --dry-run option when running a whole model run - prints a list of step subcommands
+- Allow concrete instances of Model, SectorModel
+- Include only sector_models and model_dependencies in job graphs (reduces logging noise)
+- Include hundredths of a second in log timings
+
+Fixes:
+- Handle one-dimensional DataArray to Dataframe conversions (could mis-sort data with unordered
+  labels in conversion to/from xarray - see pydata/xarray#3798)
+- Update npm dependencies
+- Relax ruamel.yaml requirement to >=15.50
+- Fix Travis/Appveyor tests under Python 3.5 (install/pin dependencies)
+
+
 Version 1.2.1
 =============
 
