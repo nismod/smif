@@ -2,6 +2,15 @@
 Changelog
 =========
 
+Version 1.3.1
+=============
+
+Fixes:
+
+- Move unit registration to within UnitAdaptor.simulate (fixes running with custom units)
+- Update npm dependencies
+
+
 Version 1.3
 ===========
 
