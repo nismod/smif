@@ -1,7 +1,7 @@
 """Handles conversion between units used in the `SosModel`
 """
-from pint import DimensionalityError, UndefinedUnitError, UnitRegistry  # type: ignore
-
+from pint import (DimensionalityError, UndefinedUnitError,  # type: ignore
+                  UnitRegistry)
 from smif.convert.adaptor import Adaptor
 from smif.data_layer.data_handle import DataHandle
 
@@ -13,12 +13,13 @@ class UnitAdaptor(Adaptor):
         self._register = UnitRegistry()
         super().__init__(name)
 
-    def before_model_run(self, data_handle: DataHandle):
-        """Register unit definitions in registry before model run
+    def simulate(self, data_handle: DataHandle):
+        """Register unit definitions in registry for model run
         """
         units = data_handle.read_unit_definitions()
         for unit in units:
             self._register.define(unit)
+        super().simulate(data_handle)
 
     def convert(self, data_array, to_spec, coefficients):
         data = data_array.data

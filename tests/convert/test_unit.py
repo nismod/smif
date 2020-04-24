@@ -3,6 +3,7 @@
 from unittest.mock import Mock
 
 import numpy as np
+
 from smif.convert.unit import UnitAdaptor
 from smif.data_layer.data_array import DataArray
 from smif.metadata import Spec
@@ -23,6 +24,7 @@ def test_convert_unit():
     data_array = DataArray(from_spec, data)
 
     data_handle.get_data = Mock(return_value=data_array)
+    data_handle.read_unit_definitions = Mock(return_value=[])
 
     adaptor = UnitAdaptor('test-ml-l')
     adaptor.add_input(from_spec)
@@ -64,7 +66,6 @@ def test_convert_custom():
     adaptor = UnitAdaptor('test-mcm-GW')
     adaptor.add_input(from_spec)
     adaptor.add_output(to_spec)
-    adaptor.before_model_run(data_handle)  # must have run before_model_run to register units
     adaptor.simulate(data_handle)
 
     actual = data_handle.set_results.call_args[0][1]
