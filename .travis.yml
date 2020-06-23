@@ -20,8 +20,8 @@ env:
     - PGPORT="5432"
     - PGPASSWORD=""
   matrix:
-    - PYTHON_VERSION="3.5" COVERAGE="false"
-    - PYTHON_VERSION="3.6" COVERAGE="true"
+    - PYTHON_VERSION="3.6" COVERAGE="false"
+    - PYTHON_VERSION="3.8" COVERAGE="true"
 
 install: source $TRAVIS_BUILD_DIR/ci/install.sh
 before_script:
