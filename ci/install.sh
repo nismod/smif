@@ -64,7 +64,7 @@ fi
 python setup.py develop
 
 # Install node and npm dependencies
-nvm install 6.11.4
-nvm use 6.11.4
+nvm install 14.15.1
+nvm use 14.15.1
 cd $TRAVIS_BUILD_DIR/src/smif/app && npm install
 cd $TRAVIS_BUILD_DIR
