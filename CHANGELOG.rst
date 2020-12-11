@@ -2,6 +2,19 @@
 Changelog
 =========
 
+Version 1.3.2
+=============
+
+Changes to tested Python and Node.js versions:
+
+- Bump Python versions (drop 3.5, test on 3.6 and 3.8)
+- Bump Node version (test on current LTS release, 14.15.1)
+
+Fixes:
+
+- Update npm dependencies
+
+
 Version 1.3.1
 =============
 
