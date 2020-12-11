@@ -17,8 +17,8 @@ import time
 from collections import defaultdict
 
 import requests
+
 from minio import Minio
-from minio.error import ResponseError
 from ruamel.yaml import YAML  # type: ignore
 
 if "BACKEND_NISMOD_MINIO_SECRETS_FILE" in os.environ:
@@ -119,14 +119,11 @@ class DAFNIRunScheduler(object):
 
             minio_client.make_bucket(model_run_id)
             for yml in yaml_files:
-                try:
-                    local_path = args['directory'] + yml
-                    with open(local_path, 'rb') as yml_data:
-                        yml_stat = os.stat(local_path)
-                        minio_client.put_object(
-                            model_run_id, yml[1:], yml_data, yml_stat.st_size)
-                except ResponseError as err:
-                    print(err)
+                local_path = args['directory'] + yml
+                with open(local_path, 'rb') as yml_data:
+                    yml_stat = os.stat(local_path)
+                    minio_client.put_object(
+                        model_run_id, yml[1:], yml_data, yml_stat.st_size)
 
             response = requests.get(URL_JOBS, headers=self.auth_header)
             response.raise_for_status()
