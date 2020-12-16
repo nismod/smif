@@ -42,6 +42,8 @@ jobs:
       before_deploy:
         - cd $TRAVIS_BUILD_DIR/src/smif/app && npm run build
         - cd $TRAVIS_BUILD_DIR
+        - git status
+        - git diff
       deploy:
         provider: pypi
         user: willu47
