@@ -17,6 +17,7 @@ install:
   - conda config --set always_yes true
   - conda update conda
   - conda config --set changeps1 false
+  - conda config --add channels conda-forge
   - conda config --set channel_priority strict
   - conda info --all
   - "conda create -n testenv python=%PYTHON_VERSION% \
