@@ -20,8 +20,8 @@ env:
     - PGPORT="5432"
     - PGPASSWORD=""
   matrix:
-    - PYTHON_VERSION="3.6" COVERAGE="false"
-    - PYTHON_VERSION="3.8" COVERAGE="true"
+    - PYTHON_VERSION="3.8" COVERAGE="false"
+    - PYTHON_VERSION="3.9" COVERAGE="true"
 
 install: source $TRAVIS_BUILD_DIR/ci/install.sh
 before_script:
@@ -36,7 +36,7 @@ jobs:
   include:
     - stage: PyPI release
       if: tag =~ ^v
-      env: PYTHON_VERSION="3.6" COVERAGE="false"
+      env: PYTHON_VERSION="3.8" COVERAGE="false"
       install: source $TRAVIS_BUILD_DIR/ci/install.sh
       script: echo "Deploying to PyPI"
       before_deploy:
