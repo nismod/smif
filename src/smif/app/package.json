@@ -9,7 +9,7 @@
   "private": true,
   "main": "src/index.js",
   "scripts": {
-    "test": "cross-env NODE_PATH=./src nyc mocha --require @babel/polyfill --require @babel/register --require jsdom-global/register --require ./test/helpers.js --recursive",
+    "test": "cross-env NODE_PATH=./src mocha --exit --require @babel/polyfill --require @babel/register --require jsdom-global/register --require ./test/helpers.js --recursive",
     "report": "nyc report --reporter=lcovonly",
     "build": "webpack --mode production",
     "watch": "webpack --progress --watch --mode development",
@@ -36,8 +36,7 @@
     "react-table": "^6.11.5",
     "redux": "^4.0.5",
     "redux-logger": "^3.0.6",
-    "redux-thunk": "^2.2.0",
-    "strip-ansi": "^5.2.0"
+    "redux-thunk": "^2.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.11.4",
@@ -49,26 +48,26 @@
     "babel-eslint": "^10.1.0",
     "babel-loader": "^8.1.0",
     "chai": "^4.2.0",
-    "clean-webpack-plugin": "^1.0.1",
+    "clean-webpack-plugin": "^4.0.0",
     "codecov": "^3.7.2",
     "cross-env": "^5.2.1",
-    "css-loader": "^2.1.1",
+    "css-loader": "^6.5.1",
     "enzyme": "^3.11.0",
     "enzyme-adapter-react-16": "^1.15.3",
-    "eslint": "^5.16.0",
+    "eslint": "^8.2.0",
     "eslint-plugin-react": "^7.20.6",
-    "html-webpack-plugin": "^3.2.0",
+    "html-webpack-plugin": "^5.5.0",
     "jsdom": "^13.2.0",
     "jsdom-global": "^3.0.2",
-    "mini-css-extract-plugin": "^0.5.0",
+    "mini-css-extract-plugin": "^2.4.4",
     "mocha": "^8.1.1",
-    "nyc": "^14.1.1",
+    "nyc": "^15.1.0",
     "react-hot-loader": "^4.12.21",
     "react-test-renderer": "^16.13.1",
     "sinon": "^7.5.0",
     "style-loader": "^0.23.0",
-    "webpack": "^4.44.1",
-    "webpack-cli": "^3.3.12",
-    "webpack-dev-server": "^3.11.2"
+    "webpack": "^5.63.0",
+    "webpack-cli": "^4.9.1",
+    "webpack-dev-server": "^4.4.0"
   }
 }

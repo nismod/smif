@@ -3,7 +3,6 @@ import PropTypes from 'prop-types'
 
 import Ansi from 'ansi-to-react'
 import moment from 'moment'
-import stripAnsi from 'strip-ansi'
 import { FaAngleDoubleUp, FaAngleDoubleDown, FaSave } from 'react-icons/fa'
 
 class ConsoleDisplay extends Component {
@@ -56,7 +55,7 @@ class ConsoleDisplay extends Component {
                         type="button"
                         className="btn btn-outline-dark btn-margin"
                         onClick={() => {
-                            this.download(moment().format('YMMDD_HHmm') + '_' + name + '.log', stripAnsi(output))
+                            this.download(moment().format('YMMDD_HHmm') + '_' + name + '.log', output)
                         }}>
                         <FaSave/>
                     </button>

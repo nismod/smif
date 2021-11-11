@@ -1,7 +1,7 @@
 const path = require('path')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
-const CleanWebpackPlugin = require('clean-webpack-plugin')
+const { CleanWebpackPlugin } = require('clean-webpack-plugin')
 
 module.exports = {
     entry: {
@@ -15,7 +15,9 @@ module.exports = {
         patternLibrary: './src/pattern-library.js'
     },
     devServer: {
-        contentBase: '.',
+        static: {
+            directory: '.'
+        },
         // serve 'index.html' for other routes, so that live reload works even
         // with other routes
         historyApiFallback: true,
@@ -54,10 +56,12 @@ module.exports = {
             //   (see https://babeljs.io/docs/plugins/preset-env for details)
             {
                 test: /\.jsx?$/,
-                loader: 'babel-loader',
                 exclude: /node_modules/,
-                query: {
-                    presets: ['@babel/preset-react', '@babel/preset-env']
+                use: {
+                    loader: 'babel-loader',
+                    options: {
+                        presets: ['@babel/preset-react', '@babel/preset-env']
+                    }
                 }
             }
         ]
@@ -95,6 +99,6 @@ module.exports = {
 
         // Clean the `dist` directory on each run to ensure all files are
         // generated and old generated files are cleaned out.
-        new CleanWebpackPlugin(['dist'])
+        new CleanWebpackPlugin()
     ],
 };
