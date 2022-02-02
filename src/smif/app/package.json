@@ -18,7 +18,7 @@
   "author": "Tom Russell",
   "license": "MIT",
   "dependencies": {
-    "ansi-to-react": "^3.3.5",
+    "ansi-to-react": "^6.1.6",
     "bootstrap": "^4.5.2",
     "immutability-helper": "^2.9.1",
     "isomorphic-fetch": "^3.0.0",
@@ -60,7 +60,7 @@
     "jsdom": "^13.2.0",
     "jsdom-global": "^3.0.2",
     "mini-css-extract-plugin": "^2.4.4",
-    "mocha": "^8.1.1",
+    "mocha": "^9.2.0",
     "nyc": "^15.1.0",
     "react-hot-loader": "^4.12.21",
     "react-test-renderer": "^16.13.1",
