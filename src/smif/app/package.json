@@ -22,7 +22,7 @@
     "bootstrap": "^4.5.2",
     "immutability-helper": "^2.9.1",
     "isomorphic-fetch": "^3.0.0",
-    "moment": "^2.27.0",
+    "moment": "^2.29.4",
     "prop-types": "^15.7.2",
     "rc-slider": "^8.7.1",
     "rc-steps": "^3.6.0",
