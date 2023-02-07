@@ -7,13 +7,16 @@ from smif.data_layer.abstract_config_store import ConfigStore
 from smif.data_layer.abstract_data_store import DataStore
 from smif.data_layer.abstract_metadata_store import MetadataStore
 from smif.data_layer.data_array import DataArray
-from smif.exception import (SmifDataExistsError, SmifDataMismatchError,
-                            SmifDataNotFoundError)
+from smif.exception import (
+    SmifDataExistsError,
+    SmifDataMismatchError,
+    SmifDataNotFoundError,
+)
 
 
 class MemoryConfigStore(ConfigStore):
-    """Config store in memory
-    """
+    """Config store in memory"""
+
     def __init__(self):
         super().__init__()
         self._model_runs = OrderedDict()
@@ -32,13 +35,17 @@ class MemoryConfigStore(ConfigStore):
         try:
             return self._model_runs[model_run_name]
         except KeyError:
-            raise SmifDataNotFoundError("sos_model_run '%s' not found" % (model_run_name))
+            raise SmifDataNotFoundError(
+                "sos_model_run '%s' not found" % (model_run_name)
+            )
 
     def write_model_run(self, model_run):
-        if model_run['name'] not in self._model_runs:
-            self._model_runs[model_run['name']] = model_run
+        if model_run["name"] not in self._model_runs:
+            self._model_runs[model_run["name"]] = model_run
         else:
-            raise SmifDataExistsError("model_run '%s' already exists" % (model_run['name']))
+            raise SmifDataExistsError(
+                "model_run '%s' already exists" % (model_run["name"])
+            )
 
     def update_model_run(self, model_run_name, model_run):
         if model_run_name in self._model_runs:
@@ -51,6 +58,7 @@ class MemoryConfigStore(ConfigStore):
             del self._model_runs[model_run_name]
         except KeyError:
             raise SmifDataNotFoundError("model_run '%s' not found" % (model_run_name))
+
     # endregion
 
     # region System-of-systems models
@@ -64,10 +72,12 @@ class MemoryConfigStore(ConfigStore):
             raise SmifDataNotFoundError("sos_model '%s' not found" % (sos_model_name))
 
     def write_sos_model(self, sos_model):
-        if sos_model['name'] not in self._sos_models:
-            self._sos_models[sos_model['name']] = sos_model
+        if sos_model["name"] not in self._sos_models:
+            self._sos_models[sos_model["name"]] = sos_model
         else:
-            raise SmifDataExistsError("sos_model '%s' already exists" % (sos_model['name']))
+            raise SmifDataExistsError(
+                "sos_model '%s' already exists" % (sos_model["name"])
+            )
 
     def update_sos_model(self, sos_model_name, sos_model):
         if sos_model_name in self._sos_models:
@@ -80,6 +90,7 @@ class MemoryConfigStore(ConfigStore):
             del self._sos_models[sos_model_name]
         except KeyError:
             raise SmifDataNotFoundError("sos_model '%s' not found" % (sos_model_name))
+
     # endregion
 
     # region Models
@@ -93,15 +104,15 @@ class MemoryConfigStore(ConfigStore):
             raise SmifDataNotFoundError("model '%s' not found" % (model_name))
 
     def write_model(self, model):
-        if model['name'] not in self._models:
-            model = _skip_coords(model, ('inputs', 'outputs', 'parameters'))
-            self._models[model['name']] = model
+        if model["name"] not in self._models:
+            model = _skip_coords(model, ("inputs", "outputs", "parameters"))
+            self._models[model["name"]] = model
         else:
-            raise SmifDataExistsError("model '%s' already exists" % (model['name']))
+            raise SmifDataExistsError("model '%s' already exists" % (model["name"]))
 
     def update_model(self, model_name, model):
         if model_name in self._models:
-            model = _skip_coords(model, ('inputs', 'outputs', 'parameters'))
+            model = _skip_coords(model, ("inputs", "outputs", "parameters"))
             self._models[model_name] = model
         else:
             raise SmifDataNotFoundError("model '%s' not found" % (model_name))
@@ -139,17 +150,19 @@ class MemoryConfigStore(ConfigStore):
             raise SmifDataNotFoundError("scenario '%s' not found" % (scenario_name))
 
     def write_scenario(self, scenario):
-        if scenario['name'] not in self._scenarios:
+        if scenario["name"] not in self._scenarios:
             scenario = _variant_list_to_dict(scenario)
-            scenario = _skip_coords(scenario, ['provides'])
-            self._scenarios[scenario['name']] = scenario
+            scenario = _skip_coords(scenario, ["provides"])
+            self._scenarios[scenario["name"]] = scenario
         else:
-            raise SmifDataExistsError("scenario '%s' already exists" % (scenario['name']))
+            raise SmifDataExistsError(
+                "scenario '%s' already exists" % (scenario["name"])
+            )
 
     def update_scenario(self, scenario_name, scenario):
         if scenario_name in self._scenarios:
             scenario = _variant_list_to_dict(scenario)
-            scenario = _skip_coords(scenario, ['provides'])
+            scenario = _skip_coords(scenario, ["provides"])
             self._scenarios[scenario_name] = scenario
         else:
             raise SmifDataNotFoundError("scenario '%s' not found" % (scenario_name))
@@ -159,37 +172,43 @@ class MemoryConfigStore(ConfigStore):
             del self._scenarios[scenario_name]
         except KeyError:
             raise SmifDataNotFoundError("scenario '%s' not found" % (scenario_name))
+
     # endregion
 
     # region Scenario Variants
     def read_scenario_variants(self, scenario_name):
-        return list(self._scenarios[scenario_name]['variants'].values())
+        return list(self._scenarios[scenario_name]["variants"].values())
 
     def read_scenario_variant(self, scenario_name, variant_name):
         try:
-            return self._scenarios[scenario_name]['variants'][variant_name]
+            return self._scenarios[scenario_name]["variants"][variant_name]
         except KeyError:
-            raise SmifDataNotFoundError("scenario '%s' variant '%s' not found"
-                                        % (scenario_name, variant_name))
+            raise SmifDataNotFoundError(
+                "scenario '%s' variant '%s' not found" % (scenario_name, variant_name)
+            )
 
     def write_scenario_variant(self, scenario_name, variant):
-        self._scenarios[scenario_name]['variants'][variant['name']] = variant
+        self._scenarios[scenario_name]["variants"][variant["name"]] = variant
 
     def update_scenario_variant(self, scenario_name, variant_name, variant):
-        self._scenarios[scenario_name]['variants'][variant_name] = variant
+        self._scenarios[scenario_name]["variants"][variant_name] = variant
 
     def delete_scenario_variant(self, scenario_name, variant_name):
-        del self._scenarios[scenario_name]['variants'][variant_name]
+        del self._scenarios[scenario_name]["variants"][variant_name]
+
     # endregion
 
     # region Narratives
     def _read_narratives(self, sos_model_name):
-        return self._sos_models[sos_model_name]['narratives']
+        return self._sos_models[sos_model_name]["narratives"]
 
     def read_narrative(self, sos_model_name, narrative_name):
         try:
-            narrative = [x for x in self._read_narratives(sos_model_name)
-                         if x['name'] == narrative_name][0]
+            narrative = [
+                x
+                for x in self._read_narratives(sos_model_name)
+                if x["name"] == narrative_name
+            ][0]
         except IndexError:
             msg = "Narrative '{}' not found in '{}'"
             raise SmifDataNotFoundError(msg.format(narrative_name, sos_model_name))
@@ -198,11 +217,12 @@ class MemoryConfigStore(ConfigStore):
     def _read_narrative_variant(self, sos_model_name, narrative_name, variant_name):
         narrative = self.read_narrative(sos_model_name, narrative_name)
         try:
-            variant = [x for x in narrative['variants'] if x['name'] == variant_name][0]
+            variant = [x for x in narrative["variants"] if x["name"] == variant_name][0]
         except IndexError:
             msg = "Variant '{}' not found in '{}'"
             raise SmifDataNotFoundError(msg.format(variant_name, narrative_name))
         return variant
+
     # endregion
 
     # region Strategies
@@ -210,17 +230,19 @@ class MemoryConfigStore(ConfigStore):
         try:
             return self._strategies[modelrun_name]
         except KeyError:
-            raise SmifDataNotFoundError("strategies in modelrun '%s' not found"
-                                        % (modelrun_name))
+            raise SmifDataNotFoundError(
+                "strategies in modelrun '%s' not found" % (modelrun_name)
+            )
 
     def write_strategies(self, modelrun_name, strategies):
         self._strategies[modelrun_name] = strategies
+
     # endregion
 
 
 class MemoryMetadataStore(MetadataStore):
-    """Store metadata in-memory
-    """
+    """Store metadata in-memory"""
+
     def __init__(self):
         super().__init__()
         self._units = []  # list[str] of pint definitions
@@ -232,6 +254,7 @@ class MemoryMetadataStore(MetadataStore):
 
     def read_unit_definitions(self):
         return self._units
+
     # endregion
 
     # region Dimensions
@@ -241,26 +264,24 @@ class MemoryMetadataStore(MetadataStore):
     def read_dimension(self, dimension_name, skip_coords=False):
         dim = self._dimensions[dimension_name]
         if skip_coords:
-            dim = {
-                'name': dim['name'],
-                'description': dim['description']
-            }
+            dim = {"name": dim["name"], "description": dim["description"]}
         return dim
 
     def write_dimension(self, dimension):
-        self._dimensions[dimension['name']] = dimension
+        self._dimensions[dimension["name"]] = dimension
 
     def update_dimension(self, dimension_name, dimension):
-        self._dimensions[dimension['name']] = dimension
+        self._dimensions[dimension["name"]] = dimension
 
     def delete_dimension(self, dimension_name):
         del self._dimensions[dimension_name]
+
     # endregion
 
 
 class MemoryDataStore(DataStore):
-    """Store data in-memory
-    """
+    """Store data in-memory"""
+
     def __init__(self):
         super().__init__()
         self._scenario_data = OrderedDict()
@@ -275,7 +296,9 @@ class MemoryDataStore(DataStore):
 
     # region Data Array
     def read_scenario_variant_data(self, key, spec, timestep=None, timesteps=None):
-        return self._read_data_array(self._scenario_data, key, spec, timestep, timesteps)
+        return self._read_data_array(
+            self._scenario_data, key, spec, timestep, timesteps
+        )
 
     def write_scenario_variant_data(self, key, data):
         self._scenario_data[key] = data
@@ -300,7 +323,8 @@ class MemoryDataStore(DataStore):
 
         dataframe = data.as_df()
         dataframe, spec = DataStore.filter_on_timesteps(
-            dataframe, spec, key, timestep, timesteps)
+            dataframe, spec, key, timestep, timesteps
+        )
         data_array = DataStore.dataframe_to_data_array(dataframe, spec, key)
         return data_array
 
@@ -312,14 +336,16 @@ class MemoryDataStore(DataStore):
         if data.spec != spec:
             raise SmifDataMismatchError(
                 "Spec did not match reading {}, requested {}, got {}".format(
-                    spec.name, spec, data.spec))
+                    spec.name, spec, data.spec
+                )
+            )
         return data
 
     def write_model_parameter_default(self, key, data):
         self._model_parameter_defaults[key] = data
 
     def model_parameter_default_data_exists(self, key):
-        return (key in self._model_parameter_defaults.keys())
+        return key in self._model_parameter_defaults.keys()
 
     # endregion
 
@@ -329,7 +355,7 @@ class MemoryDataStore(DataStore):
         interventions = [list(self._interventions[key].values()) for key in keys][0]
 
         for entry in interventions:
-            name = entry.get('name')
+            name = entry.get("name")
             if name in all_interventions:
                 msg = "An entry for intervention {} already exists"
                 raise ValueError(msg.format(name))
@@ -342,16 +368,16 @@ class MemoryDataStore(DataStore):
         self._interventions[key] = interventions
 
     def interventions_data_exists(self, key):
-        return (key in self._interventions.keys())
+        return key in self._interventions.keys()
 
     def read_strategy_interventions(self, strategy):
-        return strategy['interventions']
+        return strategy["interventions"]
 
     def write_strategy_interventions(self, strategy, data):
-        strategy['interventions'] = data
+        strategy["interventions"] = data
 
     def strategy_data_exists(self, strategy):
-        return ('interventions' in strategy.keys())
+        return "interventions" in strategy.keys()
 
     def read_initial_conditions(self, keys):
         return [self._initial_conditions[key] for key in keys][0]
@@ -360,7 +386,8 @@ class MemoryDataStore(DataStore):
         self._initial_conditions[key] = initial_conditions
 
     def initial_conditions_data_exists(self, key):
-        return (key in self._initial_conditions.keys())
+        return key in self._initial_conditions.keys()
+
     # endregion
 
     # region State
@@ -369,6 +396,7 @@ class MemoryDataStore(DataStore):
 
     def write_state(self, state, modelrun_name, timestep=None, decision_iteration=None):
         self._state[(modelrun_name, timestep, decision_iteration)] = state
+
     # endregion
 
     # region Conversion coefficients
@@ -381,12 +409,25 @@ class MemoryDataStore(DataStore):
 
     def write_coefficients(self, source_dim, destination_dim, data):
         self._coefficients[(source_dim, destination_dim)] = data
+
     # endregion
 
     # region Results
-    def read_results(self, modelrun_name, model_name, output_spec, timestep=None,
-                     decision_iteration=None):
-        key = (modelrun_name, model_name, output_spec.name, timestep, decision_iteration)
+    def read_results(
+        self,
+        modelrun_name,
+        model_name,
+        output_spec,
+        timestep=None,
+        decision_iteration=None,
+    ):
+        key = (
+            modelrun_name,
+            model_name,
+            output_spec.name,
+            timestep,
+            decision_iteration,
+        )
 
         try:
             results = self._results[key]
@@ -395,13 +436,31 @@ class MemoryDataStore(DataStore):
 
         return DataArray(output_spec, results)
 
-    def write_results(self, data_array, modelrun_name, model_name, timestep=None,
-                      decision_iteration=None):
-        key = (modelrun_name, model_name, data_array.spec.name, timestep, decision_iteration)
+    def write_results(
+        self,
+        data_array,
+        modelrun_name,
+        model_name,
+        timestep=None,
+        decision_iteration=None,
+    ):
+        key = (
+            modelrun_name,
+            model_name,
+            data_array.spec.name,
+            timestep,
+            decision_iteration,
+        )
         self._results[key] = data_array.as_ndarray()
 
-    def delete_results(self, model_run_name, model_name, output_name, timestep=None,
-                       decision_iteration=None):
+    def delete_results(
+        self,
+        model_run_name,
+        model_name,
+        output_name,
+        timestep=None,
+        decision_iteration=None,
+    ):
         key = (model_run_name, model_name, output_name, timestep, decision_iteration)
         try:
             del self._results[key]
@@ -411,31 +470,37 @@ class MemoryDataStore(DataStore):
     def available_results(self, model_run_name):
         results_keys = [
             (timestep, decision_iteration, model_name, output_name)
-            for (result_modelrun_name, model_name, output_name, timestep, decision_iteration)
-            in self._results.keys()
+            for (
+                result_modelrun_name,
+                model_name,
+                output_name,
+                timestep,
+                decision_iteration,
+            ) in self._results.keys()
             if model_run_name == result_modelrun_name
         ]
         return results_keys
+
     # endregion
 
 
 def _variant_list_to_dict(config):
     config = copy(config)
     try:
-        list_ = config['variants']
+        list_ = config["variants"]
     except KeyError:
         list_ = []
-    config['variants'] = OrderedDict([(variant['name'], variant) for variant in list_])
+    config["variants"] = OrderedDict([(variant["name"], variant) for variant in list_])
     return config
 
 
 def _variant_dict_to_list(config):
     config = copy(config)
     try:
-        dict_ = config['variants']
+        dict_ = config["variants"]
     except KeyError:
         dict_ = {}
-    config['variants'] = list(dict_.values())
+    config["variants"] = list(dict_.values())
     return config
 
 
@@ -447,7 +512,7 @@ def _skip_coords(config, keys):
     for key in keys:
         for spec in config[key]:
             try:
-                del spec['coords']
+                del spec["coords"]
             except KeyError:
                 pass
     return config

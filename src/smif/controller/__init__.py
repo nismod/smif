@@ -37,13 +37,21 @@ Use the SubProcessRunScheduler to run a system-of-systems model::
 # import classes for access like ::
 #         from smif.controller import ModelRunner
 from smif.controller.execute_run import execute_model_run
-from smif.controller.execute_step import (execute_decision_step,
-                                          execute_model_before_step,
-                                          execute_model_step)
+from smif.controller.execute_step import (
+    execute_decision_step,
+    execute_model_before_step,
+    execute_model_step,
+)
 from smif.controller.modelrun import ModelRunner
 from smif.controller.setup import copy_project_folder
 
 # Define what should be imported as * ::
 #         from smif.controller import *
-__all__ = ['ModelRunner', 'execute_decision_step', 'execute_model_before_step',
-           'execute_model_run', 'execute_model_step', 'copy_project_folder']
+__all__ = [
+    "ModelRunner",
+    "execute_decision_step",
+    "execute_model_before_step",
+    "execute_model_run",
+    "execute_model_step",
+    "copy_project_folder",
+]

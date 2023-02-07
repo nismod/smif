@@ -26,7 +26,9 @@ def execute_model_before_step(model_run_id, model_name, store, dry_run=False):
             model.before_model_run(data_handle)
 
 
-def execute_model_step(model_run_id, model_name, timestep, decision, store, dry_run=False):
+def execute_model_step(
+    model_run_id, model_name, timestep, decision, store, dry_run=False
+):
     """Runs a single step of a model run
 
     This method is designed to be the single place where smif actually calls wrapped models.
@@ -52,30 +54,36 @@ def execute_model_step(model_run_id, model_name, timestep, decision, store, dry_
     store: Store
     """
     if dry_run:
-        print("    smif step {} --model {} --timestep {} --decision {}".format(
-              model_run_id, model_name, timestep, decision))
+        print(
+            "    smif step {} --model {} --timestep {} --decision {}".format(
+                model_run_id, model_name, timestep, decision
+            )
+        )
     else:
         model, data_handle = _get_model_and_handle(
-            store, model_run_id, model_name, timestep, decision)
+            store, model_run_id, model_name, timestep, decision
+        )
         model.simulate(data_handle)
 
 
-def _get_model_and_handle(store, model_run_id, model_name, timestep=None, decision=None):
-    """Helper method to read model and set up appropriate data handle
-    """
+def _get_model_and_handle(
+    store, model_run_id, model_name, timestep=None, decision=None
+):
+    """Helper method to read model and set up appropriate data handle"""
     try:
         model_run_config = store.read_model_run(model_run_id)
     except SmifDataNotFoundError:
         logging.error(
             "Model run %s not found. Run 'smif list' to see available model runs.",
-            model_run_id)
+            model_run_id,
+        )
         sys.exit(1)
 
     loader = ModelLoader()
     sector_model_config = store.read_model(model_name)
     # absolute path to be crystal clear for ModelLoader when loading python class
-    sector_model_config['path'] = os.path.normpath(
-        os.path.join(store.model_base_folder, sector_model_config['path'])
+    sector_model_config["path"] = os.path.normpath(
+        os.path.join(store.model_base_folder, sector_model_config["path"])
     )
     model = loader.load(sector_model_config)
 
@@ -88,8 +96,8 @@ def _get_model_and_handle(store, model_run_id, model_name, timestep=None, decisi
         model=model,
         modelrun_name=model_run_id,
         current_timestep=timestep,
-        timesteps=model_run_config['timesteps'],
-        decision_iteration=decision
+        timesteps=model_run_config["timesteps"],
+        decision_iteration=decision,
     )
     return model, data_handle
 
@@ -117,20 +125,19 @@ def execute_decision_step(model_run_id, decision, store):
 
     # decision loop gets and saves decisions into "state" files
     decision_manager = DecisionManager(
-        store,
-        model_run['timesteps'],
-        model_run_id,
-        model_run['sos_model'],
-        decision
+        store, model_run["timesteps"], model_run_id, model_run["sos_model"], decision
     )
     bundle = next(decision_manager.decision_loop())
 
     # print report
     print("Got decision bundle")
-    print("    decision iterations", bundle['decision_iterations'])
-    print("    timesteps", bundle['timesteps'])
+    print("    decision iterations", bundle["decision_iterations"])
+    print("    timesteps", bundle["timesteps"])
     print("Run each model in order with commands like:")
-    print("    smif step {} --model <model> --decision <d> --timestep <t>".format(
-        model_run_id))
+    print(
+        "    smif step {} --model <model> --decision <d> --timestep <t>".format(
+            model_run_id
+        )
+    )
     print("To see a viable order, dry-run the whole model:")
     print("    smif run {} --dry-run".format(model_run_id))

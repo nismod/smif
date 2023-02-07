@@ -14,26 +14,26 @@ Exception
 
 
 class SmifException(Exception):
-    """The base class for all errors raised in smif
-    """
+    """The base class for all errors raised in smif"""
+
     pass
 
 
 class SmifDataError(SmifException):
-    """Errors raised by the Store
-    """
+    """Errors raised by the Store"""
+
     pass
 
 
 class SmifDataNotFoundError(SmifDataError):
-    """Raise when some data is not found
-    """
+    """Raise when some data is not found"""
+
     pass
 
 
 class SmifDataExistsError(SmifDataError):
-    """Raise when some data is found unexpectedly
-    """
+    """Raise when some data is found unexpectedly"""
+
     pass
 
 
@@ -43,6 +43,7 @@ class SmifDataMismatchError(SmifDataError):
     E.g. when updating an object by id, the updated object's id must match
     the id provided separately.
     """
+
     pass
 
 
@@ -51,6 +52,7 @@ class SmifDataReadError(SmifDataError):
 
     E.g. unable to handle file type or connect to database
     """
+
     pass
 
 
@@ -64,6 +66,7 @@ class SmifDataInputError(SmifDataError):
     - We require a description so you can identify your system-of-systems
       configuration throughout your project.
     """
+
     def __init__(self, component, error, message):
         self.component = component
         self.error = error
@@ -71,18 +74,18 @@ class SmifDataInputError(SmifDataError):
 
 
 class SmifModelRunError(SmifException):
-    """Raise when model run requirements are not satisfied
-    """
+    """Raise when model run requirements are not satisfied"""
+
     pass
 
 
 class SmifValidationError(SmifException):
-    """Custom exception to use for parsing validation.
-    """
+    """Custom exception to use for parsing validation."""
+
     pass
 
 
 class SmifTimestepResolutionError(SmifException):
-    """Raise when timestep cannot be resolved
-    """
+    """Raise when timestep cannot be resolved"""
+
     pass

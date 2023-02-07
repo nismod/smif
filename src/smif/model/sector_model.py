@@ -61,6 +61,7 @@ class SectorModel(Model):
     - :py:meth:`SectorModel.before_model_run`
 
     """
+
     def __init__(self, name):
         super().__init__(name)
 

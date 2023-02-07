@@ -37,8 +37,12 @@ def execute_model_run(model_run_ids, store, warm=False, dry=False):
 
         try:
             if warm:
-                modelrun.run(store, job_scheduler, store.prepare_warm_start(modelrun.name),
-                             dry_run=dry)
+                modelrun.run(
+                    store,
+                    job_scheduler,
+                    store.prepare_warm_start(modelrun.name),
+                    dry_run=dry,
+                )
             else:
                 modelrun.run(store, job_scheduler, dry_run=dry)
         except SmifModelRunError as ex:

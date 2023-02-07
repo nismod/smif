@@ -7,8 +7,7 @@ from smif.metadata import RelativeTimestep
 
 class TestRelativeTimestep(object):
     def test_create_from_name(self):
-        """Should be able to create enum from string parameter
-        """
+        """Should be able to create enum from string parameter"""
         assert RelativeTimestep.ALL == RelativeTimestep.from_name("ALL")
         assert RelativeTimestep.BASE == RelativeTimestep.from_name("BASE")
         assert RelativeTimestep.CURRENT == RelativeTimestep.from_name("CURRENT")
@@ -18,8 +17,7 @@ class TestRelativeTimestep(object):
         assert "Relative timestep 'UNKNOWN' is not recognised" in str(ex.value)
 
     def test_resolve(self):
-        """Should be able to resolve current/previous/base timesteps
-        """
+        """Should be able to resolve current/previous/base timesteps"""
         timesteps = list(range(5))
         rel = RelativeTimestep.CURRENT
         assert rel.resolve_relative_to(3, timesteps) == 3

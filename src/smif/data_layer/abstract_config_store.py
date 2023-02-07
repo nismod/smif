@@ -10,8 +10,8 @@ from abc import ABCMeta, abstractmethod
 
 
 class ConfigStore(metaclass=ABCMeta):
-    """A ConfigStore must implement each of the abstract methods defined in this interface
-    """
+    """A ConfigStore must implement each of the abstract methods defined in this interface"""
+
     # region Model runs
     @abstractmethod
     def read_model_runs(self):
@@ -62,6 +62,7 @@ class ConfigStore(metaclass=ABCMeta):
         ----------
         model_run_name : str
         """
+
     # endregion
 
     # region System-of-systems models
@@ -114,6 +115,7 @@ class ConfigStore(metaclass=ABCMeta):
         ----------
         sos_model_name : str
         """
+
     # endregion
 
     # region Models
@@ -166,6 +168,7 @@ class ConfigStore(metaclass=ABCMeta):
         ----------
         model_name : str
         """
+
     # endregion
 
     # region Scenarios
@@ -218,6 +221,7 @@ class ConfigStore(metaclass=ABCMeta):
         ----------
         scenario_name : str
         """
+
     # endregion
 
     # region Scenario Variants
@@ -278,6 +282,7 @@ class ConfigStore(metaclass=ABCMeta):
         scenario_name : str
         variant_name : str
         """
+
     # endregion
 
     # region Narratives
@@ -290,6 +295,7 @@ class ConfigStore(metaclass=ABCMeta):
         sos_model_name : str
         narrative_name : str
         """
+
     # endregion
 
     # region Strategies
@@ -315,4 +321,5 @@ class ConfigStore(metaclass=ABCMeta):
         model_run_name : str
         strategies : list[dict]
         """
+
     # endregion

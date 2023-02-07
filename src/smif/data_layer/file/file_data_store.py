@@ -13,29 +13,29 @@ from smif.exception import SmifDataMismatchError, SmifDataNotFoundError
 
 
 class FileDataStore(DataStore):
-    """Abstract file data store
-    """
+    """Abstract file data store"""
+
     def __init__(self, base_folder):
         super().__init__()
         self.logger = getLogger(__name__)
         # extension for DataArray/list-of-dict data - override in implementations
-        self.ext = ''
+        self.ext = ""
         # extension for bare numpy.ndarray data - override in implementations
-        self.coef_ext = ''
+        self.coef_ext = ""
 
         self.base_folder = str(base_folder)
-        self.data_folder = str(os.path.join(self.base_folder, 'data'))
+        self.data_folder = str(os.path.join(self.base_folder, "data"))
         self.data_folders = {}
-        self.results_folder = str(os.path.join(self.base_folder, 'results'))
+        self.results_folder = str(os.path.join(self.base_folder, "results"))
         data_folders = [
-            'coefficients',
-            'strategies',
-            'initial_conditions',
-            'interventions',
-            'narratives',
-            'scenarios',
-            'strategies',
-            'parameters'
+            "coefficients",
+            "strategies",
+            "initial_conditions",
+            "interventions",
+            "narratives",
+            "scenarios",
+            "strategies",
+            "parameters",
         ]
         for folder in data_folders:
             dirname = os.path.join(self.data_folder, folder)
@@ -49,38 +49,35 @@ class FileDataStore(DataStore):
     # region Abstract methods
     @abstractmethod
     def _read_data_array(self, path, spec, timestep=None):
-        """Read DataArray from file
-        """
+        """Read DataArray from file"""
 
     @abstractmethod
     def _write_data_array(self, path, data_array, timestep=None):
-        """Write DataArray to file
-        """
+        """Write DataArray to file"""
 
     @abstractmethod
     def _read_list_of_dicts(self, path):
-        """Read file to list[dict]
-        """
+        """Read file to list[dict]"""
 
     @abstractmethod
     def _write_list_of_dicts(self, path, data):
-        """Write list[dict] to file
-        """
+        """Write list[dict] to file"""
 
     @abstractmethod
     def _read_ndarray(self, path):
-        """Read numpy.ndarray
-        """
+        """Read numpy.ndarray"""
 
     @abstractmethod
     def _write_ndarray(self, path, data, header=None):
-        """Write numpy.ndarray
-        """
+        """Write numpy.ndarray"""
+
     # endregion
 
     # region Data Array
     def read_scenario_variant_data(self, key, spec, timestep=None, timesteps=None):
-        path = os.path.join(self.data_folders['scenarios'], '{}.{}'.format(key, self.ext))
+        path = os.path.join(
+            self.data_folders["scenarios"], "{}.{}".format(key, self.ext)
+        )
         data = self._read_data_array(path, spec, timestep, timesteps)
         try:
             data.validate_as_full()
@@ -89,41 +86,59 @@ class FileDataStore(DataStore):
         return data
 
     def write_scenario_variant_data(self, key, data):
-        path = os.path.join(self.data_folders['scenarios'], '{}.{}'.format(key, self.ext))
+        path = os.path.join(
+            self.data_folders["scenarios"], "{}.{}".format(key, self.ext)
+        )
         self._write_data_array(path, data)
 
     def scenario_variant_data_exists(self, key):
-        path = os.path.join(self.data_folders['scenarios'], '{}.{}'.format(key, self.ext))
+        path = os.path.join(
+            self.data_folders["scenarios"], "{}.{}".format(key, self.ext)
+        )
         return os.path.isfile(path)
 
     def read_narrative_variant_data(self, key, spec, timestep=None):
-        path = os.path.join(self.data_folders['narratives'], '{}.{}'.format(key, self.ext))
+        path = os.path.join(
+            self.data_folders["narratives"], "{}.{}".format(key, self.ext)
+        )
         return self._read_data_array(path, spec, timestep)
 
     def write_narrative_variant_data(self, key, data):
-        path = os.path.join(self.data_folders['narratives'], '{}.{}'.format(key, self.ext))
+        path = os.path.join(
+            self.data_folders["narratives"], "{}.{}".format(key, self.ext)
+        )
         self._write_data_array(path, data)
 
     def narrative_variant_data_exists(self, key):
-        path = os.path.join(self.data_folders['narratives'], key+'.{}'.format(self.ext))
+        path = os.path.join(
+            self.data_folders["narratives"], key + ".{}".format(self.ext)
+        )
         return os.path.isfile(path)
 
     def read_model_parameter_default(self, key, spec):
-        path = os.path.join(self.data_folders['parameters'], key+'.{}'.format(self.ext))
+        path = os.path.join(
+            self.data_folders["parameters"], key + ".{}".format(self.ext)
+        )
         data = self._read_data_array(path, spec)
         data.validate_as_full()
         return data
 
     def write_model_parameter_default(self, key, data):
-        path = os.path.join(self.data_folders['parameters'], key+'.{}'.format(self.ext))
+        path = os.path.join(
+            self.data_folders["parameters"], key + ".{}".format(self.ext)
+        )
         self._write_data_array(path, data)
 
     def model_parameter_default_data_exists(self, key):
-        path = os.path.join(self.data_folders['parameters'], key+'.{}'.format(self.ext))
+        path = os.path.join(
+            self.data_folders["parameters"], key + ".{}".format(self.ext)
+        )
         return os.path.isfile(path)
 
     def get_timesteps_from_data(self, key, spec_dict):
-        path = path = os.path.join(self.data_folders['scenarios'], key+'.{}'.format(self.ext))
+        path = path = os.path.join(
+            self.data_folders["scenarios"], key + ".{}".format(self.ext)
+        )
         return self._get_timesteps_from_data(path, spec_dict).tolist()
 
     # endregion
@@ -132,7 +147,9 @@ class FileDataStore(DataStore):
     def read_interventions(self, keys):
         all_interventions = []
         for key in keys:
-            path = os.path.join(self.data_folders['interventions'], key+'.{}'.format(self.ext))
+            path = os.path.join(
+                self.data_folders["interventions"], key + ".{}".format(self.ext)
+            )
             interventions = self._read_list_of_dicts(path)
             all_interventions.extend(interventions)
 
@@ -141,7 +158,7 @@ class FileDataStore(DataStore):
 
         for intervention in all_interventions:
             try:
-                name = intervention['name']
+                name = intervention["name"]
             except KeyError:
                 msg = "Could not find `name` key in {} for {}"
                 raise KeyError(msg.format(intervention, keys))
@@ -156,56 +173,67 @@ class FileDataStore(DataStore):
             raise ValueError(msg.format(name, dups))
 
         return {
-            intervention['name']: _nest_keys(intervention)
+            intervention["name"]: _nest_keys(intervention)
             for intervention in all_interventions
         }
 
     def write_interventions(self, key, interventions):
         # convert dict[str, dict] to list[dict]
-        data = [
-            _unnest_keys(intervention)
-            for intervention in interventions.values()
-        ]
-        path = os.path.join(self.data_folders['interventions'], key+'.{}'.format(self.ext))
+        data = [_unnest_keys(intervention) for intervention in interventions.values()]
+        path = os.path.join(
+            self.data_folders["interventions"], key + ".{}".format(self.ext)
+        )
         self._write_list_of_dicts(path, data)
 
     def interventions_data_exists(self, key):
-        path = os.path.join(self.data_folders['interventions'], key+'.{}'.format(self.ext))
+        path = os.path.join(
+            self.data_folders["interventions"], key + ".{}".format(self.ext)
+        )
         return os.path.isfile(path)
 
     def read_strategy_interventions(self, strategy):
-        path = os.path.join(self.data_folders['strategies'],
-                            strategy['filename']+'.{}'.format(self.ext))
+        path = os.path.join(
+            self.data_folders["strategies"],
+            strategy["filename"] + ".{}".format(self.ext),
+        )
         return self._read_list_of_dicts(path)
 
     def write_strategy_interventions(self, strategy, data):
-        path = os.path.join(self.data_folders['strategies'],
-                            strategy['filename']+'.{}'.format(self.ext))
+        path = os.path.join(
+            self.data_folders["strategies"],
+            strategy["filename"] + ".{}".format(self.ext),
+        )
         return self._write_list_of_dicts(path, data)
 
     def strategy_data_exists(self, strategy):
-        path = os.path.join(self.data_folders['strategies'],
-                            strategy['filename']+'.{}'.format(self.ext))
+        path = os.path.join(
+            self.data_folders["strategies"],
+            strategy["filename"] + ".{}".format(self.ext),
+        )
         return os.path.isfile(path)
 
     def read_initial_conditions(self, keys):
         conditions = []
         for key in keys:
             path = os.path.join(
-                self.data_folder, 'initial_conditions', key+'.{}'.format(self.ext))
+                self.data_folder, "initial_conditions", key + ".{}".format(self.ext)
+            )
             data = self._read_list_of_dicts(path)
             conditions.extend(data)
         return conditions
 
     def write_initial_conditions(self, key, initial_conditions):
         path = os.path.join(
-            self.data_folders['initial_conditions'], key+'.{}'.format(self.ext))
+            self.data_folders["initial_conditions"], key + ".{}".format(self.ext)
+        )
         self._write_list_of_dicts(path, initial_conditions)
 
     def initial_conditions_data_exists(self, key):
         path = os.path.join(
-            self.data_folders['initial_conditions'], key+'.{}'.format(self.ext))
+            self.data_folders["initial_conditions"], key + ".{}".format(self.ext)
+        )
         return os.path.isfile(path)
+
     # endregion
 
     # region State
@@ -225,21 +253,24 @@ class FileDataStore(DataStore):
 
     def _get_state_path(self, modelrun_name, timestep=None, decision_iteration=None):
         """Compose a unique filename for state file:
-                state_{timestep|0000}[_decision_{iteration}].{ext}
+        state_{timestep|0000}[_decision_{iteration}].{ext}
         """
         if timestep is None:
-            timestep = '0000'
+            timestep = "0000"
 
         if decision_iteration is None:
-            separator = ''
-            decision_iteration = ''
+            separator = ""
+            decision_iteration = ""
         else:
-            separator = '_decision_'
+            separator = "_decision_"
 
-        filename = 'state_{}{}{}.{}'.format(timestep, separator, decision_iteration, self.ext)
+        filename = "state_{}{}{}.{}".format(
+            timestep, separator, decision_iteration, self.ext
+        )
         path = os.path.join(self.results_folder, modelrun_name, filename)
 
         return path
+
     # endregion
 
     # region Conversion coefficients
@@ -259,71 +290,92 @@ class FileDataStore(DataStore):
 
     def _get_coefficients_path(self, source_dim, destination_dim):
         path = os.path.join(
-            self.data_folders['coefficients'],
-            "{}.{}.{}".format(
-                source_dim,
-                destination_dim,
-                self.coef_ext
-            )
+            self.data_folders["coefficients"],
+            "{}.{}.{}".format(source_dim, destination_dim, self.coef_ext),
         )
         return path
+
     # endregion
 
     # region Results
 
-    def read_results(self, modelrun_id, model_name, output_spec, timestep,
-                     decision_iteration=None):
+    def read_results(
+        self, modelrun_id, model_name, output_spec, timestep, decision_iteration=None
+    ):
         if timestep is None:
             raise ValueError("You must pass a timestep argument")
 
         results_path = self._get_results_path(
-            modelrun_id, model_name, output_spec.name,
-            timestep, decision_iteration
+            modelrun_id, model_name, output_spec.name, timestep, decision_iteration
         )
 
         try:
             return self._read_data_array(results_path, output_spec)
         except FileNotFoundError:
-            key = str([modelrun_id, model_name, output_spec.name, timestep,
-                       decision_iteration])
+            key = str(
+                [
+                    modelrun_id,
+                    model_name,
+                    output_spec.name,
+                    timestep,
+                    decision_iteration,
+                ]
+            )
             raise SmifDataNotFoundError("Could not find results for {}".format(key))
 
-    def write_results(self, data_array, modelrun_id, model_name, timestep=None,
-                      decision_iteration=None):
+    def write_results(
+        self,
+        data_array,
+        modelrun_id,
+        model_name,
+        timestep=None,
+        decision_iteration=None,
+    ):
         if timestep is None:
             raise NotImplementedError()
 
         if timestep:
             assert isinstance(timestep, int), "Timestep must be an integer"
         if decision_iteration:
-            assert isinstance(decision_iteration, int), "Decision iteration must be an integer"
+            assert isinstance(
+                decision_iteration, int
+            ), "Decision iteration must be an integer"
 
         results_path = self._get_results_path(
-            modelrun_id, model_name, data_array.name,
-            timestep, decision_iteration
+            modelrun_id, model_name, data_array.name, timestep, decision_iteration
         )
         os.makedirs(os.path.dirname(results_path), exist_ok=True)
         self._write_data_array(results_path, data_array)
 
-    def delete_results(self, model_run_name, model_name, output_name, timestep=None,
-                       decision_iteration=None):
+    def delete_results(
+        self,
+        model_run_name,
+        model_name,
+        output_name,
+        timestep=None,
+        decision_iteration=None,
+    ):
         if timestep is None:
             raise NotImplementedError()
 
         if timestep:
             assert isinstance(timestep, int), "Timestep must be an integer"
         if decision_iteration:
-            assert isinstance(decision_iteration, int), "Decision iteration must be an integer"
+            assert isinstance(
+                decision_iteration, int
+            ), "Decision iteration must be an integer"
 
         results_path = self._get_results_path(
-            model_run_name, model_name, output_name,
-            timestep, decision_iteration
+            model_run_name, model_name, output_name, timestep, decision_iteration
         )
         try:
             os.remove(results_path)
         except OSError as ex:
-            self.logger.info("Ignored error deleting results {} - {}".format(
-                ex.filename, ex.strerror))
+            self.logger.info(
+                "Ignored error deleting results {} - {}".format(
+                    ex.filename, ex.strerror
+                )
+            )
 
     def available_results(self, modelrun_name):
         """List available results for a given model run
@@ -335,20 +387,26 @@ class FileDataStore(DataStore):
             decision_<id>/
             output_<output_name>_timestep_<timestep>.csv
         """
-        paths = glob.glob(os.path.join(
-            self.results_folder, modelrun_name, "*", "*", "*.{}".format(self.ext)))
+        paths = glob.glob(
+            os.path.join(
+                self.results_folder, modelrun_name, "*", "*", "*.{}".format(self.ext)
+            )
+        )
         # (timestep, decision_iteration, model_name, output_name)
         results_keys = []
         for path in paths:
-            timestep, decision_iteration, model_name, output_name = \
-                self._parse_results_path(path)
-            results_keys.append(
-                (timestep, decision_iteration, model_name, output_name)
-            )
+            (
+                timestep,
+                decision_iteration,
+                model_name,
+                output_name,
+            ) = self._parse_results_path(path)
+            results_keys.append((timestep, decision_iteration, model_name, output_name))
         return results_keys
 
-    def _get_results_path(self, modelrun_id, model_name, output_name, timestep,
-                          decision_iteration=None):
+    def _get_results_path(
+        self, modelrun_id, model_name, output_name, timestep, decision_iteration=None
+    ):
         """Return path to filename for a given output without file extension
 
         On the pattern of:
@@ -369,12 +427,14 @@ class FileDataStore(DataStore):
         path : strs
         """
         if decision_iteration is None:
-            decision_iteration = 'none'
+            decision_iteration = "none"
 
         path = os.path.join(
-            self.results_folder, modelrun_id, model_name,
+            self.results_folder,
+            modelrun_id,
+            model_name,
             "decision_{}".format(decision_iteration),
-            "output_{}_timestep_{}.{}".format(output_name, timestep, self.ext)
+            "output_{}_timestep_{}.{}".format(output_name, timestep, self.ext),
         )
         return path
 
@@ -407,20 +467,20 @@ class FileDataStore(DataStore):
         timestep = int(timestep_str)
 
         return (timestep, decision_iteration, model_name, output_name)
+
     # endregion
 
 
 class CSVDataStore(FileDataStore):
-    """CSV text file data store
-    """
+    """CSV text file data store"""
+
     def __init__(self, base_folder):
         super().__init__(base_folder)
-        self.ext = 'csv'
-        self.coef_ext = 'txt.gz'
+        self.ext = "csv"
+        self.coef_ext = "txt.gz"
 
     def _read_data_array(self, path, spec, timestep=None, timesteps=None):
-        """Read DataArray from file
-        """
+        """Read DataArray from file"""
         try:
             dataframe = pandas.read_csv(path)
         except FileNotFoundError as ex:
@@ -428,107 +488,98 @@ class CSVDataStore(FileDataStore):
             raise SmifDataNotFoundError(msg.format(spec.name, path)) from ex
 
         dataframe, spec = DataStore.filter_on_timesteps(
-            dataframe, spec, path, timestep, timesteps)
+            dataframe, spec, path, timestep, timesteps
+        )
         data_array = DataStore.dataframe_to_data_array(dataframe, spec, path)
         return data_array
 
     def _write_data_array(self, path, data_array):
-        """Write DataArray to file
-        """
+        """Write DataArray to file"""
         dataframe = data_array.as_df()
         dataframe.reset_index().to_csv(path, index=False)
 
     def _read_list_of_dicts(self, path):
-        """Read file to list[dict]
-        """
+        """Read file to list[dict]"""
         try:
-            data = pandas.read_csv(path).to_dict('records')
+            data = pandas.read_csv(path).to_dict("records")
         except pandas.errors.EmptyDataError:
             data = []
         return data
 
     def _write_list_of_dicts(self, path, data):
-        """Write list[dict] to file
-        """
+        """Write list[dict] to file"""
         pandas.DataFrame.from_records(data).to_csv(path, index=False)
 
     def _read_ndarray(self, path):
-        """Read numpy.ndarray
-        """
+        """Read numpy.ndarray"""
         try:
             return np.loadtxt(path)
         except OSError:
             raise FileNotFoundError(path)
 
     def _write_ndarray(self, path, data, header=None):
-        """Write numpy.ndarray
-        """
+        """Write numpy.ndarray"""
         np.savetxt(path, data, header=header)
 
 
 class ParquetDataStore(FileDataStore):
-    """Binary file data store
-    """
+    """Binary file data store"""
+
     def __init__(self, base_folder):
         super().__init__(base_folder)
-        self.ext = 'parquet'
-        self.coef_ext = 'npy'
+        self.ext = "parquet"
+        self.coef_ext = "npy"
 
     def _read_data_array(self, path, spec, timestep=None, timesteps=None):
-        """Read DataArray from file
-        """
+        """Read DataArray from file"""
         try:
-            dataframe = pandas.read_parquet(path, engine='pyarrow')
+            dataframe = pandas.read_parquet(path, engine="pyarrow")
         except (pa.lib.ArrowIOError, OSError) as ex:
             msg = "Could not find data for {} at {}"
             raise SmifDataNotFoundError(msg.format(spec.name, path)) from ex
 
         dataframe, spec = DataStore.filter_on_timesteps(
-            dataframe, spec, path, timestep, timesteps)
+            dataframe, spec, path, timestep, timesteps
+        )
         data_array = DataStore.dataframe_to_data_array(dataframe, spec, path)
         return data_array
 
     def _write_data_array(self, path, data_array):
-        """Write DataArray to file
-        """
+        """Write DataArray to file"""
         dataframe = data_array.as_df()
-        dataframe.to_parquet(path, engine='pyarrow', compression='gzip')
+        dataframe.to_parquet(path, engine="pyarrow", compression="gzip")
 
     def _read_list_of_dicts(self, path):
-        """Read file to list[dict]
-        """
+        """Read file to list[dict]"""
         try:
-            return pandas.read_parquet(path, engine='pyarrow').to_dict('records')
+            return pandas.read_parquet(path, engine="pyarrow").to_dict("records")
         except pa.lib.ArrowIOError as ex:
             msg = "Unable to read file at {}"
             raise SmifDataNotFoundError(msg.format(path)) from ex
 
     def _write_list_of_dicts(self, path, data):
-        """Write list[dict] to file
-        """
+        """Write list[dict] to file"""
         if data:
-            pandas.DataFrame.from_records(data).to_parquet(path, engine='pyarrow')
+            pandas.DataFrame.from_records(data).to_parquet(path, engine="pyarrow")
         else:
-            pandas.DataFrame(columns=['placeholder']).to_parquet(path, engine='pyarrow')
+            pandas.DataFrame(columns=["placeholder"]).to_parquet(path, engine="pyarrow")
 
     def _read_ndarray(self, path):
-        """Read numpy.ndarray
-        """
+        """Read numpy.ndarray"""
         try:
             return np.load(path)
         except OSError:
             raise FileNotFoundError(path)
 
     def _write_ndarray(self, path, data, header=None):
-        """Write numpy.ndarray
-        """
+        """Write numpy.ndarray"""
         np.save(path, data)
 
 
 def _nest_keys(intervention):
     nested = {}
     for key, value in intervention.items():
-        if key.endswith(('_value', '_unit')):
+        if key.endswith(("_value", "_unit")):
             new_key, sub_key = key.rsplit(sep="_", maxsplit=1)
             if new_key in nested:
                 if not isinstance(nested[new_key], dict):

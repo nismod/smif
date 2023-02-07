@@ -19,6 +19,7 @@ class WaterSupplySectorModel(SectorModel):
     using one of the toy water models below to simulate the water supply
     system.
     """
+
     def simulate(self, data):
         """Simulate water supply
 
@@ -43,20 +44,23 @@ class WaterSupplySectorModel(SectorModel):
 
         # Inputs
         per_capita_water_demand = data.get_parameter(
-            'per_capita_water_demand').as_ndarray()  # liter/person
-        population = data.get_data('population').as_ndarray()  # people
+            "per_capita_water_demand"
+        ).as_ndarray()  # liter/person
+        population = data.get_data("population").as_ndarray()  # people
 
-        water_demand = data.get_data('water_demand').as_ndarray()  # liter
+        water_demand = data.get_data("water_demand").as_ndarray()  # liter
         final_water_demand = (population * per_capita_water_demand) + water_demand
 
-        raininess = sum(data.get_data('precipitation').as_ndarray())  # milliliters to mega
+        raininess = sum(
+            data.get_data("precipitation").as_ndarray()
+        )  # milliliters to mega
         if data.current_timestep == data.base_timestep:
-            reservoir_level = data.get_data('reservoir_level', 2009)
+            reservoir_level = data.get_data("reservoir_level", 2009)
         else:
-            reservoir_level = data.get_previous_timestep_data('reservoir_level')
+            reservoir_level = data.get_previous_timestep_data("reservoir_level")
 
         reservoir_level = sum(reservoir_level.as_ndarray())  # megaliters
-        self.logger.info('Total reservoir level before timestep: %s', reservoir_level)
+        self.logger.info("Total reservoir level before timestep: %s", reservoir_level)
 
         self.logger.debug(
             "Parameters:\n "
@@ -67,7 +71,7 @@ class WaterSupplySectorModel(SectorModel):
             population.sum(),
             raininess.sum(),
             reservoir_level,
-            final_water_demand
+            final_water_demand,
         )
 
         # Parameters
@@ -83,16 +87,19 @@ class WaterSupplySectorModel(SectorModel):
         water, cost = instance.run()
 
         self.logger.info(
-            "Water: %s, Cost: %s, Reservoir: %s", water, cost, instance.reservoir_level)
+            "Water: %s, Cost: %s, Reservoir: %s", water, cost, instance.reservoir_level
+        )
 
         # set results
-        data.set_results('water', np.ones((3, )) * water / 3)
-        data.set_results("cost", np.ones((3, )) * cost / 3)
-        data.set_results("energy_demand", np.ones((3, )) * 3)
-        data.set_results("reservoir_level", np.ones((3, )) * instance.reservoir_level / 3)
+        data.set_results("water", np.ones((3,)) * water / 3)
+        data.set_results("cost", np.ones((3,)) * cost / 3)
+        data.set_results("energy_demand", np.ones((3,)) * 3)
+        data.set_results(
+            "reservoir_level", np.ones((3,)) * instance.reservoir_level / 3
+        )
 
     def extract_obj(self, results):
-        return results['cost'].sum()
+        return results["cost"].sum()
 
 
 class ExampleWaterSupplySimulationModel(object):
@@ -106,10 +113,10 @@ class ExampleWaterSupplySimulationModel(object):
         The amount of water is a function of the number of treatment plants and
         the amount of raininess
     """
-    def __init__(self,
-                 raininess=None,
-                 number_of_treatment_plants=None,
-                 reservoir_level=None):
+
+    def __init__(
+        self, raininess=None, number_of_treatment_plants=None, reservoir_level=None
+    ):
         self.raininess = raininess
         self.number_of_treatment_plants = number_of_treatment_plants
         self.reservoir_level = reservoir_level
@@ -142,8 +149,7 @@ class ExampleWaterSupplySimulationModel(object):
         return water, cost
 
 
-if __name__ == '__main__':
-    """Run core model if this script is run from the command line
-    """
+if __name__ == "__main__":
+    """Run core model if this script is run from the command line"""
     CORE_MODEL = ExampleWaterSupplySimulationModel(1, 1, 2)
     CORE_MODEL.run()

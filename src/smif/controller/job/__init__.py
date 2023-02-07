@@ -8,4 +8,4 @@ from smif.controller.job.serial_job_scheduler import SerialJobScheduler
 
 # Define what should be imported as * ::
 #         from smif.controller.job import *
-__all__ = ['SerialJobScheduler']
+__all__ = ["SerialJobScheduler"]

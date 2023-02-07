@@ -147,8 +147,8 @@ BASE_YEAR = 2010
 
 
 class IntervalAdaptor(Adaptor):
-    """Convert intervals, assuming uniform distributions where necessary
-    """
+    """Convert intervals, assuming uniform distributions where necessary"""
+
     def generate_coefficients(self, from_spec, to_spec) -> np.ndarray:
         """Generate conversion coefficients for interval dimensions
 
@@ -221,6 +221,7 @@ class Interval(object):
             "Interval 'id' starts at hour 0 and ends at hour 1"
 
     """
+
     def __init__(self, name, list_of_intervals, base_year=BASE_YEAR):
         self._name = name
         self._baseyear = base_year
@@ -232,7 +233,9 @@ class Interval(object):
 
         if isinstance(list_of_intervals, list):
             for interval in list_of_intervals:
-                assert isinstance(interval, tuple), "Interval must be constructed with tuples"
+                assert isinstance(
+                    interval, tuple
+                ), "Interval must be constructed with tuples"
                 if len(interval) != 2:
                     msg = "Interval tuple must take form (<start>, <end>)"
                     raise ValueError(msg)
@@ -318,8 +321,7 @@ class Interval(object):
 
     @property
     def baseyear(self):
-        """The reference year
-        """
+        """The reference year"""
         return self._baseyear
 
     def __repr__(self):
@@ -337,9 +339,11 @@ class Interval(object):
         return string
 
     def __eq__(self, other):
-        if (self.name == other.name) \
-           and (self.interval == other.interval) \
-           and (self.baseyear == other.baseyear):
+        if (
+            (self.name == other.name)
+            and (self.interval == other.interval)
+            and (self.baseyear == other.baseyear)
+        ):
             return True
         else:
             return False
@@ -379,8 +383,7 @@ class Interval(object):
         reference = datetime(self._baseyear, 1, 1, 0)
         parsed_duration = parse_duration(duration)
         if isinstance(parsed_duration, timedelta):
-            hours = parsed_duration.days * 24 + \
-                    parsed_duration.seconds // 3600
+            hours = parsed_duration.days * 24 + parsed_duration.seconds // 3600
         else:
             time = parsed_duration.totimedelta(reference)
             hours = time.days * 24 + time.seconds // 3600
@@ -518,7 +521,8 @@ class IntervalSet(ResolutionSet):
             intersect = np.nonzero(bool_array)[0]
             self.logger.debug(
                 "Interval '%s' intersects with '%s'",
-                to_entry.name, ",".join([str(self.data[x].name) for x in intersect])
+                to_entry.name,
+                ",".join([str(self.data[x].name) for x in intersect]),
             )
             elements.extend(intersect)
 
@@ -562,10 +566,9 @@ class IntervalSet(ResolutionSet):
         names = {}
 
         for interval in data:
-            name = interval['name']
-            interval_list = [tuple(i) for i in interval['interval']]
-            self._data.append(
-                Interval(name, interval_list, self._base_year))
+            name = interval["name"]
+            interval_list = [tuple(i) for i in interval["interval"]]
+            self._data.append(Interval(name, interval_list, self._base_year))
             names[name] = len(self._data) - 1
 
         self._validate_intervals()
@@ -586,8 +589,7 @@ class IntervalSet(ResolutionSet):
                 raise ValueError(msg.format(hour, self.name))
 
     def get_entry_names(self):
-        """Returns the names of the intervals
-        """
+        """Returns the names of the intervals"""
         return [interval.name for interval in self.data]
 
     def __getitem___(self, key):

@@ -66,6 +66,7 @@ class Coordinates(object):
         If the elements are not a list of simple data types
         or a list of dicts with a 'name' key
     """
+
     def __init__(self, name, elements):
         self.name = name
         self._ids = None
@@ -73,8 +74,7 @@ class Coordinates(object):
         self._set_elements(elements)
 
     def __eq__(self, other):
-        return self.name == other.name \
-            and self.elements == other.elements
+        return self.name == other.name and self.elements == other.elements
 
     def __hash__(self):
         return hash(tuple(frozenset(e.items()) for e in self._elements))
@@ -92,19 +92,16 @@ class Coordinates(object):
 
     @property
     def ids(self):
-        """Element ids is a list of coordinate identifiers
-        """
+        """Element ids is a list of coordinate identifiers"""
         return self._ids
 
     @property
     def names(self):
-        """Names is an alias for Coordinates.ids
-        """
+        """Names is an alias for Coordinates.ids"""
         return self._ids
 
     def _set_elements(self, elements):
-        """Set elements with a list of ids (string or numeric) or dicts (including key 'id')
-        """
+        """Set elements with a list of ids (string or numeric) or dicts (including key 'id')"""
         if not elements:
             raise ValueError("Coordinates.elements must not be empty")
 
@@ -114,12 +111,14 @@ class Coordinates(object):
             raise ValueError("Coordinate.elements must be finite in length")
 
         try:
-            self._ids = [e['name'] for e in elements]
+            self._ids = [e["name"] for e in elements]
             self._elements = elements
         except KeyError:
             # elements must have name
-            msg = "Elements in dimension '{}' must have a name field, " \
-                  "or be a simple list of identifiers"
+            msg = (
+                "Elements in dimension '{}' must have a name field, "
+                "or be a simple list of identifiers"
+            )
             raise KeyError(msg.format(self.name))
         except (TypeError, IndexError):
             # elements might not be dict-like - in which case, treat them as names
@@ -128,12 +127,10 @@ class Coordinates(object):
 
     @property
     def dim(self):
-        """Dim (dimension) is an alias for Coordinates.name
-        """
+        """Dim (dimension) is an alias for Coordinates.name"""
         return self.name
 
     @dim.setter
     def dim(self, dim):
-        """Set name as dim
-        """
+        """Set name as dim"""
         self.name = dim

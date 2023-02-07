@@ -11,4 +11,4 @@ from smif.data_layer.store import Store
 
 # Define what should be imported as * ::
 #         from smif.data_layer import *
-__all__ = ['DataArray', 'DataHandle', 'Results', 'Store']
+__all__ = ["DataArray", "DataHandle", "Results", "Store"]
