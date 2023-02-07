@@ -61,7 +61,7 @@ def non_numeric_spec(dims, coords):
 @fixture
 def non_numeric_data():
     strings = [str(x) for x in range(24)]
-    return numpy.array(strings, dtype=numpy.object).reshape((2, 3, 4))
+    return numpy.array(strings, dtype=object).reshape((2, 3, 4))
 
 
 @fixture
@@ -533,7 +533,7 @@ class TestMissingData:
         except TypeError:
             index = pd.MultiIndex(levels=levels, labels=codes, names=names)
 
-        expected = pd.DataFrame(data=numpy.array([[None]], dtype=numpy.object),
+        expected = pd.DataFrame(data=numpy.array([[None]], dtype=object),
                                 index=index,
                                 columns=['test_data'])
         pd.testing.assert_frame_equal(actual, expected)

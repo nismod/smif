@@ -323,7 +323,7 @@ class NDimensionalRegister(Register):
         -------
         numpy.ndarray
         """
-        coefficients = np.zeros((len(from_set), len(to_set)), dtype=np.float)
+        coefficients = np.zeros((len(from_set), len(to_set)), dtype=np.float64)
         self.logger.debug("Coefficients array is of shape %s for %s to %s",
                           coefficients.shape, from_set.name, to_set.name)
 

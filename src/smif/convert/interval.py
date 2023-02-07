@@ -394,7 +394,7 @@ class Interval(object):
         numpy.ndarray
             A boolean array
         """
-        array = np.zeros(8760, dtype=np.int)
+        array = np.zeros(8760, dtype=np.int32)
         for lower, upper in self.bounds:
             array[lower:upper] += 1
         return array
@@ -428,7 +428,7 @@ class IntervalSet(ResolutionSet):
             A boolean array where rows correspond to entries in the interval
             set and columns represent hours of the year
         """
-        array = np.zeros((len(self.data), 8760), dtype=np.bool)
+        array = np.zeros((len(self.data), 8760), dtype=bool)
         for row, interval in enumerate(self.data):
             array[row, :] = interval.to_hourly_array()
         return array
@@ -571,7 +571,7 @@ class IntervalSet(ResolutionSet):
         self._validate_intervals()
 
     def _get_hourly_array(self):
-        array = np.zeros(8760, dtype=np.int)
+        array = np.zeros(8760, dtype=np.int32)
         for interval in self.data:
             array += interval.to_hourly_array()
         return array

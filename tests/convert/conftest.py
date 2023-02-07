@@ -10,14 +10,14 @@ def year_to_month_coefficients():
 
     (apportions)
     """
-    return np.array([[31, 28, 31, 30, 31, 31, 30, 30, 31, 31, 30, 31]], dtype=np.float).T / 365
+    return np.array([[31, 28, 31, 30, 31, 31, 30, 30, 31, 31, 30, 31]], dtype=np.float64).T / 365
 
 
 @fixture(scope='module')
 def month_to_year_coefficients():
     """From 12 months to one year
     """
-    return np.ones((1, 12), dtype=np.float)
+    return np.ones((1, 12), dtype=np.float64)
 
 
 @fixture(scope='module')
