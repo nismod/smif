@@ -14,8 +14,8 @@ __license__ = "mit"
 
 
 class RegionAdaptor(Adaptor):
-    """Convert regions, assuming uniform distributions where necessary
-    """
+    """Convert regions, assuming uniform distributions where necessary"""
+
     def generate_coefficients(self, from_spec, to_spec):
         """Generate conversion coefficients for spatial dimensions
 
@@ -40,7 +40,7 @@ class RegionAdaptor(Adaptor):
         return coefficients
 
 
-NamedShape = namedtuple('NamedShape', ['name', 'shape'])
+NamedShape = namedtuple("NamedShape", ["name", "shape"])
 
 
 class RegionSet(ResolutionSet):
@@ -57,11 +57,12 @@ class RegionSet(ResolutionSet):
         a GeoJSON collection
 
     """
+
     def __init__(self, set_name, elements):
         super().__init__()
         self.name = set_name
         self._regions = []
-        self.data = [e['feature'] for e in elements]
+        self.data = [e["feature"] for e in elements]
 
         self._idx = index.Index()
         for pos, region in enumerate(self._regions):
@@ -75,17 +76,12 @@ class RegionSet(ResolutionSet):
     def data(self, value):
         names = {}
         for region in value:
-            name = region['properties']['name']
+            name = region["properties"]["name"]
             if name in names:
                 msg = "Region set must have uniquely named regions - {} duplicated"
                 raise AssertionError(msg.format(name))
             names[name] = True
-            self._regions.append(
-                NamedShape(
-                    name,
-                    shape(region['geometry'])
-                )
-            )
+            self._regions.append(NamedShape(name, shape(region["geometry"])))
 
     def get_entry_names(self):
         return [region.name for region in self.data]
@@ -100,11 +96,9 @@ class RegionSet(ResolutionSet):
         """
         return [
             {
-                'type': 'Feature',
-                'geometry': mapping(region.shape),
-                'properties': {
-                    'name': region.name
-                }
+                "type": "Feature",
+                "geometry": mapping(region.shape),
+                "properties": {"name": region.name},
             }
             for region in self._regions
         ]
@@ -120,24 +114,20 @@ class RegionSet(ResolutionSet):
         """
         return [
             {
-                'type': 'Feature',
-                'geometry': mapping(region.shape.centroid),
-                'properties': {
-                    'name': region.name
-                }
+                "type": "Feature",
+                "geometry": mapping(region.shape.centroid),
+                "properties": {"name": region.name},
             }
             for region in self._regions
         ]
 
     def intersection(self, to_entry):
-        """Return the set of regions intersecting with the bounds of `to_entry`
-        """
+        """Return the set of regions intersecting with the bounds of `to_entry`"""
         bounds = to_entry.shape.bounds
         return [x for x in self._idx.intersection(bounds)]
 
     def get_proportion(self, from_idx, entry_b):
-        """Calculate the proportion of shape a that intersects with shape b
-        """
+        """Calculate the proportion of shape a that intersects with shape b"""
         entry_a = self.data[from_idx]
         if self.check_valid_shape(entry_a.shape):
             if self.check_valid_shape(entry_b.shape):
@@ -146,7 +136,9 @@ class RegionSet(ResolutionSet):
             else:
                 raise RuntimeError("Shape {} is not valid".format(entry_b.name))
         else:
-            raise RuntimeError("Shape {} from {} is not valid".format(entry_a.name, self.name))
+            raise RuntimeError(
+                "Shape {} from {} is not valid".format(entry_a.name, self.name)
+            )
 
     def check_valid_shape(self, shape):
         if not shape.is_valid:

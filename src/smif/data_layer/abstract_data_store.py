@@ -13,12 +13,13 @@ from smif.metadata import Spec
 
 
 class DataStore(metaclass=ABCMeta):
-    """A DataStore must implement each of the abstract methods defined in this interface
-    """
+    """A DataStore must implement each of the abstract methods defined in this interface"""
+
     # region DataArray
     @abstractmethod
     def read_scenario_variant_data(
-            self, key, spec, timestep=None, timesteps=None) -> DataArray:
+        self, key, spec, timestep=None, timesteps=None
+    ) -> DataArray:
         """Read scenario variant data array.
 
         If a single timestep is specified, the spec MAY include 'timestep' as a dimension,
@@ -121,6 +122,7 @@ class DataStore(metaclass=ABCMeta):
         -------
         data_array : ~smif.data_layer.data_array.DataArray
         """
+
     # endregion
 
     # region Interventions
@@ -171,11 +173,14 @@ class DataStore(metaclass=ABCMeta):
         key : str
         initial_conditions: list[dict]
         """
+
     # endregion
 
     # region State
     @abstractmethod
-    def read_state(self, modelrun_name, timestep, decision_iteration=None) -> List[Dict]:
+    def read_state(
+        self, modelrun_name, timestep, decision_iteration=None
+    ) -> List[Dict]:
         """Read list of (name, build_year) for a given model_run, timestep,
         decision
 
@@ -191,10 +196,13 @@ class DataStore(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def write_state(self, state: List[Dict],
-                    modelrun_name: str,
-                    timestep: int,
-                    decision_iteration=None):
+    def write_state(
+        self,
+        state: List[Dict],
+        modelrun_name: str,
+        timestep: int,
+        decision_iteration=None,
+    ):
         """State is a list of decisions with name and build_year.
 
         State is output from the DecisionManager
@@ -206,6 +214,7 @@ class DataStore(metaclass=ABCMeta):
         timestep : int
         decision_iteration : int, optional
         """
+
     # endregion
 
     # region Conversion coefficients
@@ -253,12 +262,19 @@ class DataStore(metaclass=ABCMeta):
         -----
         To be called from :class:`~smif.convert.adaptor.Adaptor` implementations.
         """
+
     # endregion
 
     # region Results
     @abstractmethod
-    def read_results(self, modelrun_name, model_name, output_spec, timestep=None,
-                     decision_iteration=None) -> DataArray:
+    def read_results(
+        self,
+        modelrun_name,
+        model_name,
+        output_spec,
+        timestep=None,
+        decision_iteration=None,
+    ) -> DataArray:
         """Return results of a model from a model_run for a given output at a timestep and
         decision iteration
 
@@ -276,8 +292,9 @@ class DataStore(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def write_results(self, data, modelrun_name, model_name, timestep=None,
-                      decision_iteration=None):
+    def write_results(
+        self, data, modelrun_name, model_name, timestep=None, decision_iteration=None
+    ):
         """Write results of a `model_name` in `model_run_name` for a given `output_name`
 
         Parameters
@@ -290,8 +307,14 @@ class DataStore(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def delete_results(self, model_run_name, model_name, output_name, timestep=None,
-                       decision_iteration=None):
+    def delete_results(
+        self,
+        model_run_name,
+        model_name,
+        output_name,
+        timestep=None,
+        decision_iteration=None,
+    ):
         """Delete results for a single timestep/iteration of a model output in a model run
 
         Parameters
@@ -312,6 +335,7 @@ class DataStore(metaclass=ABCMeta):
         list[tuple]
              Each tuple is (timestep, decision_iteration, model_name, output_name)
         """
+
     # endregion
 
     @classmethod
@@ -335,10 +359,10 @@ class DataStore(metaclass=ABCMeta):
         if timestep is not None:
             dataframe = cls._check_timestep_column_exists(dataframe, spec, path)
             dataframe = dataframe[dataframe.timestep == timestep]
-            if 'timestep' in spec.dims:
+            if "timestep" in spec.dims:
                 spec = cls._set_spec_timesteps(spec, [timestep])
             else:
-                dataframe = dataframe.drop('timestep', axis=1)
+                dataframe = dataframe.drop("timestep", axis=1)
         elif timesteps is not None:
             dataframe = cls._check_timestep_column_exists(dataframe, spec, path)
             dataframe = dataframe[dataframe.timestep.isin(timesteps)]
@@ -346,13 +370,16 @@ class DataStore(metaclass=ABCMeta):
         elif timestep is None and timesteps is None:
             try:
                 dataframe = cls._check_timestep_column_exists(dataframe, spec, path)
-                spec = cls._set_spec_timesteps(spec, sorted(list(dataframe.timestep.unique())))
+                spec = cls._set_spec_timesteps(
+                    spec, sorted(list(dataframe.timestep.unique()))
+                )
             except SmifDataMismatchError:
                 pass
 
         if dataframe.empty:
             raise SmifDataNotFoundError(
-                "Data for '{}' not found for timestep {}".format(spec.name, timestep))
+                "Data for '{}' not found for timestep {}".format(spec.name, timestep)
+            )
 
         return dataframe, spec
 
@@ -364,8 +391,10 @@ class DataStore(metaclass=ABCMeta):
             # zero-dimensional case (scalar)
             data = dataframe[spec.name]
             if data.shape != (1,):
-                msg = "Data for '{}' should contain a single value, instead got {} while " + \
-                        "reading from {}"
+                msg = (
+                    "Data for '{}' should contain a single value, instead got {} while "
+                    + "reading from {}"
+                )
                 raise SmifDataMismatchError(msg.format(spec.name, len(data), path))
             data_array = DataArray(spec, data.iloc[0])
 
@@ -373,24 +402,29 @@ class DataStore(metaclass=ABCMeta):
 
     @staticmethod
     def _check_timestep_column_exists(dataframe, spec, path):
-        if 'timestep' not in dataframe.columns:
-            if 'timestep' in dataframe.index.names:
+        if "timestep" not in dataframe.columns:
+            if "timestep" in dataframe.index.names:
                 dataframe = dataframe.reset_index()
             else:
-                msg = "Data for '{name}' expected a column called 'timestep', instead " + \
-                        "got data columns {data_columns} and index names {index_names} " + \
-                        "while reading from {path}"
-                raise SmifDataMismatchError(msg.format(
-                    data_columns=dataframe.columns.values.tolist(),
-                    index_names=dataframe.index.names,
-                    name=spec.name,
-                    path=path))
+                msg = (
+                    "Data for '{name}' expected a column called 'timestep', instead "
+                    + "got data columns {data_columns} and index names {index_names} "
+                    + "while reading from {path}"
+                )
+                raise SmifDataMismatchError(
+                    msg.format(
+                        data_columns=dataframe.columns.values.tolist(),
+                        index_names=dataframe.index.names,
+                        name=spec.name,
+                        path=path,
+                    )
+                )
         return dataframe
 
     @staticmethod
     def _set_spec_timesteps(spec, timesteps):
         spec_config = spec.as_dict()
-        if 'timestep' not in spec_config['dims']:
-            spec_config['dims'] = ['timestep'] + spec_config['dims']
-        spec_config['coords']['timestep'] = timesteps
+        if "timestep" not in spec_config["dims"]:
+            spec_config["dims"] = ["timestep"] + spec_config["dims"]
+        spec_config["coords"]["timestep"] = timesteps
         return Spec.from_dict(spec_config)

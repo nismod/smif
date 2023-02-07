@@ -20,66 +20,69 @@ except ImportError:
 
 
 class FileMetadataStore(MetadataStore):
-    """File-based metadata store (supports YAML, CSV, or GDAL-compatible files)
-    """
+    """File-based metadata store (supports YAML, CSV, or GDAL-compatible files)"""
+
     def __init__(self, base_folder):
         super().__init__()
         self.logger = getLogger(__name__)
 
         base_folder = str(base_folder)
-        self.units_path = os.path.join(base_folder, 'data', 'user-defined-units.txt')
-        self.data_folder = os.path.join(base_folder, 'data', 'dimensions')
-        self.config_folder = os.path.join(base_folder, 'config', 'dimensions')
+        self.units_path = os.path.join(base_folder, "data", "user-defined-units.txt")
+        self.data_folder = os.path.join(base_folder, "data", "dimensions")
+        self.config_folder = os.path.join(base_folder, "config", "dimensions")
 
     # region Units
     def read_unit_definitions(self) -> List[str]:
         try:
-            with open(self.units_path, 'r') as units_fh:
+            with open(self.units_path, "r") as units_fh:
                 return [line.strip() for line in units_fh]
         except FileNotFoundError:
-            self.logger.warning('Units file not found, expected at %s', str(self.units_path))
+            self.logger.warning(
+                "Units file not found, expected at %s", str(self.units_path)
+            )
             return []
 
     def write_unit_definitions(self, definitions: List[str]):
-        with open(self.units_path, 'w') as units_fh:
+        with open(self.units_path, "w") as units_fh:
             units_fh.writelines(definitions)
+
     # endregion
 
     # region Dimensions
     def read_dimensions(self, skip_coords=False) -> List[dict]:
-        dim_names = _read_filenames_in_dir(self.config_folder, '.yml')
+        dim_names = _read_filenames_in_dir(self.config_folder, ".yml")
         return [self.read_dimension(name, skip_coords) for name in dim_names]
 
     def read_dimension(self, dimension_name: str, skip_coords=False):
         dim = _read_yaml_file(self.config_folder, dimension_name)
         if skip_coords:
-            del dim['elements']
+            del dim["elements"]
         else:
-            dim['elements'] = self._read_dimension_file(dim['elements'])
+            dim["elements"] = self._read_dimension_file(dim["elements"])
         return dim
 
     def write_dimension(self, dimension: Dict):
         # write elements to csv file (by default, can handle any nested data)
-        elements_filename = "{}.csv".format(dimension['name'])
-        elements = dimension['elements']
+        elements_filename = "{}.csv".format(dimension["name"])
+        elements = dimension["elements"]
         self._write_dimension_file(elements_filename, elements)
 
         # refer to elements by filename and add to config
         dimension_with_ref = copy.copy(dimension)
-        dimension_with_ref['elements'] = elements_filename
-        _write_yaml_file(self.config_folder, dimension['name'], dimension_with_ref)
+        dimension_with_ref["elements"] = elements_filename
+        _write_yaml_file(self.config_folder, dimension["name"], dimension_with_ref)
 
     def update_dimension(self, dimension_name: str, dimension: Dict):
         # look up elements filename and write elements
 
         old_dim = _read_yaml_file(self.config_folder, dimension_name)
-        elements_filename = old_dim['elements']
-        elements = dimension['elements']
+        elements_filename = old_dim["elements"]
+        elements = dimension["elements"]
         self._write_dimension_file(elements_filename, elements)
 
         # refer to elements by filename and update config
         dimension_with_ref = copy.copy(dimension)
-        dimension_with_ref['elements'] = elements_filename
+        dimension_with_ref["elements"] = elements_filename
 
         _write_yaml_file(self.config_folder, dimension_name, dimension_with_ref)
 
@@ -87,7 +90,7 @@ class FileMetadataStore(MetadataStore):
         # read to find filename
 
         old_dim = _read_yaml_file(self.config_folder, dimension_name)
-        elements_filename = old_dim['elements']
+        elements_filename = old_dim["elements"]
         # remove elements data
         os.remove(os.path.join(self.data_folder, elements_filename))
         # remove description
@@ -97,12 +100,12 @@ class FileMetadataStore(MetadataStore):
     def _read_dimension_file(self, filename: str) -> List[Dict]:
         filepath = os.path.join(self.data_folder, filename)
         filebasename, ext = os.path.splitext(filename)
-        if ext == '.csv':
+        if ext == ".csv":
             dataframe = pandas.read_csv(filepath)
-            data = dataframe.to_dict('records')
-            if 'interval' in data[0]:
+            data = dataframe.to_dict("records")
+            if "interval" in data[0]:
                 data = self._unstringify_interval(data)
-        elif ext in ('.geojson', '.shp'):
+        elif ext in (".geojson", ".shp"):
             data = self._read_spatial_file(filepath)
         else:
             msg = "Extension '{}' not recognised, expected one of ('.csv', "
@@ -115,11 +118,11 @@ class FileMetadataStore(MetadataStore):
         self._read_dimension_file.cache_clear()
         path = os.path.join(self.data_folder, filename)
         filebasename, ext = os.path.splitext(filename)
-        if ext == '.csv':
-            if 'interval' in data[0]:
+        if ext == ".csv":
+            if "interval" in data[0]:
                 data = self._stringify_interval(data)
             pandas.DataFrame.from_records(data).to_csv(path, index=False)
-        elif ext in ('.geojson', '.shp'):
+        elif ext in (".geojson", ".shp"):
             raise NotImplementedError("Writing spatial dimensions not yet supported")
             # self._write_spatial_file(filepath)
         else:
@@ -133,7 +136,7 @@ class FileMetadataStore(MetadataStore):
         for item in data:
             output_item = copy.copy(item)
             try:
-                output_item['interval'] = json.dumps(item['interval'])
+                output_item["interval"] = json.dumps(item["interval"])
             except KeyError:
                 self.logger.warning("Expected interval in element %s", item)
             output.append(output_item)
@@ -144,11 +147,12 @@ class FileMetadataStore(MetadataStore):
         for item in data:
             output_item = copy.copy(item)
             try:
-                output_item['interval'] = json.loads(item['interval'])
+                output_item["interval"] = json.loads(item["interval"])
             except KeyError:
                 self.logger.warning("Expected interval in element %s", item)
             output.append(output_item)
         return output
+
     # endregion
 
     @staticmethod
@@ -178,10 +182,7 @@ def _read_spatial_data(filepath):
     data = []
     with fiona.open(filepath) as src:
         for feature in src:
-            element = {
-                'name': feature['properties']['name'],
-                'feature': feature
-            }
+            element = {"name": feature["properties"]["name"], "feature": feature}
             data.append(element)
     return data
 
@@ -196,7 +197,7 @@ def _read_yaml_file(directory, name):
         file basename (without yml extension)
     """
     path = os.path.join(directory, "{}.yml".format(name))
-    with open(path, 'r') as file_handle:
+    with open(path, "r") as file_handle:
         return YAML().load(file_handle)
 
 
@@ -212,7 +213,7 @@ def _write_yaml_file(directory, name, data):
         Data to write (should be lists, dicts and simple values)
     """
     path = os.path.join(directory, "{}.yml".format(name))
-    with open(path, 'w') as file_handle:
+    with open(path, "w") as file_handle:
         yaml = YAML()
         yaml.default_flow_style = False
         yaml.allow_unicode = True

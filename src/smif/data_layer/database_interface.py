@@ -21,25 +21,27 @@ def initiate_db_connection(host, user_name, database_name, port, password):
     """
 
     # attempt to create the database connection
-    database_connection = psycopg2.connect("host=%s dbname=%s user=%s password=%s port=%s" %
-                                           (host, database_name, user_name, password, port))
+    database_connection = psycopg2.connect(
+        "host=%s dbname=%s user=%s password=%s port=%s"
+        % (host, database_name, user_name, password, port)
+    )
 
     return database_connection
 
 
 class DbConfigStore(ConfigStore):
-    """Database backend for config store
-    """
+    """Database backend for config store"""
 
     def __init__(self, host, user, dbname, port, password):
-        """Initiate. Setup database connection. Set up common values.
-        """
+        """Initiate. Setup database connection. Set up common values."""
         # establish database connection
-        self.database_connection = initiate_db_connection(host, user, dbname, port, password)
+        self.database_connection = initiate_db_connection(
+            host, user, dbname, port, password
+        )
 
         # list of expected port types - these should be specified somewhere, or not presumed at
         # all
-        self.port_types = ['inputs', 'outputs', 'parameters']
+        self.port_types = ["inputs", "outputs", "parameters"]
 
     # region Model runs
     def read_model_runs(self):
@@ -51,10 +53,12 @@ class DbConfigStore(ConfigStore):
             A list of dicts containing model runs
         """
         # establish a cursor for the database
-        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cursor = self.database_connection.cursor(
+            cursor_factory=psycopg2.extras.RealDictCursor
+        )
 
         # query database to get model runs
-        cursor.execute('SELECT * FROM model_runs;')
+        cursor.execute("SELECT * FROM model_runs;")
 
         # get result of query
         model_runs = cursor.fetchall()
@@ -70,10 +74,12 @@ class DbConfigStore(ConfigStore):
             A dictionary containing a model run definition
         """
         # establish a cursor for the database
-        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cursor = self.database_connection.cursor(
+            cursor_factory=psycopg2.extras.RealDictCursor
+        )
 
         # sql to get model run information
-        cursor.execute('SELECT * FROM model_runs WHERE name=%s;', [model_run_name])
+        cursor.execute("SELECT * FROM model_runs WHERE name=%s;", [model_run_name])
 
         # get result of query
         model_run = cursor.fetchall()
@@ -97,10 +103,14 @@ class DbConfigStore(ConfigStore):
             A dictionary containing a model run definition
         """
         # establish a cursor for the database
-        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cursor = self.database_connection.cursor(
+            cursor_factory=psycopg2.extras.DictCursor
+        )
 
         # check model run name is unique
-        cursor.execute('SELECT id FROM model_runs WHERE name = %s;', [model_run['name']])
+        cursor.execute(
+            "SELECT id FROM model_runs WHERE name = %s;", [model_run["name"]]
+        )
 
         # get result of query
         model_runs = cursor.fetchall()
@@ -111,7 +121,9 @@ class DbConfigStore(ConfigStore):
             return
 
         # check given sos model already exists
-        cursor.execute('SELECT id FROM sos_models WHERE name=%s;', [model_run['sos_model']])
+        cursor.execute(
+            "SELECT id FROM sos_models WHERE name=%s;", [model_run["sos_model"]]
+        )
 
         # get result of query
         sos_models = cursor.fetchall()
@@ -126,8 +138,9 @@ class DbConfigStore(ConfigStore):
 
         # write model run to database
         cursor.execute(
-            'INSERT INTO model_runs (name, sos_model, sos_model_id) VALUES (%s,%s,%s);',
-            [model_run['name'], model_run['sos_model'], sos_models[0]['id']])
+            "INSERT INTO model_runs (name, sos_model, sos_model_id) VALUES (%s,%s,%s);",
+            [model_run["name"], model_run["sos_model"], sos_models[0]["id"]],
+        )
 
         # write data to database
         self.database_connection.commit()
@@ -145,10 +158,12 @@ class DbConfigStore(ConfigStore):
             A dictionary containing a model run definition with those arguments to be updated
         """
         # establish a cursor for the database
-        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cursor = self.database_connection.cursor(
+            cursor_factory=psycopg2.extras.DictCursor
+        )
 
         # check given model run is in the database
-        cursor.execute('SELECT id FROM model_runs WHERE name=%s;', [model_run_name])
+        cursor.execute("SELECT id FROM model_runs WHERE name=%s;", [model_run_name])
 
         # get result of query
         model_runs = cursor.fetchall()
@@ -157,11 +172,12 @@ class DbConfigStore(ConfigStore):
         if len(model_runs) == 1:
 
             # if the sos model key has been passed in the definition
-            if 'sos_model' in model_run.keys():
+            if "sos_model" in model_run.keys():
 
                 # check the passed model exists
                 cursor.execute(
-                    'SELECT id FROM sos_models WHERE name=%s;', [model_run['sos_model']])
+                    "SELECT id FROM sos_models WHERE name=%s;", [model_run["sos_model"]]
+                )
 
                 # get result of query
                 sos_model_id = cursor.fetchall()
@@ -170,8 +186,9 @@ class DbConfigStore(ConfigStore):
                 if len(sos_model_id) == 1:
                     # update table with new sos model
                     cursor.execute(
-                        'UPDATE model_runs SET sos_model=%s, sos_model_id=%s WHERE name=%s;',
-                        [model_run['sos_model'], sos_model_id[0]['id'], model_run_name])
+                        "UPDATE model_runs SET sos_model=%s, sos_model_id=%s WHERE name=%s;",
+                        [model_run["sos_model"], sos_model_id[0]["id"], model_run_name],
+                    )
 
                     # commit update to database
                     self.database_connection.commit()
@@ -195,10 +212,12 @@ class DbConfigStore(ConfigStore):
             The name of the model run
         """
         # establish a cursor for the database
-        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cursor = self.database_connection.cursor(
+            cursor_factory=psycopg2.extras.DictCursor
+        )
 
         # check given model run is in database
-        cursor.execute('SELECT id FROM model_runs WHERE name=%s;', [model_run_name])
+        cursor.execute("SELECT id FROM model_runs WHERE name=%s;", [model_run_name])
 
         # get result of query
         model_runs = cursor.fetchall()
@@ -206,7 +225,7 @@ class DbConfigStore(ConfigStore):
         # if only one model run returned, delete it
         if len(model_runs) == 1:
             # delete model run
-            cursor.execute('DELETE FROM model_runs WHERE name=%s;', [model_run_name])
+            cursor.execute("DELETE FROM model_runs WHERE name=%s;", [model_run_name])
 
             # commit the delete action to the database
             self.database_connection.commit()
@@ -229,10 +248,12 @@ class DbConfigStore(ConfigStore):
             A list of dicts containing sos model definitions
         """
         # establish a cursor to read the database
-        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cursor = self.database_connection.cursor(
+            cursor_factory=psycopg2.extras.DictCursor
+        )
 
         # get sos model details
-        cursor.execute('SELECT name FROM sos_models;')
+        cursor.execute("SELECT name FROM sos_models;")
 
         # get returned data
         sos_models = cursor.fetchall()
@@ -265,10 +286,12 @@ class DbConfigStore(ConfigStore):
             The systems of systems model definition
         """
         # establish a cursor to read the database
-        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cursor = self.database_connection.cursor(
+            cursor_factory=psycopg2.extras.RealDictCursor
+        )
 
         # get sos model details
-        cursor.execute('SELECT * FROM sos_models WHERE name=%s;', [sos_model_name])
+        cursor.execute("SELECT * FROM sos_models WHERE name=%s;", [sos_model_name])
 
         # get returned data
         sos_model = cursor.fetchone()
@@ -276,32 +299,36 @@ class DbConfigStore(ConfigStore):
         if sos_model is not None:
             # get simulation models
             cursor.execute(
-                'SELECT * FROM sos_model_simulation_models WHERE sos_model_name=%s;',
-                [sos_model_name])
+                "SELECT * FROM sos_model_simulation_models WHERE sos_model_name=%s;",
+                [sos_model_name],
+            )
 
             # add all returned models to the sector models key in the sos_model definition
-            sos_model['sector_models'] = []
+            sos_model["sector_models"] = []
             for model in cursor.fetchall():
-                sos_model['sector_models'].append(model)
+                sos_model["sector_models"].append(model)
 
             # get scenario sets
             cursor.execute(
-                'SELECT * FROM sos_model_scenarios WHERE sos_model_name=%s;', [sos_model_name])
+                "SELECT * FROM sos_model_scenarios WHERE sos_model_name=%s;",
+                [sos_model_name],
+            )
 
             # add all returned models to the sector models key in the sos_model definition
-            sos_model['scenario_sets'] = []
+            sos_model["scenario_sets"] = []
             for scenario in cursor.fetchall():
-                sos_model['scenario_sets'].append(scenario)
+                sos_model["scenario_sets"].append(scenario)
 
             # get sos model dependencies
             cursor.execute(
-                'SELECT * FROM sos_model_dependencies WHERE sos_model_name=%s;',
-                [sos_model_name])
+                "SELECT * FROM sos_model_dependencies WHERE sos_model_name=%s;",
+                [sos_model_name],
+            )
 
             # add all returned dependencies to the dependencies key in the sos_model definition
-            sos_model['dependencies'] = []
+            sos_model["dependencies"] = []
             for dependency in cursor.fetchall():
-                sos_model['dependencies'].append(dependency)
+                sos_model["dependencies"].append(dependency)
 
         return sos_model
 
@@ -315,10 +342,14 @@ class DbConfigStore(ConfigStore):
 
         """
         # establish a cursor to read the database
-        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cursor = self.database_connection.cursor(
+            cursor_factory=psycopg2.extras.DictCursor
+        )
 
         # check name does not already exist
-        cursor.execute('SELECT name FROM sos_models WHERE name=%s;', [sos_model['name']])
+        cursor.execute(
+            "SELECT name FROM sos_models WHERE name=%s;", [sos_model["name"]]
+        )
 
         # get returned data from query
         sos_models = cursor.fetchall()
@@ -330,19 +361,21 @@ class DbConfigStore(ConfigStore):
 
         # write sos model, return id
         cursor.execute(
-            'INSERT INTO sos_models (name, description) VALUES (%s, %s) RETURNING id;',
-            [sos_model['name'], sos_model['description']])
+            "INSERT INTO sos_models (name, description) VALUES (%s, %s) RETURNING id;",
+            [sos_model["name"], sos_model["description"]],
+        )
 
         # write to database
         self.database_connection.commit()
 
         # write dependencies
         # loop through passed dependencies
-        for dependency in sos_model['dependencies']:
+        for dependency in sos_model["dependencies"]:
             # check dependent models already exist in database - source model
             cursor.execute(
-                'SELECT name FROM simulation_models WHERE name=%s;',
-                [dependency['source_model']])
+                "SELECT name FROM simulation_models WHERE name=%s;",
+                [dependency["source_model"]],
+            )
 
             # get returned data from query
             sos_models = cursor.fetchall()
@@ -354,8 +387,9 @@ class DbConfigStore(ConfigStore):
 
             # check dependent models already exist in database - sink model
             cursor.execute(
-                'SELECT name FROM simulation_models WHERE name=%s;',
-                [dependency['sink_model']])
+                "SELECT name FROM simulation_models WHERE name=%s;",
+                [dependency["sink_model"]],
+            )
 
             # get returned data from query
             sos_models = cursor.fetchall()
@@ -371,10 +405,13 @@ class DbConfigStore(ConfigStore):
                 (sos_model_name, source_model, source_output, sink_model, sink_input, lag)
                 VALUES (%s,%s,%s,%s,%s,%s);""",
                 [
-                    sos_model['name'], dependency['source_model'],
-                    dependency['source_model_output'], dependency['sink_model'],
-                    dependency['sink_model_input'], dependency['lag']
-                ]
+                    sos_model["name"],
+                    dependency["source_model"],
+                    dependency["source_model_output"],
+                    dependency["sink_model"],
+                    dependency["sink_model_input"],
+                    dependency["lag"],
+                ],
             )
 
             # write to database
@@ -382,10 +419,12 @@ class DbConfigStore(ConfigStore):
 
         # write sos_model_sim_models
         sim_model_counter = 1
-        for sector_model in sos_model['sector_models']:
+        for sector_model in sos_model["sector_models"]:
 
             # check simulation model already in database
-            cursor.execute('SELECT id FROM simulation_models WHERE name=%s;', [sector_model])
+            cursor.execute(
+                "SELECT id FROM simulation_models WHERE name=%s;", [sector_model]
+            )
 
             # get returned data from query
             simulation_models = cursor.fetchall()
@@ -401,9 +440,11 @@ class DbConfigStore(ConfigStore):
                 (sos_model_name, simulation_model_name, simulation_model_id, sos_sim_model_id)
                 VALUES (%s,%s,%s,%s);""",
                 [
-                    sos_model['name'], sector_model, simulation_models[0]['id'],
-                    sim_model_counter
-                ]
+                    sos_model["name"],
+                    sector_model,
+                    simulation_models[0]["id"],
+                    sim_model_counter,
+                ],
             )
 
             # iterate counter
@@ -413,9 +454,9 @@ class DbConfigStore(ConfigStore):
             self.database_connection.commit()
 
         # write sos_model_scenarios
-        for scenario in sos_model['scenario_sets']:
+        for scenario in sos_model["scenario_sets"]:
             # check scenario already exists
-            cursor.execute('SELECT name FROM scenarios WHERE name=%s;', [scenario])
+            cursor.execute("SELECT name FROM scenarios WHERE name=%s;", [scenario])
 
             # get returned data from query
             scenario_names = cursor.fetchall()
@@ -429,7 +470,8 @@ class DbConfigStore(ConfigStore):
             cursor.execute(
                 """INSERT INTO sos_model_scenarios
                 (sos_model_name, scenario_name) VALUES (%s,%s);""",
-                [sos_model['name'], scenario])
+                [sos_model["name"], scenario],
+            )
 
         # write to database
         self.database_connection.commit()
@@ -448,10 +490,12 @@ class DbConfigStore(ConfigStore):
 
         """
         # establish a cursor to read the database
-        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cursor = self.database_connection.cursor(
+            cursor_factory=psycopg2.extras.DictCursor
+        )
 
         # check sos model exists
-        cursor.execute('SELECT id FROM sos_models WHERE name=%s;', [sos_model_name])
+        cursor.execute("SELECT id FROM sos_models WHERE name=%s;", [sos_model_name])
 
         # get result of query
         sos_models = cursor.fetchall()
@@ -462,17 +506,18 @@ class DbConfigStore(ConfigStore):
             return
 
         # update dependencies if passed
-        if 'dependencies' in sos_model.keys():
+        if "dependencies" in sos_model.keys():
 
             # loop through dependencies
-            for dependency in sos_model['dependencies']:
+            for dependency in sos_model["dependencies"]:
                 # update details
 
-                if 'source_model' in dependency.keys():
+                if "source_model" in dependency.keys():
                     # check dependent models already exist in database - source model
                     cursor.execute(
-                        'SELECT name FROM simulation_models WHERE name=%s;',
-                        [dependency['source_model']])
+                        "SELECT name FROM simulation_models WHERE name=%s;",
+                        [dependency["source_model"]],
+                    )
 
                     # get returned data from query
                     sos_models = cursor.fetchall()
@@ -484,17 +529,20 @@ class DbConfigStore(ConfigStore):
 
                     # update
                     cursor.execute(
-                        'UPDATE dependencies SET source_model=%s WHERE name=%s;'
-                        [dependency['source_model'], sos_model_name])
+                        "UPDATE dependencies SET source_model=%s WHERE name=%s;", [
+                            dependency["source_model"], sos_model_name
+                        ]
+                    )
 
                     # write to database
                     self.database_connection.commit()
 
-                if 'sink_model' in dependency.keys():
+                if "sink_model" in dependency.keys():
                     # check dependent models already exist in database - sink model
                     cursor.execute(
-                        'SELECT name FROM simulation_models WHERE name=%s;',
-                        [dependency['sink_model']])
+                        "SELECT name FROM simulation_models WHERE name=%s;",
+                        [dependency["sink_model"]],
+                    )
 
                     # get returned data from query
                     sos_models = cursor.fetchall()
@@ -506,49 +554,54 @@ class DbConfigStore(ConfigStore):
 
                     # update
                     cursor.execute(
-                        'UPDATE dependencies SET sink_model=%s WHERE name=%s;',
-                        [dependency['source_model'], sos_model_name])
+                        "UPDATE dependencies SET sink_model=%s WHERE name=%s;",
+                        [dependency["source_model"], sos_model_name],
+                    )
 
                     # write to database
                     self.database_connection.commit()
 
-                if 'source_model_output' in dependency.keys():
+                if "source_model_output" in dependency.keys():
                     # update
                     cursor.execute(
-                        'UPDATE dependencies SET source_model_output=%s WHERE name=%s;',
-                        [dependency['source_model_output'], sos_model['name']])
+                        "UPDATE dependencies SET source_model_output=%s WHERE name=%s;",
+                        [dependency["source_model_output"], sos_model["name"]],
+                    )
 
                     # write to database
                     self.database_connection.commit()
 
-                if 'sink_model_input' in dependency.keys():
+                if "sink_model_input" in dependency.keys():
                     # update
                     cursor.execute(
-                        'UPDATE dependencies SET sink_model_input=%s WHERE name=%s;',
-                        [dependency['sink_model_input'], sos_model_name])
+                        "UPDATE dependencies SET sink_model_input=%s WHERE name=%s;",
+                        [dependency["sink_model_input"], sos_model_name],
+                    )
 
                     # write to database
                     self.database_connection.commit()
 
-                if 'lag' in dependency.keys():
+                if "lag" in dependency.keys():
                     # update
                     cursor.execute(
-                        'UPDATE dependencies SET lag=%s WHERE name=%s;',
-                        [dependency['lag'], sos_model_name])
+                        "UPDATE dependencies SET lag=%s WHERE name=%s;",
+                        [dependency["lag"], sos_model_name],
+                    )
 
                     # write to database
                     self.database_connection.commit()
 
         # need to update methods as does not all for multiple as different rows
         # update sos_model_simulation_models if passed
-        if 'sector_models' in sos_model.keys():
+        if "sector_models" in sos_model.keys():
 
             # loop through the sector models
-            for sector_model in sos_model['sector_models']:
+            for sector_model in sos_model["sector_models"]:
 
                 # check simulation model already in database
                 cursor.execute(
-                    'SELECT name FROM simulation_models WHERE name=%s;', [sector_model])
+                    "SELECT name FROM simulation_models WHERE name=%s;", [sector_model]
+                )
 
                 # get returned data from query
                 sos_models = cursor.fetchall()
@@ -563,46 +616,50 @@ class DbConfigStore(ConfigStore):
 
             # get what is already in the database
             cursor.execute(
-                'SELECT *  FROM sos_model_simulation_models WHERE sos_model_name=%s;',
-                [sos_model_name])
+                "SELECT *  FROM sos_model_simulation_models WHERE sos_model_name=%s;",
+                [sos_model_name],
+            )
 
             # get result from query
             sos_model_sim_models = cursor.fetchall()
 
-            for sector_model in sos_model['sector_models']:
+            for sector_model in sos_model["sector_models"]:
                 # already checked if sim model in database
                 # start by seeing if in relation already - loop through existing data
                 for sim_model in sos_model_sim_models:
-                    if sim_model['simulation_model_name'] == sector_model:
+                    if sim_model["simulation_model_name"] == sector_model:
                         # return an error as already in relation so don't need to add again
                         return
 
                 # if here, not in relation so add sim model to sos model sim model relation
                 # get max id count in relation
                 cursor.execute(
-                    'SELECT max(sos_sim_model_id) FROM sos_model_simulation_models \
-                    WHERE sos_model_name=%s;', [sos_model_name])
+                    "SELECT max(sos_sim_model_id) FROM sos_model_simulation_models \
+                    WHERE sos_model_name=%s;",
+                    [sos_model_name],
+                )
 
                 # get result of query
                 sos_sim_model_id = cursor.fetchone()
 
                 # write sim model to sos model sim models relation
                 cursor.execute(
-                    'INSERT INTO sos_model_simulation_models (sos_model_name, \
-                    simulation_model_name, sos_sim_model_id) VALUES (%s,%s,%s);',
-                    [sos_model_name, sector_model, sos_sim_model_id[0]])
+                    "INSERT INTO sos_model_simulation_models (sos_model_name, \
+                    simulation_model_name, sos_sim_model_id) VALUES (%s,%s,%s);",
+                    [sos_model_name, sector_model, sos_sim_model_id[0]],
+                )
 
                 # write update to database
                 self.database_connection.commit()
 
         # need to update methods as does not allow multiple as different rows
         # update sos_model_scenarios if passed
-        if 'scenario_sets' in sos_model.keys():
+        if "scenario_sets" in sos_model.keys():
 
             # loop through passed scenarios
-            for scenario in sos_model['scenario_sets']:
+            for scenario in sos_model["scenario_sets"]:
                 # check scenario already exists
-                cursor.execute('SELECT name FROM scenarios WHERE name=%s;', [scenario])
+                cursor.execute("SELECT name FROM scenarios WHERE name=%s;", [scenario])
 
                 # get returned data from query
                 scenario_names = cursor.fetchall()
@@ -614,19 +671,21 @@ class DbConfigStore(ConfigStore):
 
                 # add data into database
                 cursor.execute(
-                    'UPDATE sos_model_scenarios SET scenario_name=%s WHERE sos_model_name=%s;',
-                    [scenario, sos_model_name])
+                    "UPDATE sos_model_scenarios SET scenario_name=%s WHERE sos_model_name=%s;",
+                    [scenario, sos_model_name],
+                )
 
             # write to database
             self.database_connection.commit()
 
         # update sos model description if passed
-        if 'description' in sos_model.keys():
+        if "description" in sos_model.keys():
 
             # sql to update description
             cursor.execute(
-                'UPDATE sos_models SET description=%s WHERE name=%s;',
-                [sos_model['description'], sos_model_name])
+                "UPDATE sos_models SET description=%s WHERE name=%s;",
+                [sos_model["description"], sos_model_name],
+            )
 
             # write to database
             self.database_connection.commit()
@@ -644,10 +703,12 @@ class DbConfigStore(ConfigStore):
         """
 
         # establish a cursor to read the database
-        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cursor = self.database_connection.cursor(
+            cursor_factory=psycopg2.extras.DictCursor
+        )
 
         # check sos model exists
-        cursor.execute('SELECT id FROM sos_models WHERE name=%s;', [sos_model_name])
+        cursor.execute("SELECT id FROM sos_models WHERE name=%s;", [sos_model_name])
 
         # get result of query
         sos_models = cursor.fetchall()
@@ -659,41 +720,45 @@ class DbConfigStore(ConfigStore):
 
         # delete from sos_model_simulation_models
         cursor.execute(
-            'DELETE FROM sos_model_simulation_models WHERE sos_model_name = %s;',
-            [sos_model_name])
+            "DELETE FROM sos_model_simulation_models WHERE sos_model_name = %s;",
+            [sos_model_name],
+        )
 
         # run query to delete from db
         self.database_connection.commit()
 
         # delete from sos_model_scenarios
         cursor.execute(
-            'DELETE FROM sos_model_scenarios WHERE sos_model_name = %s;',
-            [sos_model_name])
+            "DELETE FROM sos_model_scenarios WHERE sos_model_name = %s;",
+            [sos_model_name],
+        )
 
         # run query to delete from db
         self.database_connection.commit()
 
         # delete from sos_model_dependencies
         cursor.execute(
-            'DELETE FROM sos_model_dependencies WHERE sos_model_name = %s;',
-            [sos_model_name])
+            "DELETE FROM sos_model_dependencies WHERE sos_model_name = %s;",
+            [sos_model_name],
+        )
 
         # run query to delete from db
         self.database_connection.commit()
 
         # delete from model_run
-        cursor.execute('DELETE FROM model_runs WHERE sos_model = %s;', [sos_model_name])
+        cursor.execute("DELETE FROM model_runs WHERE sos_model = %s;", [sos_model_name])
 
         # run query to delete from db
         self.database_connection.commit()
 
         # delete from sos_models
-        cursor.execute('DELETE FROM sos_models WHERE name = %s;', [sos_model_name])
+        cursor.execute("DELETE FROM sos_models WHERE name = %s;", [sos_model_name])
 
         # run query to delete from db
         self.database_connection.commit()
 
         return
+
     # endregion
 
     # region Models
@@ -706,10 +771,12 @@ class DbConfigStore(ConfigStore):
             A list of dictionaries for the models returned
         """
         # establish a cursor to read the database
-        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cursor = self.database_connection.cursor(
+            cursor_factory=psycopg2.extras.RealDictCursor
+        )
 
         # run sql call
-        cursor.execute('SELECT * FROM simulation_models')
+        cursor.execute("SELECT * FROM simulation_models")
 
         # get returned data
         simulation_models = cursor.fetchall()
@@ -721,8 +788,9 @@ class DbConfigStore(ConfigStore):
         for simulation_model in simulation_models:
 
             # get details of the models from the read call and add to list
-            simulation_model_list[simulation_model['name']] = \
-                self.read_model(simulation_model['name'])
+            simulation_model_list[simulation_model["name"]] = self.read_model(
+                simulation_model["name"]
+            )
 
         # return data to user
         return simulation_model_list
@@ -741,10 +809,12 @@ class DbConfigStore(ConfigStore):
             A dictionary of the model definition returned
         """
         # establish a cursor to read the database
-        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cursor = self.database_connection.cursor(
+            cursor_factory=psycopg2.extras.RealDictCursor
+        )
 
         # run sql call
-        cursor.execute('SELECT * FROM simulation_models WHERE name=%s', [model_name])
+        cursor.execute("SELECT * FROM simulation_models WHERE name=%s", [model_name])
 
         # get returned data
         simulation_model = cursor.fetchall()
@@ -758,9 +828,10 @@ class DbConfigStore(ConfigStore):
                 # get specification details by joining sim model port and specification
                 # relation using the specification id (unique to each specification)
                 cursor.execute(
-                    'SELECT s.* FROM simulation_model_port smp JOIN specifications \
-                    s ON smp.specification_id=s.id WHERE smp.model_name=%s AND port_type=%s;',
-                    [model_name, port_type])
+                    "SELECT s.* FROM simulation_model_port smp JOIN specifications \
+                    s ON smp.specification_id=s.id WHERE smp.model_name=%s AND port_type=%s;",
+                    [model_name, port_type],
+                )
 
                 # get returned data
                 port_data = cursor.fetchall()
@@ -781,17 +852,22 @@ class DbConfigStore(ConfigStore):
 
         """
         # establish a cursor to read the database
-        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cursor = self.database_connection.cursor(
+            cursor_factory=psycopg2.extras.DictCursor
+        )
 
         # write model
         # write the model to the database
         cursor.execute(
-            'INSERT INTO simulation_models (name, description, interventions, \
-            wrapper_location) VALUES (%s,%s,%s,%s) RETURNING id;',
+            "INSERT INTO simulation_models (name, description, interventions, \
+            wrapper_location) VALUES (%s,%s,%s,%s) RETURNING id;",
             [
-                model['name'], model['description'], json.dumps(model['interventions']),
-                model['wrapper_location']
-            ])
+                model["name"],
+                model["description"],
+                json.dumps(model["interventions"]),
+                model["wrapper_location"],
+            ],
+        )
 
         # commit changes to database
         self.database_connection.commit()
@@ -812,13 +888,18 @@ class DbConfigStore(ConfigStore):
 
                     # add specification to database
                     cursor.execute(
-                        'INSERT INTO specifications (name, description, \
+                        "INSERT INTO specifications (name, description, \
                         dimensions, unit, suggested_range, absolute_range) VALUES \
-                        (%s,%s,%s,%s,%s,%s) RETURNING id;',
+                        (%s,%s,%s,%s,%s,%s) RETURNING id;",
                         [
-                            spec['name'], spec['description'], spec['dimensions'],
-                            spec['unit'], spec['suggested_range'], spec['absolute_range']
-                        ])
+                            spec["name"],
+                            spec["description"],
+                            spec["dimensions"],
+                            spec["unit"],
+                            spec["suggested_range"],
+                            spec["absolute_range"],
+                        ],
+                    )
 
                     # commit changes to database
                     self.database_connection.commit()
@@ -829,13 +910,17 @@ class DbConfigStore(ConfigStore):
                     # write to port
                     # write model and specification to port table, including the spec id
                     cursor.execute(
-                        'INSERT INTO simulation_model_port (model_name, model_id, \
+                        "INSERT INTO simulation_model_port (model_name, model_id, \
                         specification_name, specification_id, port_type) VALUES \
-                        (%s, %s, %s, %s, %s);',
+                        (%s, %s, %s, %s, %s);",
                         [
-                            model['name'], simulation_model_id[0], spec['name'],
-                            specification_id[0], port_type
-                        ])
+                            model["name"],
+                            simulation_model_id[0],
+                            spec["name"],
+                            specification_id[0],
+                            port_type,
+                        ],
+                    )
 
                     # commit changes to database
                     self.database_connection.commit()
@@ -855,25 +940,30 @@ class DbConfigStore(ConfigStore):
 
         """
         # establish a cursor to read the database
-        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cursor = self.database_connection.cursor(
+            cursor_factory=psycopg2.extras.DictCursor
+        )
 
         # update the model description is passed
-        if 'description' in model.keys():
+        if "description" in model.keys():
             cursor.execute(
-                'UPDATE simulation_models SET description=%s WHERE name=%s;',
-                [model['description'], model_name])
+                "UPDATE simulation_models SET description=%s WHERE name=%s;",
+                [model["description"], model_name],
+            )
 
         # update the intervention list is passed
-        if 'interventions' in model.keys():
+        if "interventions" in model.keys():
             cursor.execute(
-                'UPDATE simulation_models SET interventions=%s WHERE name=%s;',
-                [json.dumps(model['interventions']), model_name])
+                "UPDATE simulation_models SET interventions=%s WHERE name=%s;",
+                [json.dumps(model["interventions"]), model_name],
+            )
 
         # update the wrapper location if passed
-        if 'wrapper_location' in model.keys():
+        if "wrapper_location" in model.keys():
             cursor.execute(
-                'UPDATE simulation_models SET wrapper_location=%s WHERE name=%s;',
-                [model['wrapper_location'], model_name])
+                "UPDATE simulation_models SET wrapper_location=%s WHERE name=%s;",
+                [model["wrapper_location"], model_name],
+            )
 
         # commit changes to database
         self.database_connection.commit()
@@ -890,9 +980,10 @@ class DbConfigStore(ConfigStore):
 
                     # get the id of the specification to update - based on name, model and port
                     cursor.execute(
-                        'SELECT specification_id FROM simulation_model_port WHERE \
-                            port_type=%s and specification_name=%s and model_name=%s;',
-                        [port_type, spec['name'], model_name])
+                        "SELECT specification_id FROM simulation_model_port WHERE \
+                            port_type=%s and specification_name=%s and model_name=%s;",
+                        [port_type, spec["name"], model_name],
+                    )
 
                     # get result of query
                     spec_id = cursor.fetchall()
@@ -906,33 +997,38 @@ class DbConfigStore(ConfigStore):
                         return
 
                     # check for each key in the specification and update if present
-                    if 'name' in spec.keys():
+                    if "name" in spec.keys():
                         continue
-                    if 'description' in spec.keys():
+                    if "description" in spec.keys():
                         # run update sql
                         cursor.execute(
-                            'UPDATE specifications SET description = %s WHERE id=%s',
-                            [spec['description'], spec_id])
-                    if 'dimensions' in spec.keys():
+                            "UPDATE specifications SET description = %s WHERE id=%s",
+                            [spec["description"], spec_id],
+                        )
+                    if "dimensions" in spec.keys():
                         # run update sql
                         cursor.execute(
-                            'UPDATE specifications SET dimensions = %s WHERE id=%s',
-                            [spec['dimensions'], spec_id])
-                    if 'unit' in spec.keys():
+                            "UPDATE specifications SET dimensions = %s WHERE id=%s",
+                            [spec["dimensions"], spec_id],
+                        )
+                    if "unit" in spec.keys():
                         # run update sql
                         cursor.execute(
-                            'UPDATE specifications SET unit = %s WHERE id=%s',
-                            [spec['unit'], spec_id])
-                    if 'suggested_range' in spec.keys():
+                            "UPDATE specifications SET unit = %s WHERE id=%s",
+                            [spec["unit"], spec_id],
+                        )
+                    if "suggested_range" in spec.keys():
                         # run update sql
                         cursor.execute(
-                            'UPDATE specifications SET suggested_range = %s WHERE id=%s',
-                            [spec['suggested_range'], spec_id])
-                    if 'absolute_range' in spec.keys():
+                            "UPDATE specifications SET suggested_range = %s WHERE id=%s",
+                            [spec["suggested_range"], spec_id],
+                        )
+                    if "absolute_range" in spec.keys():
                         # run update sql
                         cursor.execute(
-                            'UPDATE specifications SET absolute_range = %s WHERE id=%s',
-                            [spec['absolute_range'], spec_id])
+                            "UPDATE specifications SET absolute_range = %s WHERE id=%s",
+                            [spec["absolute_range"], spec_id],
+                        )
 
                     # commit changes to database
                     self.database_connection.commit()
@@ -949,20 +1045,24 @@ class DbConfigStore(ConfigStore):
 
         """
         # establish a cursor to read the database
-        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cursor = self.database_connection.cursor(
+            cursor_factory=psycopg2.extras.RealDictCursor
+        )
 
         # delete specifications if unique to model
         # get a list of the specifications linked to the model name
         cursor.execute(
-            'SELECT * FROM simulation_model_port WHERE model_name=%s;', [model_name])
+            "SELECT * FROM simulation_model_port WHERE model_name=%s;", [model_name]
+        )
 
         # loop through returned model specifications
         for specification in cursor.fetchall():
 
             # check if the specification is used by any other models
             cursor.execute(
-                'SELECT COUNT(*) FROM simulation_model_port WHERE specification_id=%s;',
-                [specification['id']])
+                "SELECT COUNT(*) FROM simulation_model_port WHERE specification_id=%s;",
+                [specification["id"]],
+            )
 
             # get the count from the query
             specification_count = cursor.fetchone()
@@ -970,19 +1070,22 @@ class DbConfigStore(ConfigStore):
             # if the count is only 1, safe to delete specification, otherwise leave it
             if specification_count == 1:
                 cursor.execute(
-                    'DELETE FROM specifications WHERE id=%s;', [specification['id']])
+                    "DELETE FROM specifications WHERE id=%s;", [specification["id"]]
+                )
 
                 # commit changes to database
                 self.database_connection.commit()
 
         # run sql call to delete from simulation model port
-        cursor.execute('DELETE FROM simulation_model_port WHERE model_name=%s;', [model_name])
+        cursor.execute(
+            "DELETE FROM simulation_model_port WHERE model_name=%s;", [model_name]
+        )
 
         # commit changes to database
         self.database_connection.commit()
 
         # run sql call to delete from simulation models
-        cursor.execute('DELETE FROM simulation_models WHERE name=%s;', [model_name])
+        cursor.execute("DELETE FROM simulation_models WHERE name=%s;", [model_name])
 
         # commit changes to database
         self.database_connection.commit()
@@ -999,10 +1102,12 @@ class DbConfigStore(ConfigStore):
             A list of scenarios as dictionary's
         """
         # establish a cursor to read the database
-        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cursor = self.database_connection.cursor(
+            cursor_factory=psycopg2.extras.RealDictCursor
+        )
 
         # run sql call
-        cursor.execute('SELECT * FROM scenarios')
+        cursor.execute("SELECT * FROM scenarios")
 
         # get returned data
         scenarios = cursor.fetchall()
@@ -1024,10 +1129,12 @@ class DbConfigStore(ConfigStore):
             A scenario definition
         """
         # establish a cursor to read the database
-        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cursor = self.database_connection.cursor(
+            cursor_factory=psycopg2.extras.RealDictCursor
+        )
 
         # run sql call
-        cursor.execute('SELECT * FROM scenarios WHERE name=%s', [scenario_name])
+        cursor.execute("SELECT * FROM scenarios WHERE name=%s", [scenario_name])
 
         # get returned data
         scenario = cursor.fetchone()
@@ -1045,11 +1152,13 @@ class DbConfigStore(ConfigStore):
 
         """
         # establish a cursor to read the database
-        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cursor = self.database_connection.cursor(
+            cursor_factory=psycopg2.extras.DictCursor
+        )
 
         # run sql call
-        sql = 'INSERT INTO scenarios (name, description) VALUES (%s,%s) RETURNING id;'
-        cursor.execute(sql, [scenario['name'], scenario['description']])
+        sql = "INSERT INTO scenarios (name, description) VALUES (%s,%s) RETURNING id;"
+        cursor.execute(sql, [scenario["name"], scenario["description"]])
 
         # commit changes to database
         self.database_connection.commit()
@@ -1066,12 +1175,15 @@ class DbConfigStore(ConfigStore):
 
         """
         # establish a cursor to read the database
-        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cursor = self.database_connection.cursor(
+            cursor_factory=psycopg2.extras.DictCursor
+        )
 
         # run sql call
         cursor.execute(
-            'UPDATE scenarios SET description = %s WHERE name=%s',
-            [scenario['description'], scenario_name])
+            "UPDATE scenarios SET description = %s WHERE name=%s",
+            [scenario["description"], scenario_name],
+        )
 
         # commit changes to database
         self.database_connection.commit()
@@ -1085,10 +1197,12 @@ class DbConfigStore(ConfigStore):
             The name of the scenario to delete
         """
         # establish a cursor to read the database
-        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cursor = self.database_connection.cursor(
+            cursor_factory=psycopg2.extras.DictCursor
+        )
 
         # check passed scenario exists
-        cursor.execute('SELECT id FROM scenarios WHERE name=%s;', [scenario_name])
+        cursor.execute("SELECT id FROM scenarios WHERE name=%s;", [scenario_name])
 
         # get returned data - scenario id
         scenario_id = cursor.fetchall()
@@ -1098,18 +1212,20 @@ class DbConfigStore(ConfigStore):
             # need to check for and delete any scenario variants that are associated with this
             # scenario
             cursor.execute(
-                'DELETE FROM scenario_variants WHERE scenario_name=%s;', [scenario_name])
+                "DELETE FROM scenario_variants WHERE scenario_name=%s;", [scenario_name]
+            )
 
             # commit changes to database
             self.database_connection.commit()
 
             # run sql call
-            cursor.execute('DELETE FROM scenarios WHERE name=%s', [scenario_name])
+            cursor.execute("DELETE FROM scenarios WHERE name=%s", [scenario_name])
 
             # commit changes to database
             self.database_connection.commit()
 
         return
+
     # endregion
 
     # region Scenario Variants
@@ -1127,12 +1243,16 @@ class DbConfigStore(ConfigStore):
             A list scenario variants as dictionaries
         """
         # establish a cursor to read the database
-        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cursor = self.database_connection.cursor(
+            cursor_factory=psycopg2.extras.RealDictCursor
+        )
 
         # run sql call
         cursor.execute(
-            'SELECT sv.*, v.description, v.data FROM scenario_variants sv JOIN variants v \
-                ON sv.variant_name = v.name WHERE sv.scenario_name=%s', [scenario_name])
+            "SELECT sv.*, v.description, v.data FROM scenario_variants sv JOIN variants v \
+                ON sv.variant_name = v.name WHERE sv.scenario_name=%s",
+            [scenario_name],
+        )
 
         # get returned data
         scenario_variants = cursor.fetchall()
@@ -1156,13 +1276,16 @@ class DbConfigStore(ConfigStore):
             A scenario variant definition
         """
         # establish a cursor to read the database
-        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cursor = self.database_connection.cursor(
+            cursor_factory=psycopg2.extras.RealDictCursor
+        )
 
         # run sql call
         cursor.execute(
-            'SELECT sv.*, v.description, v.data FROM scenario_variants sv JOIN variants v \
-                ON sv.variant_name = v.name WHERE sv.scenario_name=%s AND sv.variant_name=%s',
-            [scenario_name, variant_name])
+            "SELECT sv.*, v.description, v.data FROM scenario_variants sv JOIN variants v \
+                ON sv.variant_name = v.name WHERE sv.scenario_name=%s AND sv.variant_name=%s",
+            [scenario_name, variant_name],
+        )
 
         # get returned data
         scenario_variant = cursor.fetchall()
@@ -1186,13 +1309,15 @@ class DbConfigStore(ConfigStore):
             The id of the added scenario variant
         """
         # establish a cursor to read the database
-        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cursor = self.database_connection.cursor(
+            cursor_factory=psycopg2.extras.DictCursor
+        )
 
         # here is a dependency on the given scenario name already existing
         # - this can be enforced in the database by a foreign key, but should probably check
         #   here
         # - would also enable access to the scenario id
-        cursor.execute('SELECT id FROM scenarios WHERE name=%s;', [scenario_name])
+        cursor.execute("SELECT id FROM scenarios WHERE name=%s;", [scenario_name])
 
         # get returned data
         scenario_id = cursor.fetchall()
@@ -1202,17 +1327,28 @@ class DbConfigStore(ConfigStore):
 
             # run sql to add data to variants to database
             cursor.execute(
-                'INSERT INTO variants (name, description, data) VALUES (%s,%s,%s);',
-                [variant['variant_name'], variant['description'], json.dumps(variant['data'])])
+                "INSERT INTO variants (name, description, data) VALUES (%s,%s,%s);",
+                [
+                    variant["variant_name"],
+                    variant["description"],
+                    json.dumps(variant["data"]),
+                ],
+            )
 
             # commit changes to database
             self.database_connection.commit()
 
             # run sql call
-            sql = 'INSERT INTO scenario_variants (scenario_name, variant_name, scenario_id) \
-                VALUES (%s,%s,%s) RETURNING id;'
+            sql = "INSERT INTO scenario_variants (scenario_name, variant_name, scenario_id) \
+                VALUES (%s,%s,%s) RETURNING id;"
             cursor.execute(
-                sql, [variant['scenario_name'], variant['variant_name'], scenario_id[0]['id']])
+                sql,
+                [
+                    variant["scenario_name"],
+                    variant["variant_name"],
+                    scenario_id[0]["id"],
+                ],
+            )
 
             # commit changes to database
             self.database_connection.commit()
@@ -1238,28 +1374,33 @@ class DbConfigStore(ConfigStore):
 
         """
         # establish a cursor to read the database
-        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cursor = self.database_connection.cursor(
+            cursor_factory=psycopg2.extras.RealDictCursor
+        )
 
-        if 'description' in variant.keys() and 'data' in variant.keys():
-
-            # run sql call
-            cursor.execute(
-                'UPDATE variants SET description=%s AND data=%s WHERE name = %s RETURNING id;',
-                [variant['description'], json.dumps(variant['data']), variant_name])
-
-        elif 'description' in variant.keys() and 'data' not in variant.keys():
+        if "description" in variant.keys() and "data" in variant.keys():
 
             # run sql call
             cursor.execute(
-                'UPDATE variants SET description=%s WHERE name = %s RETURNING id;',
-                [variant['description'], variant_name])
+                "UPDATE variants SET description=%s AND data=%s WHERE name = %s RETURNING id;",
+                [variant["description"], json.dumps(variant["data"]), variant_name],
+            )
 
-        elif 'description' not in variant.keys() and 'data' in variant.keys():
+        elif "description" in variant.keys() and "data" not in variant.keys():
 
             # run sql call
             cursor.execute(
-                'UPDATE variants SET data=%s WHERE name = %s RETURNING id;',
-                [json.dumps(variant['data']), variant_name])
+                "UPDATE variants SET description=%s WHERE name = %s RETURNING id;",
+                [variant["description"], variant_name],
+            )
+
+        elif "description" not in variant.keys() and "data" in variant.keys():
+
+            # run sql call
+            cursor.execute(
+                "UPDATE variants SET data=%s WHERE name = %s RETURNING id;",
+                [json.dumps(variant["data"]), variant_name],
+            )
 
         # commit changes to database
         self.database_connection.commit()
@@ -1270,7 +1411,7 @@ class DbConfigStore(ConfigStore):
         return affected_rows
 
     def delete_scenario_variant(self, scenario_name, variant_name):
-        """"Delete scenario variant
+        """ "Delete scenario variant
 
         Argument
         --------
@@ -1286,17 +1427,21 @@ class DbConfigStore(ConfigStore):
 
         """
         # establish a cursor to read the database
-        cursor = self.database_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cursor = self.database_connection.cursor(
+            cursor_factory=psycopg2.extras.DictCursor
+        )
 
         # run sql call
-        sql = 'DELETE FROM scenario_variants WHERE scenario_name=%s AND variant_name=%s'
+        sql = "DELETE FROM scenario_variants WHERE scenario_name=%s AND variant_name=%s"
         cursor.execute(sql, [scenario_name, variant_name])
 
         # commit changes to database
         self.database_connection.commit()
 
         # run sql call
-        cursor.execute('DELETE FROM variants WHERE name=%s', [scenario_name, variant_name])
+        cursor.execute(
+            "DELETE FROM variants WHERE name=%s", [scenario_name, variant_name]
+        )
 
         # commit changes to database
         self.database_connection.commit()
@@ -1311,6 +1456,7 @@ class DbConfigStore(ConfigStore):
     # region Narratives
     def read_narrative(self, sos_model_name, narrative_name):
         raise NotImplementedError()
+
     # endregion
 
     # region Strategies
@@ -1319,15 +1465,17 @@ class DbConfigStore(ConfigStore):
 
     def write_strategies(self, model_run_name, strategies):
         raise NotImplementedError()
+
     # endregion
 
 
 class DbMetadataStore(MetadataStore):
-    """Database backend for metadata store
-    """
+    """Database backend for metadata store"""
+
     # region Units
     def read_unit_definitions(self):
         raise NotImplementedError()
+
     # endregion
 
     # region Dimensions
@@ -1345,23 +1493,28 @@ class DbMetadataStore(MetadataStore):
 
     def delete_dimension(self, dimension_name):
         raise NotImplementedError()
+
     # endregion
 
 
 class DbDataStore(DataStore):
-    """Database backend for data store
-    """
+    """Database backend for data store"""
+
     # region Scenario Variant Data
-    def read_scenario_variant_data(self, scenario_name, variant_name, variable, timestep=None):
+    def read_scenario_variant_data(
+        self, scenario_name, variant_name, variable, timestep=None
+    ):
         raise NotImplementedError()
 
     def write_scenario_variant_data(self, scenario_name, variant_name, data_array):
         raise NotImplementedError()
+
     # endregion
 
     # region Narrative Data
-    def read_narrative_variant_data(self, narrative_name, variant_name, variable,
-                                    timestep=None):
+    def read_narrative_variant_data(
+        self, narrative_name, variant_name, variable, timestep=None
+    ):
         raise NotImplementedError()
 
     def write_narrative_variant_data(self, narrative_name, variant_name, data_array):
@@ -1372,6 +1525,7 @@ class DbDataStore(DataStore):
 
     def write_model_parameter_default(self, model_name, parameter_name, data):
         raise NotImplementedError()
+
     # endregion
 
     # region Interventions
@@ -1380,6 +1534,7 @@ class DbDataStore(DataStore):
 
     def read_initial_conditions(self, sector_model_name):
         raise NotImplementedError()
+
     # endregion
 
     # region State
@@ -1388,6 +1543,7 @@ class DbDataStore(DataStore):
 
     def write_state(self, state, modelrun_name, timestep, decision_iteration=None):
         raise NotImplementedError()
+
     # endregion
 
     # region Conversion coefficients
@@ -1396,21 +1552,41 @@ class DbDataStore(DataStore):
 
     def write_coefficients(self, source_dim, destination_dim, data):
         raise NotImplementedError()
+
     # endregion
 
     # region Results
-    def read_results(self, modelrun_name, model_name, output_spec, timestep=None,
-                     decision_iteration=None):
+    def read_results(
+        self,
+        modelrun_name,
+        model_name,
+        output_spec,
+        timestep=None,
+        decision_iteration=None,
+    ):
         raise NotImplementedError()
 
-    def write_results(self, data_array, modelrun_name, model_name, timestep=None,
-                      decision_iteration=None):
+    def write_results(
+        self,
+        data_array,
+        modelrun_name,
+        model_name,
+        timestep=None,
+        decision_iteration=None,
+    ):
         raise NotImplementedError()
 
-    def delete_results(self, model_run_name, model_name, output_name, timestep=None,
-                       decision_iteration=None):
+    def delete_results(
+        self,
+        model_run_name,
+        model_name,
+        output_name,
+        timestep=None,
+        decision_iteration=None,
+    ):
         raise NotImplementedError()
 
     def prepare_warm_start(self, modelrun_id):
         raise NotImplementedError()
+
     # endregion

@@ -17,4 +17,4 @@ from smif.metadata.spec import Spec
 
 # Define what should be imported as * ::
 #         from smif.metadata import *
-__all__ = ['Coordinates', 'RelativeTimestep', 'Spec']
+__all__ = ["Coordinates", "RelativeTimestep", "Spec"]

@@ -29,25 +29,27 @@ def get_model_run_definition(store, modelrun):
         model_run_config = store.read_model_run(modelrun)
     except SmifDataNotFoundError:
         logging.error(
-            "Model run %s not found. Run 'smif list' to see available model runs.", modelrun)
+            "Model run %s not found. Run 'smif list' to see available model runs.",
+            modelrun,
+        )
         exit(-1)
 
-    logging.info("Running %s", model_run_config['name'])
+    logging.info("Running %s", model_run_config["name"])
     logging.debug("Model Run: %s", model_run_config)
-    sos_model_config = store.read_sos_model(model_run_config['sos_model'])
+    sos_model_config = store.read_sos_model(model_run_config["sos_model"])
 
-    sector_models = get_sector_models(sos_model_config['sector_models'], store)
+    sector_models = get_sector_models(sos_model_config["sector_models"], store)
     logging.debug("Sector models: %s", sector_models)
 
-    scenario_models = get_scenario_models(model_run_config['scenarios'], store)
+    scenario_models = get_scenario_models(model_run_config["scenarios"], store)
     logging.debug("Scenario models: %s", [model.name for model in scenario_models])
 
     sos_model = SosModel.from_dict(sos_model_config, sector_models + scenario_models)
-    model_run_config['sos_model'] = sos_model
+    model_run_config["sos_model"] = sos_model
     logging.debug("Model list: %s", list(model.name for model in sos_model.models))
 
-    model_run_config['strategies'] = store.read_strategies(model_run_config['name'])
-    logging.debug("Strategies: %s", [s['type'] for s in model_run_config['strategies']])
+    model_run_config["strategies"] = store.read_strategies(model_run_config["name"])
+    logging.debug("Strategies: %s", [s["type"] for s in model_run_config["strategies"]])
 
     return model_run_config
 
@@ -69,11 +71,11 @@ def get_scenario_models(scenarios, handler):
         scenario_definition = handler.read_scenario(scenario_name)
 
         # assign variant name to definition
-        scenario_definition['scenario'] = variant_name
+        scenario_definition["scenario"] = variant_name
 
         # rename provides => outputs
-        scenario_definition['outputs'] = scenario_definition['provides']
-        del scenario_definition['provides']
+        scenario_definition["outputs"] = scenario_definition["provides"]
+        del scenario_definition["provides"]
 
         logging.debug("Scenario definition: %s", scenario_name)
 
@@ -99,8 +101,8 @@ def get_sector_models(sector_model_names, handler):
         sector_model_config = handler.read_model(sector_model_name)
 
         # absolute path to be crystal clear for ModelLoader when loading python class
-        sector_model_config['path'] = os.path.normpath(
-            os.path.join(handler.model_base_folder, sector_model_config['path'])
+        sector_model_config["path"] = os.path.normpath(
+            os.path.join(handler.model_base_folder, sector_model_config["path"])
         )
         sector_model = SectorModel.from_dict(sector_model_config)
         sector_models.append(sector_model)
@@ -121,9 +123,9 @@ def build_model_run(model_run_config):
     """
     logger = logging.getLogger()
     try:
-        logger.profiling_start('build_model_run', model_run_config['name'])
+        logger.profiling_start("build_model_run", model_run_config["name"])
     except AttributeError:
-        logger.info('build_model_run %s', model_run_config['name'])
+        logger.info("build_model_run %s", model_run_config["name"])
 
     try:
         model_run = ModelRun.from_dict(model_run_config)
@@ -138,7 +140,7 @@ def build_model_run(model_run_config):
         exit(-1)
 
     try:
-        logger.profiling_stop('build_model_run', model_run_config['name'])
+        logger.profiling_stop("build_model_run", model_run_config["name"])
     except AttributeError:
-        logger.info('build_model_run %s', model_run_config['name'])
+        logger.info("build_model_run %s", model_run_config["name"])
     return model_run

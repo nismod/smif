@@ -58,4 +58,4 @@ from smif.model.sos_model import SosModel
 
 # Define what should be imported as * ::
 #         from smif.model import *
-__all__ = ['Model', 'ModelOperation', 'SectorModel', 'ScenarioModel', 'SosModel']
+__all__ = ["Model", "ModelOperation", "SectorModel", "ScenarioModel", "SosModel"]

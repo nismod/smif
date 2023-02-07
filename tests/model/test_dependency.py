@@ -8,48 +8,44 @@ from smif.metadata import RelativeTimestep, Spec
 from smif.model.dependency import Dependency
 
 
-@fixture(scope='function')
+@fixture(scope="function")
 def dep():
-    """Dependency with mocked models
-    """
+    """Dependency with mocked models"""
     source_model = Mock()
-    source_model.name = 'source_model'
+    source_model.name = "source_model"
     source_spec = Spec(
-        name='source',
-        dtype='float',
-        dims=['x', 'y'],
-        coords={'x': [0, 1], 'y': [0, 1]},
+        name="source",
+        dtype="float",
+        dims=["x", "y"],
+        coords={"x": [0, 1], "y": [0, 1]},
     )
     sink_model = Mock()
-    sink_model.name = 'sink_model'
+    sink_model.name = "sink_model"
     sink_spec = Spec(
-        name='sink',
-        dtype='float',
-        dims=['x', 'y'],
-        coords={'x': [0, 1], 'y': [0, 1]},
+        name="sink",
+        dtype="float",
+        dims=["x", "y"],
+        coords={"x": [0, 1], "y": [0, 1]},
     )
     return Dependency(source_model, source_spec, sink_model, sink_spec)
 
 
 def test_create():
-    """Create with models and specs, access properties
-    """
+    """Create with models and specs, access properties"""
     source_model = Mock()
     source_spec = Spec(
-        name='source',
-        dtype='float',
-        dims=['x', 'y'],
-        coords={'x': [0, 1], 'y': [0, 1]}
+        name="source", dtype="float", dims=["x", "y"], coords={"x": [0, 1], "y": [0, 1]}
     )
     sink_model = Mock()
     sink_spec = Spec(
-        name='sink',
-        dtype='float',
-        dims=['x', 'y'],
-        coords={'x': [0, 1], 'y': [0, 1]},
+        name="sink",
+        dtype="float",
+        dims=["x", "y"],
+        coords={"x": [0, 1], "y": [0, 1]},
     )
-    dep = Dependency(source_model, source_spec, sink_model, sink_spec,
-                     RelativeTimestep.PREVIOUS)
+    dep = Dependency(
+        source_model, source_spec, sink_model, sink_spec, RelativeTimestep.PREVIOUS
+    )
     assert dep.source_model == source_model
     assert dep.source == source_spec
     assert dep.sink_model == sink_model
@@ -63,80 +59,81 @@ def test_create():
 
 def test_create_with_identical_meta():
     source = Spec(
-        name='source',
-        dtype='float',
-        dims=['x', 'y'],
-        coords={'x': [0, 1], 'y': [0, 1]},
-        unit='m'
+        name="source",
+        dtype="float",
+        dims=["x", "y"],
+        coords={"x": [0, 1], "y": [0, 1]},
+        unit="m",
     )
     a_sink = Spec(
-        name='sink',  # differs but that's okay
-        dtype='float',
-        dims=['x', 'y'],
-        coords={'x': [0, 1], 'y': [0, 1]},
-        unit='m'
+        name="sink",  # differs but that's okay
+        dtype="float",
+        dims=["x", "y"],
+        coords={"x": [0, 1], "y": [0, 1]},
+        unit="m",
     )
     Dependency(Mock(), source, Mock(), a_sink)
 
     b_sink = Spec(
-        name='sink',
-        dtype='int',  # differs
-        dims=['x', 'y'],
-        coords={'x': [0, 1], 'y': [0, 1]},
-        unit='m'
+        name="sink",
+        dtype="int",  # differs
+        dims=["x", "y"],
+        coords={"x": [0, 1], "y": [0, 1]},
+        unit="m",
     )
     with raises(ValueError) as ex:
         Dependency(Mock(), source, Mock(), b_sink)
-    assert 'mismatched dtype' in str(ex.value)
+    assert "mismatched dtype" in str(ex.value)
 
     c_sink = Spec(
-        name='sink',
-        dtype='float',
-        dims=['x', 'z'],  # differs
-        coords={'x': [0, 1], 'z': [0, 1]},
-        unit='m'
+        name="sink",
+        dtype="float",
+        dims=["x", "z"],  # differs
+        coords={"x": [0, 1], "z": [0, 1]},
+        unit="m",
     )
     with raises(ValueError) as ex:
         Dependency(Mock(), source, Mock(), c_sink)
-    assert 'mismatched dims' in str(ex.value)
+    assert "mismatched dims" in str(ex.value)
 
     d_sink = Spec(
-        name='sink',
-        dtype='float',
-        dims=['x', 'y'],
-        coords={'x': [0, 1], 'y': [1, 2]},  # differs
-        unit='m'
+        name="sink",
+        dtype="float",
+        dims=["x", "y"],
+        coords={"x": [0, 1], "y": [1, 2]},  # differs
+        unit="m",
     )
     with raises(ValueError) as ex:
         Dependency(Mock(), source, Mock(), d_sink)
-    assert 'mismatched coords' in str(ex.value)
+    assert "mismatched coords" in str(ex.value)
 
     e_sink = Spec(
-        name='sink',
-        dtype='float',
-        dims=['x', 'y'],
-        coords={'x': [0, 1], 'y': [0, 1]},
-        unit='km'  # differs
+        name="sink",
+        dtype="float",
+        dims=["x", "y"],
+        coords={"x": [0, 1], "y": [0, 1]},
+        unit="km",  # differs
     )
     with raises(ValueError) as ex:
         Dependency(Mock(), source, Mock(), e_sink)
-    assert 'mismatched unit' in str(ex.value)
+    assert "mismatched unit" in str(ex.value)
 
 
 def test_repr(dep):
     actual = repr(dep)
     expected = "<Dependency({}, {}, {}, {}, {})>".format(
-        dep.source_model, dep.source, dep.sink_model, dep.sink, dep.timestep)
+        dep.source_model, dep.source, dep.sink_model, dep.sink, dep.timestep
+    )
     assert actual == expected
 
 
 def test_as_dict(dep):
     assert dep.as_dict() == {
-        'source': 'source_model',
-        'source_output': 'source',
-        'sink_input': 'sink',
-        'sink': 'sink_model',
-        'timestep': 'CURRENT'
+        "source": "source_model",
+        "source_output": "source",
+        "sink_input": "sink",
+        "sink": "sink_model",
+        "timestep": "CURRENT",
     }
 
 
@@ -149,12 +146,7 @@ def test_equality(dep):
     c.source_model = Mock()
     assert a != c
 
-    another_spec = Spec(
-        name='another',
-        dtype='float',
-        dims=['z'],
-        coords={'z': [0, 1]}
-    )
+    another_spec = Spec(name="another", dtype="float", dims=["z"], coords={"z": [0, 1]})
     d = copy(dep)
     d.source = another_spec
     assert a != d

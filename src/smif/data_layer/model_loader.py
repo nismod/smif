@@ -39,11 +39,15 @@ class ModelLoader(object):
         -------
         :class:`~smif.model.Model`
         """
-        klass = self.load_model_class(config['name'], config['path'], config['classname'])
-        if not hasattr(klass, 'from_dict'):
-            msg = "Model '{}' does not have a ``from_dict`` method and " \
-                  "cannot be loaded from config"
-            raise KeyError(msg.format(config['name']))
+        klass = self.load_model_class(
+            config["name"], config["path"], config["classname"]
+        )
+        if not hasattr(klass, "from_dict"):
+            msg = (
+                "Model '{}' does not have a ``from_dict`` method and "
+                "cannot be loaded from config"
+            )
+            raise KeyError(msg.format(config["name"]))
         model_instance = klass.from_dict(config)
         if model_instance:
             return model_instance

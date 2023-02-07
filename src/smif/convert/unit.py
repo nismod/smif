@@ -1,21 +1,19 @@
 """Handles conversion between units used in the `SosModel`
 """
-from pint import (DimensionalityError, UndefinedUnitError,  # type: ignore
-                  UnitRegistry)
+from pint import DimensionalityError, UndefinedUnitError, UnitRegistry  # type: ignore
 from smif.convert.adaptor import Adaptor
 from smif.data_layer.data_handle import DataHandle
 
 
 class UnitAdaptor(Adaptor):
-    """Scalar conversion of units
-    """
+    """Scalar conversion of units"""
+
     def __init__(self, name):
         self._register = UnitRegistry()
         super().__init__(name)
 
     def simulate(self, data_handle: DataHandle):
-        """Register unit definitions in registry for model run
-        """
+        """Register unit definitions in registry for model run"""
         units = data_handle.read_unit_definitions()
         for unit in units:
             self._register.define(unit)
@@ -28,14 +26,18 @@ class UnitAdaptor(Adaptor):
         try:
             quantity = self._register.Quantity(data, from_spec.unit)
         except UndefinedUnitError:
-            raise ValueError('Cannot convert from undefined unit {}'.format(from_spec.unit))
+            raise ValueError(
+                "Cannot convert from undefined unit {}".format(from_spec.unit)
+            )
 
         try:
             converted_quantity = quantity.to(to_spec.unit)
         except UndefinedUnitError as ex:
-            raise ValueError('Cannot convert undefined unit {}'.format(to_spec.unit)) from ex
+            raise ValueError(
+                "Cannot convert undefined unit {}".format(to_spec.unit)
+            ) from ex
         except DimensionalityError as ex:
-            msg = 'Cannot convert unit from {} to {}'
+            msg = "Cannot convert unit from {} to {}"
             raise ValueError(msg.format(from_spec.unit, to_spec.unit)) from ex
 
         return converted_quantity.magnitude

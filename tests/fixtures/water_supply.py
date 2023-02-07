@@ -53,9 +53,9 @@ def process_results(output):
 
     """
     results = {}
-    raw_results = output.decode('utf-8').split('\n')
+    raw_results = output.decode("utf-8").split("\n")
     for result in raw_results[0:2]:
-        values = result.split(',')
+        values = result.split(",")
         if len(values) == 2:
             results[str(values[0])] = float(values[1])
     return results
@@ -66,6 +66,7 @@ class WaterSupplySectorModel(SectorModel):
     using one of the toy water models below to simulate the water supply
     system.
     """
+
     def simulate(self, timestep, data):
         """
 
@@ -78,46 +79,40 @@ class WaterSupplySectorModel(SectorModel):
             contains a :class:`numpy.ndarray` with dimension regions x intervals
 
         """
-        decisions = data[timestep]['decisions']
+        decisions = data[timestep]["decisions"]
 
         # unpack inputs
         self.logger.debug(data)
 
-        if 'raininess' in data[timestep]:
-            raininess = data[timestep]['raininess'][0, 0]
-        elif 'water' in data[timestep]:
-            raininess = data[timestep]['water'][0, 0]
+        if "raininess" in data[timestep]:
+            raininess = data[timestep]["raininess"][0, 0]
+        elif "water" in data[timestep]:
+            raininess = data[timestep]["water"][0, 0]
         else:
             raise KeyError("Couldn't find parameter in {}".format(data))
 
         # unpack decision variables
         if len(decisions) > 0:
-            selective_list = [x for x in decisions
-                              if x.name.startswith('water_asset')]
+            selective_list = [x for x in decisions if x.name.startswith("water_asset")]
             number_of_treatment_plants = len(selective_list) + 1
         else:
             number_of_treatment_plants = 1
 
         # simulate (wrapping toy model)
         instance = ExampleWaterSupplySimulationModelWithAsset(
-            raininess,
-            number_of_treatment_plants
+            raininess, number_of_treatment_plants
         )
         instance_results = instance.simulate(timestep, data)
 
         results = {
-            'water': np.array([[
-                instance_results['water']
-            ]]),
-            'cost': np.array([[
-                instance_results['cost']
-            ]]),
-            'state': []
+            "water": np.array([[instance_results["water"]]]),
+            "cost": np.array([[instance_results["cost"]]]),
+            "state": [],
         }
         return {self.name: results}
 
     def extract_obj(self, results):
-        return results['cost']
+        return results["cost"]
 
     def constraints(self, parameters):
         """
@@ -129,8 +124,7 @@ class WaterSupplySectorModel(SectorModel):
         capacity, while the value ``parameters[0]`` in the min term is the
         value of the raininess parameter.
         """
-        constraints = ({'type': 'ineq',
-                        'fun': lambda x: min(x[0], parameters[0]) - 3})
+        constraints = {"type": "ineq", "fun": lambda x: min(x[0], parameters[0]) - 3}
         return constraints
 
 
@@ -142,6 +136,7 @@ class ExampleWaterSupplySimulationModel(object):
     raininess : int
         The amount of rain produced in each simulation
     """
+
     def __init__(self, raininess):
         self.raininess = raininess
         self.water = None
@@ -157,10 +152,7 @@ class ExampleWaterSupplySimulationModel(object):
         """
         self.water = self.raininess
         self.cost = 1
-        return {
-            "water": self.water,
-            "cost": self.cost
-        }
+        return {"water": self.water, "cost": self.cost}
 
 
 class ExampleWaterSupplySimulationModelWithAsset(ExampleWaterSupplySimulationModel):
@@ -175,10 +167,9 @@ class ExampleWaterSupplySimulationModelWithAsset(ExampleWaterSupplySimulationMod
         the amount of raininess
 
     """
-    def __init__(self, raininess, number_of_treatment_plants):
-        """Overrides the basic example class to include treatment plants
 
-        """
+    def __init__(self, raininess, number_of_treatment_plants):
+        """Overrides the basic example class to include treatment plants"""
         self.number_of_treatment_plants = number_of_treatment_plants
         self.water = None
         self.cost = None
@@ -192,16 +183,12 @@ class ExampleWaterSupplySimulationModelWithAsset(ExampleWaterSupplySimulationMod
 
         Each treatment plant costs 1.0 unit.
         """
-        logger.debug("There are {} plants".format(
-            self.number_of_treatment_plants))
+        logger.debug("There are {} plants".format(self.number_of_treatment_plants))
         logger.debug("It is {} rainy".format(self.raininess))
         water = min(self.number_of_treatment_plants, self.raininess)
         cost = 1.264 * self.number_of_treatment_plants
         logger.debug("The system costs £{}".format(cost))
-        return {
-            "water": water,
-            "cost": cost
-        }
+        return {"water": water, "cost": cost}
 
 
 class ExampleWaterSupplySimulationModelWithReservoir(ExampleWaterSupplySimulationModel):
@@ -220,6 +207,7 @@ class ExampleWaterSupplySimulationModelWithReservoir(ExampleWaterSupplySimulatio
     dict
 
     """
+
     fixed_demand = 1
 
     def __init__(self, raininess, reservoir_level):
@@ -243,7 +231,7 @@ class ExampleWaterSupplySimulationModelWithReservoir(ExampleWaterSupplySimulatio
         self._reservoir_level = self.water - self.fixed_demand
         self.cost = 1 + (0.1 * self._reservoir_level)
         return {
-            'water': self.water,
-            'cost': self.cost,
-            'reservoir level': self._reservoir_level
+            "water": self.water,
+            "cost": self.cost,
+            "reservoir level": self._reservoir_level,
         }

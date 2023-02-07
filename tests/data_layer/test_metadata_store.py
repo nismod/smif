@@ -6,19 +6,14 @@ from smif.data_layer.file.file_metadata_store import FileMetadataStore
 from smif.data_layer.memory_interface import MemoryMetadataStore
 
 
-@fixture(
-    params=[
-        'memory',
-        'file',
-        param('database', marks=mark.skip)
-    ])
+@fixture(params=["memory", "file", param("database", marks=mark.skip)])
 def init_handler(request, setup_empty_folder_structure):
-    if request.param == 'memory':
+    if request.param == "memory":
         handler = MemoryMetadataStore()
-    elif request.param == 'file':
+    elif request.param == "file":
         base_folder = setup_empty_folder_structure
         handler = FileMetadataStore(base_folder)
-    elif request.param == 'database':
+    elif request.param == "database":
         handler = DbMetadataStore()
         raise NotImplementedError
 
@@ -38,28 +33,28 @@ def handler(init_handler, unit_definitions, dimension, sample_dimensions):
     return handler
 
 
-class TestUnits():
-    """Read units definitions
-    """
+class TestUnits:
+    """Read units definitions"""
+
     def test_read_units(self, handler, unit_definitions):
         expected = unit_definitions
         actual = handler.read_unit_definitions()
         assert actual == expected
 
 
-class TestDimensions():
-    """Read/write/update/delete dimensions
-    """
+class TestDimensions:
+    """Read/write/update/delete dimensions"""
+
     def test_read_dimensions(self, handler, dimension, sample_dimensions):
         actual = handler.read_dimensions()
         expected = [dimension] + sample_dimensions
         assert sorted_by_name(actual) == sorted_by_name(expected)
 
     def test_read_dimension(self, handler, dimension):
-        assert handler.read_dimension('category') == dimension
+        assert handler.read_dimension("category") == dimension
 
     def test_write_dimension(self, handler, dimension, sample_dimensions):
-        another_dimension = {'name': '3rd', 'elements': [{'name': 'a'}, {'name': 'b'}]}
+        another_dimension = {"name": "3rd", "elements": [{"name": "a"}, {"name": "b"}]}
         handler.write_dimension(another_dimension)
         actual = handler.read_dimensions()
         expected = [dimension, another_dimension] + sample_dimensions
@@ -67,36 +62,35 @@ class TestDimensions():
 
     def test_write_interval_dimension(self, handler):
         intervals = {
-            'name': 'seasons',
-            'elements': [
-                {'name': 'spring', 'interval': [['P2M', 'P5M']]},
-                {'name': 'summer', 'interval': [['P5M', 'P8M']]},
-                {'name': 'autumn', 'interval': [['P8M', 'P11M']]},
-                {'name': 'winter', 'interval': [['P0M', 'P2M'], ['P11M', 'P12M']]},
-            ]
+            "name": "seasons",
+            "elements": [
+                {"name": "spring", "interval": [["P2M", "P5M"]]},
+                {"name": "summer", "interval": [["P5M", "P8M"]]},
+                {"name": "autumn", "interval": [["P8M", "P11M"]]},
+                {"name": "winter", "interval": [["P0M", "P2M"], ["P11M", "P12M"]]},
+            ],
         }
         handler.write_dimension(intervals)
-        actual = handler.read_dimension('seasons')
+        actual = handler.read_dimension("seasons")
         assert actual == intervals
 
     def test_update_dimension(self, handler, dimension, sample_dimensions):
         another_dimension = {
-            'name': 'category',
-            'elements': [{'name': 4}, {'name': 5}, {'name': 6}]
+            "name": "category",
+            "elements": [{"name": 4}, {"name": 5}, {"name": 6}],
         }
-        handler.update_dimension('category', another_dimension)
+        handler.update_dimension("category", another_dimension)
         actual = handler.read_dimensions()
         expected = [another_dimension] + sample_dimensions
         assert sorted_by_name(actual) == sorted_by_name(expected)
 
     def test_delete_dimension(self, handler, sample_dimensions):
-        handler.delete_dimension('category')
+        handler.delete_dimension("category")
         actual = handler.read_dimensions()
         expected = sample_dimensions
         assert sorted_by_name(actual) == sorted_by_name(expected)
 
 
 def sorted_by_name(list_):
-    """Helper to sort lists-of-dicts
-    """
-    return sorted(list_, key=lambda d: d['name'])
+    """Helper to sort lists-of-dicts"""
+    return sorted(list_, key=lambda d: d["name"])

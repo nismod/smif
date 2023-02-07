@@ -21,9 +21,9 @@ class Adaptor(Model, metaclass=ABCMeta):
     :class:`~smif.metadata.spec.Spec` definitions.
 
     """
+
     def simulate(self, data_handle: DataHandle):
-        """Convert from input to output based on matching variable names
-        """
+        """Convert from input to output based on matching variable names"""
         for from_spec in self.inputs.values():
             if from_spec.name in self.outputs:
                 to_spec = self.outputs[from_spec.name]
@@ -32,10 +32,9 @@ class Adaptor(Model, metaclass=ABCMeta):
                 data_out = self.convert(data_in, to_spec, coefficients)
                 data_handle.set_results(to_spec.name, data_out)
 
-    def get_coefficients(self,
-                         data_handle: DataHandle,
-                         from_spec: Spec,
-                         to_spec: Spec) -> np.ndarray:
+    def get_coefficients(
+        self, data_handle: DataHandle, from_spec: Spec, to_spec: Spec
+    ) -> np.ndarray:
         """Read coefficients, or generate and save if necessary
 
         Parameters
@@ -74,10 +73,7 @@ class Adaptor(Model, metaclass=ABCMeta):
         """
         raise NotImplementedError
 
-    def convert(self,
-                data_array: DataArray,
-                to_spec: Spec,
-                coefficients: np.ndarray):
+    def convert(self, data_array: DataArray, to_spec: Spec, coefficients: np.ndarray):
         """Convert a dataset between :class:`~smif.metadata.spec.Spec` definitions
 
         Parameters
@@ -97,8 +93,13 @@ class Adaptor(Model, metaclass=ABCMeta):
 
         from_convert_dim, to_convert_dim = self.get_convert_dims(from_spec, to_spec)
 
-        self.logger.debug("Converting from %s:%s to %s:%s", from_spec.name, from_convert_dim,
-                          to_spec.name, to_convert_dim)
+        self.logger.debug(
+            "Converting from %s:%s to %s:%s",
+            from_spec.name,
+            from_convert_dim,
+            to_spec.name,
+            to_convert_dim,
+        )
 
         axis = from_spec.dims.index(from_convert_dim)
 
@@ -115,9 +116,9 @@ class Adaptor(Model, metaclass=ABCMeta):
         return converted
 
     @staticmethod
-    def convert_with_coefficients(data: np.ndarray,
-                                  coefficients: np.ndarray,
-                                  axis: int):
+    def convert_with_coefficients(
+        data: np.ndarray, coefficients: np.ndarray, axis: int
+    ):
         """Unchecked conversion, given data, coefficients and axis
 
         Parameters
@@ -139,12 +140,12 @@ class Adaptor(Model, metaclass=ABCMeta):
         coefficient_axes = [0, 1]
 
         # data is nD, label these (2 to n+1) to avoid collisions
-        data_axes = list(range(2, 2+data.ndim))
+        data_axes = list(range(2, 2 + data.ndim))
         # except for the axis to convert: label this 0 to match first dim of coefficients
         data_axes[axis] = 0
 
         # results are also nD, label these (2 to n+1) identically to data_axes
-        result_axes = list(range(2, 2+data.ndim))
+        result_axes = list(range(2, 2 + data.ndim))
         # except for the axis to convert: label this 1 to match second dim of coefficients
         result_axes[axis] = 1
 

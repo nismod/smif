@@ -6,34 +6,35 @@ import dateutil.parser
 import smif
 from flask import current_app, jsonify, request
 from flask.views import MethodView
-from smif.exception import (SmifDataError, SmifDataInputError,
-                            SmifDataNotFoundError, SmifException,
-                            SmifValidationError)
+from smif.exception import (
+    SmifDataError,
+    SmifDataInputError,
+    SmifDataNotFoundError,
+    SmifException,
+    SmifValidationError,
+)
 
 
 class SmifAPI(MethodView):
-    """Implement operations for Smif
-    """
+    """Implement operations for Smif"""
+
     def get(self, key):
         """Get smif details
         version: GET /api/v1/smif/version
         """
-        if key == 'version':
+        if key == "version":
             data = smif.__version__
         else:
             data = {}
-            data['version'] = smif.__version__
+            data["version"] = smif.__version__
 
-        response = jsonify({
-            'data': data,
-            'error': {}
-        })
+        response = jsonify({"data": data, "error": {}})
         return response
 
 
 class ModelRunAPI(MethodView):
-    """Implement CRUD operations for model_run configuration data
-    """
+    """Implement CRUD operations for model_run configuration data"""
+
     def get(self, model_run_name=None, action=None):
         """Get model_runs
         all: GET /api/v1/model_runs/
@@ -47,12 +48,14 @@ class ModelRunAPI(MethodView):
 
                     model_runs = data_interface.read_model_runs()
 
-                    if 'status' in request.args.keys():
+                    if "status" in request.args.keys():
                         # filtered: GET /api/v1/model_runs?status=done
                         data = []
                         for model_run in model_runs:
-                            status = current_app.config.scheduler.get_status(model_run['name'])
-                            if status['status'] == request.args['status']:
+                            status = current_app.config.scheduler.get_status(
+                                model_run["name"]
+                            )
+                            if status["status"] == request.args["status"]:
                                 data.append(model_run)
                     else:
                         # all: GET /api/v1/model_runs/
@@ -62,20 +65,14 @@ class ModelRunAPI(MethodView):
                     # one: GET /api/vi/model_runs/name
                     data = {}
                     data = data_interface.read_model_run(model_run_name)
-            elif action == 'status':
+            elif action == "status":
                 # action: GET /api/vi/model_runs/name/status
                 data = {}
                 data = current_app.config.scheduler.get_status(model_run_name)
 
-            response = jsonify({
-                'data': data,
-                'error': {}
-            })
+            response = jsonify({"data": data, "error": {}})
         except SmifException as err:
-            response = jsonify({
-                'data': data,
-                'error': parse_exceptions(err)
-            })
+            response = jsonify({"data": data, "error": parse_exceptions(err)})
 
         return response
 
@@ -99,30 +96,28 @@ class ModelRunAPI(MethodView):
             if action is None:
                 data = request.get_json() or request.form
                 data_interface.write_model_run(data)
-            elif action == 'start':
+            elif action == "start":
                 data = request.get_json() or request.form
                 args = {
-                    'verbosity': data['args']['verbosity'],
-                    'warm_start': data['args']['warm_start'],
-                    'output_format': data['args']['output_format']
+                    "verbosity": data["args"]["verbosity"],
+                    "warm_start": data["args"]["warm_start"],
+                    "output_format": data["args"]["output_format"],
                 }
-                if hasattr(data_interface, 'model_base_folder'):
-                    args['directory'] = data_interface.model_base_folder
+                if hasattr(data_interface, "model_base_folder"):
+                    args["directory"] = data_interface.model_base_folder
                 current_app.config.scheduler.add(model_run_name, args)
-            elif action == 'kill':
+            elif action == "kill":
                 current_app.config.scheduler.kill(model_run_name)
-            elif action == 'remove':
+            elif action == "remove":
                 raise NotImplementedError
-            elif action == 'resume':
+            elif action == "resume":
                 raise NotImplementedError
             else:
                 raise SyntaxError("ModelRun action '%s' does not exist" % action)
         except SmifException as err:
-            response = jsonify({
-                'message': 'failed',
-                'data': data,
-                'error': parse_exceptions(err)
-            })
+            response = jsonify(
+                {"message": "failed", "data": data, "error": parse_exceptions(err)}
+            )
         else:
             response = jsonify({"message": "success"})
 
@@ -139,11 +134,9 @@ class ModelRunAPI(MethodView):
         try:
             data_interface.update_model_run(model_run_name, data)
         except SmifException as err:
-            response = jsonify({
-                'message': 'failed',
-                'data': data,
-                'error': parse_exceptions(err)
-            })
+            response = jsonify(
+                {"message": "failed", "data": data, "error": parse_exceptions(err)}
+            )
         else:
             response = jsonify({"message": "success"})
 
@@ -161,8 +154,8 @@ class ModelRunAPI(MethodView):
 
 
 class SosModelAPI(MethodView):
-    """Implement CRUD operations for sos_model configuration data
-    """
+    """Implement CRUD operations for sos_model configuration data"""
+
     def get(self, sos_model_name):
         """Get sos_model
         all: GET /api/v1/sos_models/
@@ -179,15 +172,9 @@ class SosModelAPI(MethodView):
                 data = {}
                 data = data_interface.read_sos_model(sos_model_name)
 
-            response = jsonify({
-                'data': data,
-                'error': {}
-            })
+            response = jsonify({"data": data, "error": {}})
         except SmifException as err:
-            response = jsonify({
-                'data': data,
-                'error': parse_exceptions(err)
-            })
+            response = jsonify({"data": data, "error": parse_exceptions(err)})
 
         return response
 
@@ -201,11 +188,9 @@ class SosModelAPI(MethodView):
         try:
             data_interface.write_sos_model(data)
         except SmifException as err:
-            response = jsonify({
-                'message': 'failed',
-                'data': data,
-                'error': parse_exceptions(err)
-            })
+            response = jsonify(
+                {"message": "failed", "data": data, "error": parse_exceptions(err)}
+            )
         else:
             response = jsonify({"message": "success"})
 
@@ -222,11 +207,9 @@ class SosModelAPI(MethodView):
         try:
             data_interface.update_sos_model(sos_model_name, data)
         except SmifException as err:
-            response = jsonify({
-                'message': 'failed',
-                'data': data,
-                'error': parse_exceptions(err)
-            })
+            response = jsonify(
+                {"message": "failed", "data": data, "error": parse_exceptions(err)}
+            )
         else:
             response = jsonify({"message": "success"})
 
@@ -244,8 +227,8 @@ class SosModelAPI(MethodView):
 
 
 class SectorModelAPI(MethodView):
-    """Implement CRUD operations for sector_model configuration data
-    """
+    """Implement CRUD operations for sector_model configuration data"""
+
     def get(self, sector_model_name):
         """Get sector_models
         all: GET /api/v1/sector_models/
@@ -262,15 +245,9 @@ class SectorModelAPI(MethodView):
                 data = {}
                 data = data_interface.read_model(sector_model_name, skip_coords=True)
 
-            response = jsonify({
-                'data': data,
-                'error': {}
-            })
+            response = jsonify({"data": data, "error": {}})
         except SmifException as err:
-            response = jsonify({
-                'data': data,
-                'error': parse_exceptions(err)
-            })
+            response = jsonify({"data": data, "error": parse_exceptions(err)})
         return response
 
     def post(self):
@@ -284,11 +261,9 @@ class SectorModelAPI(MethodView):
         try:
             data_interface.write_model(data)
         except SmifException as err:
-            response = jsonify({
-                'message': 'failed',
-                'data': data,
-                'error': parse_exceptions(err)
-            })
+            response = jsonify(
+                {"message": "failed", "data": data, "error": parse_exceptions(err)}
+            )
         else:
             response = jsonify({"message": "success"})
 
@@ -306,11 +281,9 @@ class SectorModelAPI(MethodView):
         try:
             data_interface.update_model(sector_model_name, data)
         except SmifException as err:
-            response = jsonify({
-                'message': 'failed',
-                'data': data,
-                'error': parse_exceptions(err)
-            })
+            response = jsonify(
+                {"message": "failed", "data": data, "error": parse_exceptions(err)}
+            )
         else:
             response = jsonify({"message": "success"})
 
@@ -328,8 +301,8 @@ class SectorModelAPI(MethodView):
 
 
 class ScenarioAPI(MethodView):
-    """Implement CRUD operations for scenarios configuration data
-    """
+    """Implement CRUD operations for scenarios configuration data"""
+
     def get(self, scenario_name):
         """Get scenarios
         all: GET /api/v1/scenarios/
@@ -346,15 +319,9 @@ class ScenarioAPI(MethodView):
                 data = {}
                 data = data_interface.read_scenario(scenario_name, skip_coords=True)
 
-            response = jsonify({
-                'data': data,
-                'error': {}
-            })
+            response = jsonify({"data": data, "error": {}})
         except SmifException as err:
-            response = jsonify({
-                'data': data,
-                'error': parse_exceptions(err)
-            })
+            response = jsonify({"data": data, "error": parse_exceptions(err)})
 
         return response
 
@@ -369,11 +336,9 @@ class ScenarioAPI(MethodView):
             data = check_timestamp(data)
             data_interface.write_scenario(data)
         except SmifException as err:
-            response = jsonify({
-                'message': 'failed',
-                'data': data,
-                'error': parse_exceptions(err)
-            })
+            response = jsonify(
+                {"message": "failed", "data": data, "error": parse_exceptions(err)}
+            )
         else:
             response = jsonify({"message": "success"})
 
@@ -391,11 +356,9 @@ class ScenarioAPI(MethodView):
             data = check_timestamp(data)
             data_interface.update_scenario(scenario_name, data)
         except SmifException as err:
-            response = jsonify({
-                'message': 'failed',
-                'data': data,
-                'error': parse_exceptions(err)
-            })
+            response = jsonify(
+                {"message": "failed", "data": data, "error": parse_exceptions(err)}
+            )
         else:
             response = jsonify({"message": "success"})
 
@@ -413,8 +376,8 @@ class ScenarioAPI(MethodView):
 
 
 class DimensionAPI(MethodView):
-    """Implement CRUD operations for dimensions configuration data
-    """
+    """Implement CRUD operations for dimensions configuration data"""
+
     def get(self, dimension_name):
         """Get dimensions
         all: GET /api/v1/dimensions/
@@ -431,15 +394,9 @@ class DimensionAPI(MethodView):
                 data = {}
                 data = data_interface.read_dimension(dimension_name, skip_coords=True)
 
-            response = jsonify({
-                'data': data,
-                'error': {}
-            })
+            response = jsonify({"data": data, "error": {}})
         except SmifException as err:
-            response = jsonify({
-                'data': data,
-                'error': parse_exceptions(err)
-            })
+            response = jsonify({"data": data, "error": parse_exceptions(err)})
 
         return response
 
@@ -454,11 +411,9 @@ class DimensionAPI(MethodView):
             data = check_timestamp(data)
             data_interface.write_dimension(data)
         except SmifException as err:
-            response = jsonify({
-                'message': 'failed',
-                'data': data,
-                'error': parse_exceptions(err)
-            })
+            response = jsonify(
+                {"message": "failed", "data": data, "error": parse_exceptions(err)}
+            )
         else:
             response = jsonify({"message": "success"})
 
@@ -476,11 +431,9 @@ class DimensionAPI(MethodView):
             data = check_timestamp(data)
             data_interface.update_dimension(dimension_name, data)
         except SmifException as err:
-            response = jsonify({
-                'message': 'failed',
-                'data': data,
-                'error': parse_exceptions(err)
-            })
+            response = jsonify(
+                {"message": "failed", "data": data, "error": parse_exceptions(err)}
+            )
         else:
             response = jsonify({"message": "success"})
 
@@ -498,12 +451,11 @@ class DimensionAPI(MethodView):
 
 
 def check_timestamp(data):
-    """Check for timestamp and parse to datetime object
-    """
-    if 'stamp' in data:
+    """Check for timestamp and parse to datetime object"""
+    if "stamp" in data:
         try:
-            data['stamp'] = dateutil.parser.parse(data['stamp'])
-        except(ValueError):
+            data["stamp"] = dateutil.parser.parse(data["stamp"])
+        except (ValueError):
             pass
     return data
 
@@ -531,9 +483,9 @@ def _parse_exception(ex):
         msg = ex.args[0]
     if type(ex) == SmifDataInputError:
         msg = {
-            'component': ex.component,
-            'error': ex.error,
-            'message': ex.message,
+            "component": ex.component,
+            "error": ex.error,
+            "message": ex.message,
         }
     if type(ex) == SmifDataNotFoundError:
         msg = ex.args[0]

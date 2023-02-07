@@ -14,15 +14,13 @@ from setuptools import setup
 
 
 def setup_package():
-    needs_sphinx = {'build_sphinx', 'upload_docs'}.intersection(sys.argv)
-    sphinx = ['sphinx'] if needs_sphinx else []
-    setup(setup_requires=['pyscaffold>=3.0a0,<3.1a0'] + sphinx,
-          entry_points={
-              'console_scripts': [
-                  'smif = smif.cli:main'
-              ]
-          },
-          use_pyscaffold=True)
+    needs_sphinx = {"build_sphinx", "upload_docs"}.intersection(sys.argv)
+    sphinx = ["sphinx"] if needs_sphinx else []
+    setup(
+        setup_requires=["setuptools_scm"] + sphinx,
+        use_scm_version=True,
+        entry_points={"console_scripts": ["smif = smif.cli:main"]},
+    )
 
 
 if __name__ == "__main__":

@@ -8,8 +8,8 @@ from typing import List
 
 
 class MetadataStore(metaclass=ABCMeta):
-    """A MetaDataStore must implement each of the abstract methods defined in this interface
-    """
+    """A MetaDataStore must implement each of the abstract methods defined in this interface"""
+
     # region Units
     @abstractmethod
     def read_unit_definitions(self) -> List[str]:
@@ -29,6 +29,7 @@ class MetadataStore(metaclass=ABCMeta):
         list[str]
             Pint-compatible unit definitions
         """
+
     # endregion
 
     # region Dimensions
@@ -89,4 +90,5 @@ class MetadataStore(metaclass=ABCMeta):
         ----------
         dimension_name : str
         """
+
     # endregion

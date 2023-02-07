@@ -35,7 +35,7 @@ class Results:
         -------
         List of model run names
         """
-        return sorted([x['name'] for x in self._store.read_model_runs()])
+        return sorted([x["name"] for x in self._store.read_model_runs()])
 
     def list_sector_models(self, model_run_name: str):
         """Return a list of sector models for given model run.
@@ -50,7 +50,8 @@ class Results:
         """
         return sorted(
             self._store.read_sos_model(
-                self._store.read_model_run(model_run_name)['sos_model'])['sector_models']
+                self._store.read_model_run(model_run_name)["sos_model"]
+            )["sector_models"]
         )
 
     def list_scenarios(self, model_run_name: str):
@@ -64,7 +65,7 @@ class Results:
         -------
         Dictionary of (scenario name, variant) for the given model run.
         """
-        return dict(self._store.read_model_run(model_run_name)['scenarios'])
+        return dict(self._store.read_model_run(model_run_name)["scenarios"])
 
     def list_scenario_outputs(self, scenario_name: str):
         """Return a list of outputs of a given scenario.
@@ -78,7 +79,8 @@ class Results:
         List of outputs for the requested scenario
         """
         return sorted(
-            [x['name'] for x in self._store.read_scenario(scenario_name)['provides']])
+            [x["name"] for x in self._store.read_scenario(scenario_name)["provides"]]
+        )
 
     def list_outputs(self, sector_model_name: str):
         """Return a list of model run names.
@@ -92,7 +94,8 @@ class Results:
         List of outputs for the given sector model
         """
         return sorted(
-            [x['name'] for x in self._store.read_model(sector_model_name)['outputs']])
+            [x["name"] for x in self._store.read_model(sector_model_name)["outputs"]]
+        )
 
     def available_results(self, model_run_name):
         """Return the results available for a given model run.
@@ -110,41 +113,49 @@ class Results:
         model_run = self._store.read_model_run(model_run_name)
 
         results = {
-            'model_run': model_run_name,
-            'sos_model': model_run['sos_model'],
-            'sector_models': dict(),
-            'scenarios': dict(model_run['scenarios'])
+            "model_run": model_run_name,
+            "sos_model": model_run["sos_model"],
+            "sector_models": dict(),
+            "scenarios": dict(model_run["scenarios"]),
         }
 
         model_names = {sec for _t, _d, sec, _out in available}
         for model_name in model_names:
-            results['sector_models'][model_name] = {
-                'outputs': dict(),
+            results["sector_models"][model_name] = {
+                "outputs": dict(),
             }
 
             outputs = {out for _t, _d, sec, out in available if sec == model_name}
 
             for output in outputs:
-                results['sector_models'][model_name]['outputs'][output] = dict()
+                results["sector_models"][model_name]["outputs"][output] = dict()
 
-                decs = {d for _t, d, sec, out in available if
-                        sec == model_name and out == output}
+                decs = {
+                    d
+                    for _t, d, sec, out in available
+                    if sec == model_name and out == output
+                }
 
                 for dec in decs:
-                    ts = sorted({t for t, d, sec, out in available if
-                                 d == dec and sec == model_name and out == output})
-                    results['sector_models'][model_name]['outputs'][output][dec] = ts
+                    ts = sorted(
+                        {
+                            t
+                            for t, d, sec, out in available
+                            if d == dec and sec == model_name and out == output
+                        }
+                    )
+                    results["sector_models"][model_name]["outputs"][output][dec] = ts
 
         return results
 
     def read_results(
-            self,
-            model_run_names: list,
-            model_names: list,
-            output_names: list,
-            timesteps: list = None,
-            decisions: list = None,
-            time_decision_tuples: list = None,
+        self,
+        model_run_names: list,
+        model_names: list,
+        output_names: list,
+        timesteps: list = None,
+        decisions: list = None,
+        time_decision_tuples: list = None,
     ):
         """Return results from the store as a formatted pandas data frame. There are a number
         of ways of requesting specific timesteps/decisions. You can specify either:
@@ -207,7 +218,7 @@ class Results:
             output_names,
             timesteps,
             decisions,
-            time_decision_tuples
+            time_decision_tuples,
         )
 
         # Keep tabs on the units for each output
@@ -225,36 +236,42 @@ class Results:
             names_of_df = [x for x in results_dict.keys()]
 
             formatted_frames.append(
-                pd.concat(list_of_df, keys=names_of_df, names=['model_run']).reset_index())
+                pd.concat(
+                    list_of_df, keys=names_of_df, names=["model_run"]
+                ).reset_index()
+            )
 
         # Append the other output columns to the first data frame
         formatted_frame = formatted_frames.pop(0)
         output_names.pop(0)
 
         for other_frame, output_name in zip(formatted_frames, output_names):
-            assert (formatted_frame['model_run'] == other_frame['model_run']).all()
-            assert (formatted_frame['timestep_decision'] == other_frame[
-                'timestep_decision']).all()
+            assert (formatted_frame["model_run"] == other_frame["model_run"]).all()
+            assert (
+                formatted_frame["timestep_decision"] == other_frame["timestep_decision"]
+            ).all()
             formatted_frame[output_name] = other_frame[output_name]
 
         # Unpack the timestep_decision tuples into individual columns and drop the combined
-        formatted_frame[['timestep', 'decision']] = pd.DataFrame(
-            formatted_frame['timestep_decision'].tolist(), index=formatted_frame.index)
+        formatted_frame[["timestep", "decision"]] = pd.DataFrame(
+            formatted_frame["timestep_decision"].tolist(), index=formatted_frame.index
+        )
 
-        formatted_frame = formatted_frame.drop(columns=['timestep_decision'])
+        formatted_frame = formatted_frame.drop(columns=["timestep_decision"])
 
         # Now reorder the columns. Want model_run then timestep then decision
         cols = formatted_frame.columns.tolist()
 
-        assert (cols[0] == 'model_run')
-        cols.insert(1, cols.pop(cols.index('timestep')))
-        cols.insert(2, cols.pop(cols.index('decision')))
-        assert (cols[0:3] == ['model_run', 'timestep', 'decision'])
+        assert cols[0] == "model_run"
+        cols.insert(1, cols.pop(cols.index("timestep")))
+        cols.insert(2, cols.pop(cols.index("decision")))
+        assert cols[0:3] == ["model_run", "timestep", "decision"]
 
         return formatted_frame[cols]
 
-    def read_scenario_data(self, scenario_name: str, variant_name: str, variable_name: str,
-                           timesteps: list) -> pd.DataFrame:
+    def read_scenario_data(
+        self, scenario_name: str, variant_name: str, variable_name: str, timesteps: list
+    ) -> pd.DataFrame:
         """Return scenario variant data from the store as a formatted pandas data frame.
 
         Parameters
@@ -285,22 +302,27 @@ class Results:
         """
 
         # Query the store and return as pandas data frame sorted with ascending timestep
-        scenario_data_frame = self._store.read_scenario_variant_data(
-            scenario_name=scenario_name,
-            variant_name=variant_name,
-            variable=variable_name,
-            timesteps=timesteps
-        ).as_df().sort_values('timestep').reset_index()
+        scenario_data_frame = (
+            self._store.read_scenario_variant_data(
+                scenario_name=scenario_name,
+                variant_name=variant_name,
+                variable=variable_name,
+                timesteps=timesteps,
+            )
+            .as_df()
+            .sort_values("timestep")
+            .reset_index()
+        )
 
         # Reorder the columns with timestep left-most
         cols = scenario_data_frame.columns.tolist()
-        assert 'timestep' in cols
-        cols.insert(0, cols.pop(cols.index('timestep')))
+        assert "timestep" in cols
+        cols.insert(0, cols.pop(cols.index("timestep")))
 
         return scenario_data_frame[cols]
 
     def get_units(self, output_name: str):
-        """ Return the units of a given output.
+        """Return the units of a given output.
 
         Parameters
         ----------
@@ -316,15 +338,11 @@ class Results:
 
         if len(sec_model_names) != 1:
             raise NotImplementedError(
-                'Results.read() currently requires exactly one sector model'
+                "Results.read() currently requires exactly one sector model"
             )
 
         if len(model_run_names) < 1:
-            raise ValueError(
-                'Results.read() requires at least one sector model name'
-            )
+            raise ValueError("Results.read() requires at least one sector model name")
 
         if len(output_names) < 1:
-            raise ValueError(
-                'Results.read() requires at least one output name'
-            )
+            raise ValueError("Results.read() requires at least one output name")

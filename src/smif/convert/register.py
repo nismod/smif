@@ -13,19 +13,17 @@ import numpy as np  # type: ignore
 
 
 class ResolutionSet(metaclass=ABCMeta):
-    """Abstract class which holds the Resolution definitions
-    """
+    """Abstract class which holds the Resolution definitions"""
+
     def __init__(self):
-        self.name = ''
-        self.description = ''
+        self.name = ""
+        self.description = ""
         self._data = []
         self.logger = logging.getLogger(__name__)
 
     def as_dict(self):
-        """Get a serialisable representation of the object
-        """
-        return {'name': self.name,
-                'description': self.description}
+        """Get a serialisable representation of the object"""
+        return {"name": self.name, "description": self.description}
 
     def __iter__(self):
         return iter(self.data)
@@ -60,8 +58,7 @@ class ResolutionSet(metaclass=ABCMeta):
 
     @abstractmethod
     def intersection(self, bounds):
-        """Return the subset of entries intersecting with the bounds
-        """
+        """Return the subset of entries intersecting with the bounds"""
         raise NotImplementedError
 
     @abstractmethod
@@ -106,13 +103,12 @@ class ResolutionSet(metaclass=ABCMeta):
 
 
 class LogMixin(object):
-
     @property
     def logger(self):
         try:
             logger = self._logger
         except AttributeError:
-            name = '.'.join([__name__, self.__class__.__name__])
+            name = ".".join([__name__, self.__class__.__name__])
             logger = logging.getLogger(name)
             self._logger = logger
         return self._logger
@@ -131,6 +127,7 @@ class Register(LogMixin, metaclass=ABCMeta):
         The axis over which operations on the data array are performed
 
     """
+
     store = None
 
     def __init__(self, axis=None):
@@ -149,7 +146,9 @@ class Register(LogMixin, metaclass=ABCMeta):
     def get_coefficients(self, source: str, destination: str):
         raise NotImplementedError
 
-    def convert(self, data: np.ndarray, from_set_name: str, to_set_name: str) -> np.ndarray:
+    def convert(
+        self, data: np.ndarray, from_set_name: str, to_set_name: str
+    ) -> np.ndarray:
         """Convert a list of data points for a given set to another set
 
         .. deprecated
@@ -175,7 +174,9 @@ class Register(LogMixin, metaclass=ABCMeta):
         return converted
 
     @staticmethod
-    def convert_with_coefficients(data, coefficients: np.ndarray, axis=None) -> np.ndarray:
+    def convert_with_coefficients(
+        data, coefficients: np.ndarray, axis=None
+    ) -> np.ndarray:
         """Convert an array of data using given coefficients, along a given axis
 
         .. deprecated
@@ -195,8 +196,10 @@ class Register(LogMixin, metaclass=ABCMeta):
         if axis is not None:
             data_count = data.shape[axis]
             if coefficients.shape[0] != data_count:
-                msg = "Size of coefficient array does not match source " \
-                      "resolution set from data matrix: %s != %s"
+                msg = (
+                    "Size of coefficient array does not match source "
+                    "resolution set from data matrix: %s != %s"
+                )
                 raise ValueError(msg, coefficients.shape[axis], data_count)
 
         if axis == 0:
@@ -218,6 +221,7 @@ class NDimensionalRegister(Register):
         The axis over which operations on the data array are performed
 
     """
+
     def __init__(self, axis=None):
         super().__init__(axis)
         self._register = OrderedDict()  # type: Dict[str, ResolutionSet]
@@ -239,9 +243,9 @@ class NDimensionalRegister(Register):
             msg = "A ResolutionSet named {} has already been loaded"
             raise ValueError(msg.format(resolution_set.name))
 
-        self.logger.info("Registering '%s' with %i items",
-                         resolution_set.name,
-                         len(resolution_set))
+        self.logger.info(
+            "Registering '%s' with %i items", resolution_set.name, len(resolution_set)
+        )
 
         self._register[resolution_set.name] = resolution_set
 
@@ -298,17 +302,21 @@ class NDimensionalRegister(Register):
         to_set = self.get_entry(destination)
 
         if from_set.coverage != to_set.coverage:
-            log_msg = "Coverage for '%s' is %d and does not match coverage " \
-                    "for '%s' which is %d"
-            self.logger.warning(log_msg, from_set.name, from_set.coverage,
-                                to_set.name, to_set.coverage)
+            log_msg = (
+                "Coverage for '%s' is %d and does not match coverage "
+                "for '%s' which is %d"
+            )
+            self.logger.warning(
+                log_msg, from_set.name, from_set.coverage, to_set.name, to_set.coverage
+            )
 
         coefficients = self.generate_coefficients(from_set, to_set)
 
         return coefficients
 
     def generate_coefficients(
-            self, from_set: ResolutionSet, to_set: ResolutionSet) -> np.ndarray:
+        self, from_set: ResolutionSet, to_set: ResolutionSet
+    ) -> np.ndarray:
         """Generate coefficients for converting between two :class:`ResolutionSet`s
 
         Coefficients for converting a single dimension will always be 2D, of shape
@@ -323,9 +331,13 @@ class NDimensionalRegister(Register):
         -------
         numpy.ndarray
         """
-        coefficients = np.zeros((len(from_set), len(to_set)), dtype=np.float)
-        self.logger.debug("Coefficients array is of shape %s for %s to %s",
-                          coefficients.shape, from_set.name, to_set.name)
+        coefficients = np.zeros((len(from_set), len(to_set)), dtype=np.float64)
+        self.logger.debug(
+            "Coefficients array is of shape %s for %s to %s",
+            coefficients.shape,
+            from_set.name,
+            to_set.name,
+        )
 
         from_names = from_set.get_entry_names()
         for to_idx, to_entry in enumerate(to_set):
@@ -333,10 +345,14 @@ class NDimensionalRegister(Register):
                 from_entry = from_set.data[from_idx]
                 proportion = from_set.get_proportion(from_idx, to_entry)
 
-                self.logger.debug("%i percent of %s (#%s) is in %s (#%s)",
-                                  proportion * 100,
-                                  to_entry.name, to_idx,
-                                  from_entry.name, from_idx)
+                self.logger.debug(
+                    "%i percent of %s (#%s) is in %s (#%s)",
+                    proportion * 100,
+                    to_entry.name,
+                    to_idx,
+                    from_entry.name,
+                    from_idx,
+                )
                 from_idx = from_names.index(from_entry.name)
 
                 coefficients[from_idx, to_idx] = proportion

@@ -13,26 +13,28 @@ from smif.exception import SmifTimestepResolutionError
 
 
 class RelativeTimestep(Enum):
-    """Specify current, previous or base year timestep
-    """
-    CURRENT = 'CURRENT'  # current planning timestep
-    PREVIOUS = 'PREVIOUS'  # previous planning timestep
-    BASE = 'BASE'  # base year planning timestep
-    ALL = 'ALL'  # all planning timesteps
+    """Specify current, previous or base year timestep"""
+
+    CURRENT = "CURRENT"  # current planning timestep
+    PREVIOUS = "PREVIOUS"  # previous planning timestep
+    BASE = "BASE"  # base year planning timestep
+    ALL = "ALL"  # all planning timesteps
 
     @classmethod
     def from_name(cls, name):
-        if name == 'CURRENT':
+        if name == "CURRENT":
             return cls.CURRENT
-        elif name == 'PREVIOUS':
+        elif name == "PREVIOUS":
             return cls.PREVIOUS
-        elif name == 'BASE':
+        elif name == "BASE":
             return cls.BASE
-        elif name == 'ALL':
+        elif name == "ALL":
             return cls.ALL
         raise ValueError("Relative timestep '%s' is not recognised" % name)
 
-    def resolve_relative_to(self, timestep: int, timesteps: List[int]) -> Union[None, int]:
+    def resolve_relative_to(
+        self, timestep: int, timesteps: List[int]
+    ) -> Union[None, int]:
         """Resolve a relative timestep with respect to a given timestep and
         sequence of timesteps.
 
@@ -43,20 +45,22 @@ class RelativeTimestep(Enum):
         """
         if timestep not in timesteps:
             raise SmifTimestepResolutionError(
-                "Timestep {} is not present in {}".format(timestep, timesteps))
+                "Timestep {} is not present in {}".format(timestep, timesteps)
+            )
 
         # default None, e.g. for ALL
         relative_timestep = None
 
-        if self.name == 'CURRENT':
+        if self.name == "CURRENT":
             relative_timestep = timestep
-        elif self.name == 'PREVIOUS':
+        elif self.name == "PREVIOUS":
             try:
                 relative_timestep = element_before(timestep, timesteps)
             except ValueError:
                 raise SmifTimestepResolutionError(
-                    "{} has no previous timestep in {}".format(timestep, timesteps))
-        elif self.name == 'BASE':
+                    "{} has no previous timestep in {}".format(timestep, timesteps)
+                )
+        elif self.name == "BASE":
             relative_timestep = timesteps[0]
 
         return relative_timestep

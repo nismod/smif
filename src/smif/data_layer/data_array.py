@@ -23,7 +23,7 @@ or:
 """
 
 
-class DataArray():
+class DataArray:
     """DataArray provides access to input/parameter/results data, with conversions to common
     python data libraries (for example: numpy, pandas, xarray).
 
@@ -32,14 +32,15 @@ class DataArray():
     spec: smif.metadata.spec.Spec
     data: numpy.ndarray
     """
+
     def __init__(self, spec: Spec, data: np.ndarray):
         self.logger = getLogger(__name__)
 
-        if not hasattr(data, 'shape'):
+        if not hasattr(data, "shape"):
             self.logger.debug("Data is not an numpy.ndarray")
             data = np.array(data)
 
-        if not hasattr(spec, 'shape'):
+        if not hasattr(spec, "shape"):
             self.logger.error("spec argument is not a Spec")
             raise TypeError("spec argument is not a Spec")
 
@@ -56,8 +57,7 @@ class DataArray():
         self.data = data
 
     def __eq__(self, other):
-        return self.spec == other.spec and \
-            _array_equal_nan(self.data, other.data)
+        return self.spec == other.spec and _array_equal_nan(self.data, other.data)
 
     def __repr__(self):
         return "<DataArray('{}', '{}')>".format(self.spec, self.data)
@@ -66,14 +66,12 @@ class DataArray():
         return "<DataArray('{}', '{}')>".format(self.spec, self.data)
 
     def as_dict(self):
-        """
-        """
+        """ """
         return self.spec.as_dict()
 
     @property
     def name(self):
-        """The name of the data that this spec describes.
-        """
+        """The name of the data that this spec describes."""
         return self.spec.name
 
     @name.setter
@@ -82,57 +80,47 @@ class DataArray():
 
     @property
     def description(self):
-        """A human-friendly description
-        """
+        """A human-friendly description"""
         return self.spec.description
 
     @property
     def dims(self):
-        """Names for each dimension
-        """
+        """Names for each dimension"""
         return self.spec.dims
 
     @property
     def coords(self):
-        """Coordinate labels for each dimension.
-        """
+        """Coordinate labels for each dimension."""
         return self.spec.coords
 
     def dim_coords(self, dim):
-        """Coordinates for a given dimension
-        """
+        """Coordinates for a given dimension"""
         return self.spec.dim_coords(dim)
 
     def dim_names(self, dim):
-        """Coordinate names for a given dimension
-        """
+        """Coordinate names for a given dimension"""
         return self.spec.dim_names(dim)
 
     def dim_elements(self, dim):
-        """Coordinate elements for a given dimension
-        """
+        """Coordinate elements for a given dimension"""
         return self.spec.dim_elements(dim)
 
     @property
     def unit(self):
-        """The unit for all data points.
-        """
+        """The unit for all data points."""
         return self.spec.unit
 
     @property
     def shape(self):
-        """The shape of the data array
-        """
+        """The shape of the data array"""
         return self.data.shape
 
     def as_ndarray(self) -> np.ndarray:
-        """Access as a :class:`numpy.ndarray`
-        """
+        """Access as a :class:`numpy.ndarray`"""
         return self.data
 
     def as_df(self) -> pandas.DataFrame:
-        """Access DataArray as a :class:`pandas.DataFrame`
-        """
+        """Access DataArray as a :class:`pandas.DataFrame`"""
         dims = self.dims
         coords = [c.ids for c in self.coords]
 
@@ -143,7 +131,8 @@ class DataArray():
                 else:
                     index = pandas.MultiIndex.from_product(coords, names=dims)
                 return pandas.DataFrame(
-                    {self.name: np.reshape(self.data, self.data.size)}, index=index)
+                    {self.name: np.reshape(self.data, self.data.size)}, index=index
+                )
             else:
                 # with no dims or coords, should be in the zero-dimensional case
                 if self.data.shape != ():
@@ -155,8 +144,7 @@ class DataArray():
 
     @classmethod
     def from_df(cls, spec, dataframe):
-        """Create a DataArray from a :class:`pandas.DataFrame`
-        """
+        """Create a DataArray from a :class:`pandas.DataFrame`"""
         name = spec.name
         dims = spec.dims
 
@@ -176,14 +164,19 @@ class DataArray():
             dataframe = dataframe.reset_index().set_index(dims[0])
 
         if name not in data_columns or (dims and set(dims) != set(index_names)):
-            msg = "Data for '{name}' expected a data column called '{name}' and index " + \
-                  "names {dims}, instead got data columns {data_columns} and index names " + \
-                  "{index_names}"
-            raise SmifDataMismatchError(msg.format(
-                name=name,
-                dims=dims,
-                data_columns=data_columns,
-                index_names=index_names))
+            msg = (
+                "Data for '{name}' expected a data column called '{name}' and index "
+                + "names {dims}, instead got data columns {data_columns} and index names "
+                + "{index_names}"
+            )
+            raise SmifDataMismatchError(
+                msg.format(
+                    name=name,
+                    dims=dims,
+                    data_columns=data_columns,
+                    index_names=index_names,
+                )
+            )
 
         try:
             # convert to dataset
@@ -207,37 +200,30 @@ class DataArray():
         return cls(spec, xr_data_array.data)
 
     def as_xarray(self):
-        """Access DataArray as a :class:`xarray.DataArray`
-        """
+        """Access DataArray as a :class:`xarray.DataArray`"""
         metadata = self.spec.as_dict()
-        del metadata['dims']
-        del metadata['coords']
+        del metadata["dims"]
+        del metadata["coords"]
 
         dims = self.dims
         coords = {c.name: c.ids for c in self.coords}
 
         try:
             return xarray.DataArray(
-                self.data,
-                coords=coords,
-                dims=dims,
-                name=self.name,
-                attrs=metadata
+                self.data, coords=coords, dims=dims, name=self.name, attrs=metadata
             )
         except NameError as ex:
             raise SmifDataError(INSTALL_WARNING) from ex
 
     @classmethod
     def from_xarray(cls, spec, xr_data_array):
-        """Create a DataArray from a :class:`xarray.DataArray`
-        """
+        """Create a DataArray from a :class:`xarray.DataArray`"""
         # reindex to ensure data order and fill out NaNs
         xr_data_array = _reindex_xr_data_array(spec, xr_data_array)
         return cls(spec, xr_data_array.data)
 
     def update(self, other):
-        """Update data values with any from other which are non-null
-        """
+        """Update data values with any from other which are non-null"""
         assert self.spec == other.spec, "Specs must match when updating DataArray"
         # convert self and other to xarray representation
         self_xr = self.as_xarray()
@@ -248,24 +234,33 @@ class DataArray():
         self.data = overridden.data
 
     def validate_as_full(self):
-        """Check that the data array contains no NaN values
-        """
+        """Check that the data array contains no NaN values"""
         dataframe = self.as_df()
         if np.any(dataframe.isnull()):
             expected_len = len(dataframe)
             missing_data = show_null(dataframe)
             actual_len = expected_len - len(missing_data)
-            dim_lens = "{" + ", ".join(
-                "{}: {}".format(dim, len_) for dim, len_ in zip(self.dims, self.shape)
-            ) + "}"
+            dim_lens = (
+                "{"
+                + ", ".join(
+                    "{}: {}".format(dim, len_)
+                    for dim, len_ in zip(self.dims, self.shape)
+                )
+                + "}"
+            )
             self.logger.debug("Missing data:\n\n    %s", missing_data)
-            msg = "Data for '{name}' had missing values - read {actual_len} but expected " + \
-                  "{expected_len} in total, from dims of length {dim_lens}"
-            raise SmifDataMismatchError(msg.format(
-                name=self.name,
-                actual_len=actual_len,
-                expected_len=expected_len,
-                dim_lens=dim_lens))
+            msg = (
+                "Data for '{name}' had missing values - read {actual_len} but expected "
+                + "{expected_len} in total, from dims of length {dim_lens}"
+            )
+            raise SmifDataMismatchError(
+                msg.format(
+                    name=self.name,
+                    actual_len=actual_len,
+                    expected_len=expected_len,
+                    dim_lens=dim_lens,
+                )
+            )
 
 
 def show_null(dataframe) -> pandas.DataFrame:
@@ -293,12 +288,11 @@ def find_duplicate_indices(dataframe):
     dups_df = dataframe[dataframe.index.duplicated()]
     # drop data columns, reset index to promote index to values
     dups_index_df = dups_df.drop(dups_df.columns, axis=1).reset_index()
-    return dups_index_df.to_dict('records')
+    return dups_index_df.to_dict("records")
 
 
 def _array_equal_nan(a, b):
-    """Compare numpy arrays for equality, allowing NaN to be considerd equal to itself
-    """
+    """Compare numpy arrays for equality, allowing NaN to be considerd equal to itself"""
     if np.issubdtype(a.dtype, np.number) and np.issubdtype(b.dtype, np.number):
         return np.all((a == b) | (np.isnan(a) & np.isnan(b)))
     else:
@@ -306,18 +300,22 @@ def _array_equal_nan(a, b):
 
 
 def _reindex_xr_data_array(spec, xr_data_array):
-    """Reindex to ensure full data, order
-    """
+    """Reindex to ensure full data, order"""
     # all index values must exist in dimension - extras would otherwise be silently dropped
     for dim in spec.dims:
         index_values = set(xr_data_array.coords[dim].values)
         dim_names = set(spec.dim_names(dim))
         in_index_but_not_dim_names = index_values - dim_names
         if in_index_but_not_dim_names:
-            msg = "Data for '{name}' contained unexpected values in the set of " + \
-                  "coordinates for dimension '{dim}': {extras}"
-            raise SmifDataMismatchError(msg.format(
-                dim=dim, extras=list(in_index_but_not_dim_names), name=spec.name))
+            msg = (
+                "Data for '{name}' contained unexpected values in the set of "
+                + "coordinates for dimension '{dim}': {extras}"
+            )
+            raise SmifDataMismatchError(
+                msg.format(
+                    dim=dim, extras=list(in_index_but_not_dim_names), name=spec.name
+                )
+            )
 
     coords = {c.name: c.ids for c in spec.coords}
     xr_data_array = xr_data_array.reindex(indexers=coords)

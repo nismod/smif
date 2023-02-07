@@ -21,7 +21,7 @@ __copyright__ = "Will Usher, Tom Russell"
 __license__ = "mit"
 
 
-class SosModel():
+class SosModel:
     """Consists of the collection of models joined via dependencies
 
     Arguments
@@ -30,11 +30,12 @@ class SosModel():
         The unique name of the SosModel
 
     """
+
     def __init__(self, name):
         self.logger = logging.getLogger(__name__)
 
         self.name = name
-        self.description = ''
+        self.description = ""
 
         # Models in an internal lookup by name
         # { name: Model }
@@ -63,19 +64,13 @@ class SosModel():
             model_dependencies.append(dep.as_dict())
 
         config = {
-            'name': self.name,
-            'description': self.description,
-            'scenarios': sorted(
-                scenario.name
-                for scenario in self.scenario_models
-            ),
-            'sector_models': sorted(
-                model.name
-                for model in self.sector_models
-            ),
-            'scenario_dependencies': scenario_dependencies,
-            'model_dependencies': model_dependencies,
-            'narratives': self.narratives
+            "name": self.name,
+            "description": self.description,
+            "scenarios": sorted(scenario.name for scenario in self.scenario_models),
+            "sector_models": sorted(model.name for model in self.sector_models),
+            "scenario_dependencies": scenario_dependencies,
+            "model_dependencies": model_dependencies,
+            "narratives": self.narratives,
         }
 
         return config
@@ -93,10 +88,10 @@ class SosModel():
             Optional. If provided, must include each ScenarioModel and SectorModel referred to
             in the data['dependencies']
         """
-        sos_model = cls(data['name'])
+        sos_model = cls(data["name"])
 
         try:
-            sos_model.description = data['description']
+            sos_model.description = data["description"]
         except KeyError:
             pass
 
@@ -104,13 +99,13 @@ class SosModel():
             for model in models:
                 sos_model.add_model(model)
 
-            for dep in data['model_dependencies'] + data['scenario_dependencies']:
-                sink = SosModel._get_dependency(sos_model, dep, 'sink')
-                source = SosModel._get_dependency(sos_model, dep, 'source')
-                source_output_name = dep['source_output']
-                sink_input_name = dep['sink_input']
+            for dep in data["model_dependencies"] + data["scenario_dependencies"]:
+                sink = SosModel._get_dependency(sos_model, dep, "sink")
+                source = SosModel._get_dependency(sos_model, dep, "source")
+                source_output_name = dep["source_output"]
+                sink_input_name = dep["sink_input"]
                 try:
-                    timestep = RelativeTimestep.from_name(dep['timestep'])
+                    timestep = RelativeTimestep.from_name(dep["timestep"])
                 except KeyError:
                     # if not provided, default to current
                     timestep = RelativeTimestep.CURRENT
@@ -119,7 +114,8 @@ class SosModel():
                     pass
 
                 sos_model.add_dependency(
-                    source, source_output_name, sink, sink_input_name, timestep)
+                    source, source_output_name, sink, sink_input_name, timestep
+                )
 
         sos_model.check_dependencies()
         return sos_model
@@ -129,16 +125,24 @@ class SosModel():
         try:
             source = sos_model.get_model(dep[source_or_sink])
         except KeyError:
-            msg = 'SectorModel or ScenarioModel {} `{}` required by ' + \
-                  'dependency `{}` was not provided by the builder'
-            dependency = (
-                dep['source'] + ' (' + dep['source_output'] + ')' +
-                ' - ' +
-                dep['sink'] + ' (' + dep['sink_input'] + ')'
+            msg = (
+                "SectorModel or ScenarioModel {} `{}` required by "
+                + "dependency `{}` was not provided by the builder"
             )
-            raise SmifDataMismatchError(msg.format(source_or_sink,
-                                                   dep[source_or_sink],
-                                                   dependency))
+            dependency = (
+                dep["source"]
+                + " ("
+                + dep["source_output"]
+                + ")"
+                + " - "
+                + dep["sink"]
+                + " ("
+                + dep["sink_input"]
+                + ")"
+            )
+            raise SmifDataMismatchError(
+                msg.format(source_or_sink, dep[source_or_sink], dependency)
+            )
         return source
 
     @property
@@ -160,10 +164,7 @@ class SosModel():
         list
             A list of sector model objects
         """
-        return [
-            model for model in self.models
-            if isinstance(model, SectorModel)
-        ]
+        return [model for model in self.models if isinstance(model, SectorModel)]
 
     @property
     def scenario_models(self):
@@ -174,10 +175,7 @@ class SosModel():
         list
             A list of scenario model objects
         """
-        return [
-            model for model in self.models
-            if isinstance(model, ScenarioModel)
-        ]
+        return [model for model in self.models if isinstance(model, ScenarioModel)]
 
     def add_model(self, model):
         """Adds a model to the system-of-systems model
@@ -213,8 +211,7 @@ class SosModel():
         iterable[smif.model.dependency.Dependency]
         """
         return itertools.chain(
-            self._scenario_dependencies.values(),
-            self._model_dependencies.values()
+            self._scenario_dependencies.values(), self._model_dependencies.values()
         )
 
     @property
@@ -237,8 +234,14 @@ class SosModel():
         """
         return self._model_dependencies.values()
 
-    def add_dependency(self, source_model, source_output_name, sink_model, sink_input_name,
-                       timestep=RelativeTimestep.CURRENT):
+    def add_dependency(
+        self,
+        source_model,
+        source_output_name,
+        sink_model,
+        sink_input_name,
+        timestep=RelativeTimestep.CURRENT,
+    ):
         """Adds a dependency to this system-of-systems model
 
         Arguments
@@ -277,7 +280,8 @@ class SosModel():
         key = (source_model.name, source_output_name, sink_model.name, sink_input_name)
 
         if not self._allow_adding_dependency(
-                source_model, source_output_name, sink_model, sink_input_name, timestep):
+            source_model, source_output_name, sink_model, sink_input_name, timestep
+        ):
             msg = "Inputs: '%s'. Free inputs: '%s'."
             self.logger.debug(msg, sink_model.inputs, self.free_inputs)
             msg = "Could not add dependency: input '{}' already provided"
@@ -287,19 +291,25 @@ class SosModel():
         sink_spec = sink_model.inputs[sink_input_name]
         if isinstance(source_model, ScenarioModel):
             self._scenario_dependencies[key] = Dependency(
-                source_model, source_spec, sink_model, sink_spec, timestep=timestep)
+                source_model, source_spec, sink_model, sink_spec, timestep=timestep
+            )
         else:
             self._model_dependencies[key] = Dependency(
-                source_model, source_spec, sink_model, sink_spec, timestep=timestep)
+                source_model, source_spec, sink_model, sink_spec, timestep=timestep
+            )
 
         msg = "Added dependency from '%s:%s' to '%s:%s'"
         self.logger.debug(
-            msg, source_model.name, source_output_name, self.name, sink_input_name)
+            msg, source_model.name, source_output_name, self.name, sink_input_name
+        )
 
-    def _allow_adding_dependency(self, source_model, source_output_name, sink_model,
-                                 sink_input_name, timestep):
+    def _allow_adding_dependency(
+        self, source_model, source_output_name, sink_model, sink_input_name, timestep
+    ):
         key = (source_model.name, source_output_name, sink_model.name, sink_input_name)
-        existing_deps = key in self._scenario_dependencies or key in self._model_dependencies
+        existing_deps = (
+            key in self._scenario_dependencies or key in self._model_dependencies
+        )
 
         if existing_deps:
             if key in self._scenario_dependencies and key in self._model_dependencies:
@@ -321,8 +331,9 @@ class SosModel():
                 new_is_previous = timestep == RelativeTimestep.PREVIOUS
                 new_is_scenario = isinstance(source_model, ScenarioModel)
 
-                allowable = (new_is_previous and other_is_scenario) or \
-                    (other_is_previous and new_is_scenario)
+                allowable = (new_is_previous and other_is_scenario) or (
+                    other_is_previous and new_is_scenario
+                )
         else:
             allowable = True
 
@@ -333,11 +344,13 @@ class SosModel():
         list of available models
         """
         if self.free_inputs:
-            msg = "A SosModel must have all inputs linked to dependencies. " \
-                  "Define dependencies for {}"
-            raise NotImplementedError(msg.format(", ".join(
-                str(key) for key in self.free_inputs.keys()
-            )))
+            msg = (
+                "A SosModel must have all inputs linked to dependencies. "
+                "Define dependencies for {}"
+            )
+            raise NotImplementedError(
+                msg.format(", ".join(str(key) for key in self.free_inputs.keys()))
+            )
 
     @property
     def free_inputs(self):
@@ -349,9 +362,14 @@ class SosModel():
         """
         satisfied_inputs = set(
             (sink_name, sink_input_name)
-            for (source_name, source_output_name, sink_name, sink_input_name), deps
-            in itertools.chain(
-                self._scenario_dependencies.items(), self._model_dependencies.items())
+            for (
+                source_name,
+                source_output_name,
+                sink_name,
+                sink_input_name,
+            ), deps in itertools.chain(
+                self._scenario_dependencies.items(), self._model_dependencies.items()
+            )
             if deps
         )
         all_inputs = set()
@@ -368,10 +386,7 @@ class SosModel():
 
         unsatisfied_inputs = all_inputs - satisfied_inputs
 
-        return {
-            input_key: all_specs[input_key]
-            for input_key in unsatisfied_inputs
-        }
+        return {input_key: all_specs[input_key] for input_key in unsatisfied_inputs}
 
     @property
     def outputs(self):
@@ -396,13 +411,15 @@ class SosModel():
         narrative: dict
         """
         try:
-            name = narrative['name']
+            name = narrative["name"]
         except KeyError:
-            msg = "Could not find narrative name. Narrative argument " \
-                  "should be a dict. Received a '{}'."
+            msg = (
+                "Could not find narrative name. Narrative argument "
+                "should be a dict. Received a '{}'."
+            )
             raise SmifDataMismatchError(msg.format(type(narrative)))
 
-        for model, parameters in narrative['provides'].items():
+        for model, parameters in narrative["provides"].items():
             self._check_model_exists(model)
             for parameter in parameters:
                 self._check_parameter_exists(parameter, model)

@@ -61,8 +61,18 @@ class Spec(object):
     unit : str, optional
         Unit to be used for data values
     """
-    def __init__(self, name=None, dims=None, coords=None, dtype=None,
-                 abs_range=None, exp_range=None, unit=None, description=None):
+
+    def __init__(
+        self,
+        name=None,
+        dims=None,
+        coords=None,
+        dtype=None,
+        abs_range=None,
+        exp_range=None,
+        unit=None,
+        description=None,
+    ):
         self._name = name
         self._description = description
 
@@ -100,16 +110,19 @@ class Spec(object):
         self._unit = unit
 
     def _coords_from_list(self, coords, dims):
-        """Set up coords and dims, checking for consistency
-        """
+        """Set up coords and dims, checking for consistency"""
         for coord in coords:
             if not isinstance(coord, Coordinates):
-                msg = "Spec.coords may be a dict[str,list] or a list[Coordinates], in {}"
+                msg = (
+                    "Spec.coords may be a dict[str,list] or a list[Coordinates], in {}"
+                )
                 raise ValueError(msg.format(self._name))
 
         if dims is not None:
-            msg = "Spec.dims are derived from Spec.coords if provided as a list of " + \
-                  "Coordinates, in {}"
+            msg = (
+                "Spec.dims are derived from Spec.coords if provided as a list of "
+                + "Coordinates, in {}"
+            )
             raise ValueError(msg.format(self._name))
 
         dims = [coord.dim for coord in coords]
@@ -121,8 +134,7 @@ class Spec(object):
         return coords, dims
 
     def _coords_from_dict(self, coords, dims):
-        """Set up coords and dims, checking for consistency
-        """
+        """Set up coords and dims, checking for consistency"""
         if dims is None:
             msg = "Spec.dims must be specified if coords are provided as a dict, in {}"
             raise ValueError(msg.format(self._name))
@@ -141,41 +153,38 @@ class Spec(object):
 
     @classmethod
     def from_dict(cls, data_provided):
-        """Create a Spec from a dict representation
-        """
+        """Create a Spec from a dict representation"""
         # default anything to None, let constructor handle essential missing values
         data = defaultdict(lambda: None)
         data.update(data_provided)
         spec = Spec(
-            name=data['name'],
-            description=data['description'],
-            dims=data['dims'],
-            coords=data['coords'],
-            dtype=data['dtype'],
-            abs_range=data['abs_range'],
-            exp_range=data['exp_range'],
-            unit=data['unit']
-            )
+            name=data["name"],
+            description=data["description"],
+            dims=data["dims"],
+            coords=data["coords"],
+            dtype=data["dtype"],
+            abs_range=data["abs_range"],
+            exp_range=data["exp_range"],
+            unit=data["unit"],
+        )
         return spec
 
     def as_dict(self):
-        """Serialise to dict representation
-        """
+        """Serialise to dict representation"""
         return {
-            'name': self.name,
-            'description': self.description,
-            'dims': self._dims,
-            'coords': {c.name: c.ids for c in self._coords},
-            'dtype': self._dtype,
-            'abs_range': self._abs_range,
-            'exp_range': self._exp_range,
-            'unit': self._unit
+            "name": self.name,
+            "description": self.description,
+            "dims": self._dims,
+            "coords": {c.name: c.ids for c in self._coords},
+            "dtype": self._dtype,
+            "abs_range": self._abs_range,
+            "exp_range": self._exp_range,
+            "unit": self._unit,
         }
 
     @property
     def name(self):
-        """The name of the data that this spec describes.
-        """
+        """The name of the data that this spec describes."""
         return self._name
 
     @name.setter
@@ -184,103 +193,93 @@ class Spec(object):
 
     @property
     def description(self):
-        """A human-friendly description
-        """
+        """A human-friendly description"""
         return self._description
 
     @property
     def dtype(self):
-        """The dtype of the data that this spec describes.
-        """
+        """The dtype of the data that this spec describes."""
         return self._dtype
 
     @property
     def abs_range(self):
-        """The absolute range of data values that this spec describes.
-        """
+        """The absolute range of data values that this spec describes."""
         return self._abs_range
 
     @property
     def exp_range(self):
-        """The expected range of data values that this spec describes.
-        """
+        """The expected range of data values that this spec describes."""
         return self._exp_range
 
     @property
     def shape(self):
-        """Tuple of dimension sizes. The shape of the data that this spec describes.
-        """
+        """Tuple of dimension sizes. The shape of the data that this spec describes."""
         return tuple(len(c.ids) for c in self._coords)
 
     @property
     def ndim(self):
-        """The number of dimensions of the data that this spec describes.
-        """
+        """The number of dimensions of the data that this spec describes."""
         return len(self._coords)
 
     @property
     def dims(self):
-        """Names for each dimension
-        """
+        """Names for each dimension"""
         return list(self._dims)
 
     @property
     def coords(self):
-        """Coordinate labels for each dimension.
-        """
+        """Coordinate labels for each dimension."""
         return list(self._coords)
 
     def dim_coords(self, dim: str):
-        """Coordinates for a given dimension
-        """
+        """Coordinates for a given dimension"""
         if not isinstance(dim, str):
             msg = "Expected string as argument, instead received {}"
             raise TypeError(msg.format(type(dim)))
 
         if dim not in self.dims:
-            raise KeyError("Could not find dim '{}' in Spec '{}'".format(dim, self._name))
+            raise KeyError(
+                "Could not find dim '{}' in Spec '{}'".format(dim, self._name)
+            )
 
         for coord in self._coords:
             if coord.dim == dim:
                 return coord
-        raise KeyError("Coords not found for dim '{}', in Spec '{}'".format(dim, self._name))
+        raise KeyError(
+            "Coords not found for dim '{}', in Spec '{}'".format(dim, self._name)
+        )
 
     def dim_names(self, dim: str):
-        """Names of each coordinate in a given dimension
-        """
+        """Names of each coordinate in a given dimension"""
         return self.dim_coords(dim).names
 
     def dim_elements(self, dim: str):
-        """Elements of each coordinate in a given dimension
-        """
+        """Elements of each coordinate in a given dimension"""
         return self.dim_coords(dim).elements
 
     @property
     def unit(self):
-        """The unit for all data points.
-        """
+        """The unit for all data points."""
         return self._unit
 
     def __eq__(self, other):
-        return self.dtype == other.dtype \
-            and self.dims == other.dims \
-            and self.coords == other.coords \
+        return (
+            self.dtype == other.dtype
+            and self.dims == other.dims
+            and self.coords == other.coords
             and self.unit == other.unit
+        )
 
     def __hash__(self):
-        return hash((
-            self.dtype,
-            tuple(self.dims),
-            tuple(self.coords),
-            self.unit
-        ))
+        return hash((self.dtype, tuple(self.dims), tuple(self.coords), self.unit))
 
     def __repr__(self):
-        return "<Spec name='{}' dims='{}' unit='{}'>".format(self.name, self.dims, self.unit)
+        return "<Spec name='{}' dims='{}' unit='{}'>".format(
+            self.name, self.dims, self.unit
+        )
 
     def _check_range(self, range_):
-        """Error if range is not a [min, max] list or tuple
-        """
+        """Error if range is not a [min, max] list or tuple"""
         if not _is_sequence(range_):
             msg = "Spec range must be a list or tuple, got {} for {}"
             raise TypeError(msg.format(range_, self._name))
@@ -294,7 +293,7 @@ class Spec(object):
 
 
 def _is_sequence(obj):
-    """Check for iterable object that is not a string ('strip' is a method on str)
-    """
-    return not hasattr(obj, "strip") \
-        and (hasattr(obj, "__getitem__") or hasattr(obj, "__iter__"))
+    """Check for iterable object that is not a string ('strip' is a method on str)"""
+    return not hasattr(obj, "strip") and (
+        hasattr(obj, "__getitem__") or hasattr(obj, "__iter__")
+    )

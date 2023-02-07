@@ -27,8 +27,10 @@ class Dependency(object):
     timestep : smif.metadata.RelativeTimestep, optional
         The relative timestep of the dependency, defaults to CURRENT
     """
-    def __init__(self, source_model, source, sink_model, sink,
-                 timestep=RelativeTimestep.CURRENT):
+
+    def __init__(
+        self, source_model, source, sink_model, sink, timestep=RelativeTimestep.CURRENT
+    ):
         # Insist on identical metadata - conversions must be explicit
         if source != sink:
             diff = ""
@@ -40,10 +42,13 @@ class Dependency(object):
                 diff += "coords do not match "
             if source.unit != sink.unit:
                 diff += "unit(%s!=%s) " % (source.unit, sink.unit)
-            msg = "Dependencies must connect identical metadata (up to variable name). " + \
-                "Connecting %s:%s->%s:%s with mismatched %s"
+            msg = (
+                "Dependencies must connect identical metadata (up to variable name). "
+                + "Connecting %s:%s->%s:%s with mismatched %s"
+            )
             raise ValueError(
-                msg % (source_model.name, source.name, sink_model.name, sink.name, diff))
+                msg % (source_model.name, source.name, sink_model.name, sink.name, diff)
+            )
 
         self.source_model = source_model
         self.source = source
@@ -52,27 +57,29 @@ class Dependency(object):
         self.timestep = timestep
 
     def as_dict(self):
-        """Serialise to dictionary representation
-        """
+        """Serialise to dictionary representation"""
         config = {
-            'source': self.source_model.name,
-            'source_output': self.source.name,
-            'sink': self.sink_model.name,
-            'sink_input': self.sink.name
+            "source": self.source_model.name,
+            "source_output": self.source.name,
+            "sink": self.sink_model.name,
+            "sink_input": self.sink.name,
         }
         try:
-            config['timestep'] = self.timestep.value
+            config["timestep"] = self.timestep.value
         except AttributeError:
-            config['timestep'] = self.timestep
+            config["timestep"] = self.timestep
         return config
 
     def __repr__(self):
         return "<Dependency({}, {}, {}, {}, {})>".format(
-            self.source_model, self.source, self.sink_model, self.sink, self.timestep)
+            self.source_model, self.source, self.sink_model, self.sink, self.timestep
+        )
 
     def __eq__(self, other):
-        return self.source_model == other.source_model \
-            and self.source == other.source \
-            and self.sink_model == other.sink_model \
-            and self.sink == other.sink \
+        return (
+            self.source_model == other.source_model
+            and self.source == other.source
+            and self.sink_model == other.sink_model
+            and self.sink == other.sink
             and self.timestep == other.timestep
+        )

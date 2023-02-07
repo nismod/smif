@@ -20,10 +20,17 @@ from smif.metadata import RelativeTimestep
 
 
 class DataHandle(object):
-    """Get/set model parameters and data
-    """
-    def __init__(self, store: Store, modelrun_name, current_timestep, timesteps, model,
-                 decision_iteration=None):
+    """Get/set model parameters and data"""
+
+    def __init__(
+        self,
+        store: Store,
+        modelrun_name,
+        current_timestep,
+        timesteps,
+        model,
+        decision_iteration=None,
+    ):
         """Create a DataHandle for a Model to access data, parameters and state, and to
         communicate results.
 
@@ -53,40 +60,40 @@ class DataHandle(object):
         self._model = model
 
         modelrun = self._store.read_model_run(self._modelrun_name)
-        sos_model = self._store.read_sos_model(modelrun['sos_model'])
+        sos_model = self._store.read_sos_model(modelrun["sos_model"])
 
         self._scenario_dependencies = {}  # type: Dict[str, Dict]
         self._model_dependencies = {}  # type: Dict[str, Dict]
-        scenario_variants = modelrun['scenarios']
+        scenario_variants = modelrun["scenarios"]
         self._load_dependencies(sos_model, scenario_variants)
         self.logger.debug(
             "Create with %s model, %s scenario dependencies",
             len(self._scenario_dependencies),
-            len(self._model_dependencies))
+            len(self._model_dependencies),
+        )
 
         self._parameters = {}  # type: Dict[str, DataArray]
-        self._load_parameters(sos_model, modelrun['narratives'])
+        self._load_parameters(sos_model, modelrun["narratives"])
 
     def _load_dependencies(self, sos_model, scenario_variants):
-        """Load Model dependencies as a dict with {input_name: list[Dependency]}
-        """
-        for dep in sos_model['model_dependencies']:
-            if dep['sink'] == self._model_name:
-                input_name = dep['sink_input']
+        """Load Model dependencies as a dict with {input_name: list[Dependency]}"""
+        for dep in sos_model["model_dependencies"]:
+            if dep["sink"] == self._model_name:
+                input_name = dep["sink_input"]
                 self._model_dependencies[input_name] = {
-                    'source_model_name': dep['source'],
-                    'source_output_name': dep['source_output'],
-                    'type': 'model'
+                    "source_model_name": dep["source"],
+                    "source_output_name": dep["source_output"],
+                    "type": "model",
                 }
 
-        for dep in sos_model['scenario_dependencies']:
-            if dep['sink'] == self._model_name:
-                input_name = dep['sink_input']
+        for dep in sos_model["scenario_dependencies"]:
+            if dep["sink"] == self._model_name:
+                input_name = dep["sink_input"]
                 self._scenario_dependencies[input_name] = {
-                    'source_model_name': dep['source'],
-                    'source_output_name': dep['source_output'],
-                    'type': 'scenario',
-                    'variant': scenario_variants[dep['source']]
+                    "source_model_name": dep["source"],
+                    "source_output_name": dep["source_output"],
+                    "type": "scenario",
+                    "variant": scenario_variants[dep["source"]],
                 }
 
     def _load_parameters(self, sos_model, concrete_narratives):
@@ -111,18 +118,20 @@ class DataHandle(object):
         """
         # Populate the parameters with their default values
         for parameter in self._model.parameters.values():
-            self._parameters[parameter.name] = \
-                self._store.read_model_parameter_default(self._model.name, parameter.name)
+            self._parameters[parameter.name] = self._store.read_model_parameter_default(
+                self._model.name, parameter.name
+            )
 
         # Load in the concrete narrative and selected variants from the model run
         for narrative_name, variant_names in concrete_narratives.items():
             # Load the narrative
             try:
-                narrative = [x for x in sos_model['narratives']
-                             if x['name'] == narrative_name][0]
+                narrative = [
+                    x for x in sos_model["narratives"] if x["name"] == narrative_name
+                ][0]
             except IndexError:
                 msg = "Couldn't find a match for {} in {}"
-                raise IndexError(msg.format(narrative_name, sos_model['name']))
+                raise IndexError(msg.format(narrative_name, sos_model["name"]))
             self.logger.debug("Loaded narrative: %s", narrative)
             self.logger.debug("Considering variants: %s", variant_names)
 
@@ -130,14 +139,13 @@ class DataHandle(object):
             # previous parameter values
             for variant_name in variant_names:
                 try:
-                    parameter_list = narrative['provides'][self._model.name]
+                    parameter_list = narrative["provides"][self._model.name]
                 except KeyError:
                     parameter_list = []
 
                 for parameter in parameter_list:
                     da = self._store.read_narrative_variant_data(
-                        sos_model['name'],
-                        narrative_name, variant_name, parameter
+                        sos_model["name"], narrative_name, variant_name, parameter
                     )
                     self._parameters[parameter].update(da)
 
@@ -155,7 +163,7 @@ class DataHandle(object):
             current_timestep=self._current_timestep,
             timesteps=list(self.timesteps),
             model=model,
-            decision_iteration=self._decision_iteration
+            decision_iteration=self._decision_iteration,
         )
 
     def __getitem__(self, key):
@@ -167,43 +175,37 @@ class DataHandle(object):
             return self.get_results(key)
         else:
             raise KeyError(
-                "'%s' not recognised as input, output or parameter for '%s'" %
-                (key, self._model_name)
-                )
+                "'%s' not recognised as input, output or parameter for '%s'"
+                % (key, self._model_name)
+            )
 
     def __setitem__(self, key, value):
-        if hasattr(value, 'as_ndarray'):
+        if hasattr(value, "as_ndarray"):
             raise TypeError("Pass in a numpy array")
         self.set_results(key, value)
 
     @property
     def current_timestep(self):
-        """Current timestep
-        """
+        """Current timestep"""
         return self._current_timestep
 
     @property
     def previous_timestep(self):
-        """Previous timestep
-        """
+        """Previous timestep"""
         return RelativeTimestep.PREVIOUS.resolve_relative_to(
-            self._current_timestep,
-            self._timesteps
+            self._current_timestep, self._timesteps
         )
 
     @property
     def base_timestep(self):
-        """Base timestep
-        """
+        """Base timestep"""
         return RelativeTimestep.BASE.resolve_relative_to(
-            self._current_timestep,
-            self._timesteps
+            self._current_timestep, self._timesteps
         )
 
     @property
     def timesteps(self):
-        """All timesteps (as tuple)
-        """
+        """All timesteps (as tuple)"""
         return tuple(self._timesteps)
 
     @property
@@ -231,9 +233,7 @@ class DataHandle(object):
         else:
 
             sos_state = self._store.read_state(
-                self._modelrun_name,
-                self._current_timestep,
-                self._decision_iteration
+                self._modelrun_name, self._current_timestep, self._decision_iteration
             )
 
         return sos_state
@@ -252,11 +252,11 @@ class DataHandle(object):
         all_interventions = self._store.read_interventions(self._model_name)
 
         for decision in state:
-            name = decision['name']
-            build_year = decision['build_year']
+            name = decision["name"]
+            build_year = decision["build_year"]
             try:
                 serialised = all_interventions[name]
-                serialised['build_year'] = build_year
+                serialised["build_year"] = build_year
                 current_interventions[name] = serialised
             except KeyError:
                 # ignore if intervention is not in current set
@@ -290,17 +290,23 @@ class DataHandle(object):
         """
         if input_name not in self._inputs:
             raise KeyError(
-                "'{}' not recognised as input for '{}'".format(input_name, self._model_name))
+                "'{}' not recognised as input for '{}'".format(
+                    input_name, self._model_name
+                )
+            )
 
         timestep = self._resolve_timestep(timestep)
 
         dep = self._resolve_source(input_name)
 
         self.logger.debug(
-            "Read %s %s %s", dep['source_model_name'], dep['source_output_name'],
-            timestep)
+            "Read %s %s %s",
+            dep["source_model_name"],
+            dep["source_output_name"],
+            timestep,
+        )
 
-        if dep['type'] == 'scenario':
+        if dep["type"] == "scenario":
             data = self._get_scenario(dep, timestep, input_name)
         else:
             input_spec = self._inputs[input_name]
@@ -323,43 +329,48 @@ class DataHandle(object):
             if timestep is None:
                 raise ValueError("You must provide a timestep to obtain data")
             elif hasattr(timestep, "resolve_relative_to"):
-                timestep = timestep.resolve_relative_to(self._timesteps[0], self._timesteps)
+                timestep = timestep.resolve_relative_to(
+                    self._timesteps[0], self._timesteps
+                )
             else:
                 assert isinstance(timestep, int) and timestep in self._timesteps
         else:
             if timestep is None:
                 timestep = self._current_timestep
             elif hasattr(timestep, "resolve_relative_to"):
-                timestep = timestep.resolve_relative_to(self._current_timestep,
-                                                        self._timesteps)
+                timestep = timestep.resolve_relative_to(
+                    self._current_timestep, self._timesteps
+                )
             else:
                 assert isinstance(timestep, int) and timestep <= self._current_timestep
         return timestep
 
     def _get_result(self, dep, timestep, input_spec) -> DataArray:
-        """Retrieves a model result for a dependency
-        """
+        """Retrieves a model result for a dependency"""
         output_spec = copy(input_spec)
-        output_spec.name = dep['source_output_name']
-        self.logger.debug("Getting model result for %s via %s from %s",
-                          input_spec, dep, output_spec)
+        output_spec.name = dep["source_output_name"]
+        self.logger.debug(
+            "Getting model result for %s via %s from %s", input_spec, dep, output_spec
+        )
         try:
             data = self._store.read_results(
                 self._modelrun_name,
-                dep['source_model_name'],  # read from source model
+                dep["source_model_name"],  # read from source model
                 output_spec,  # using source model output spec
                 timestep,
-                self._decision_iteration
+                self._decision_iteration,
             )
             data.name = input_spec.name  # ensure name matches input (as caller expects)
         except SmifDataError as ex:
             msg = "Could not read data for output '{}' from '{}' in {}, iteration {}"
-            raise SmifDataError(msg.format(
-                output_spec.name,
-                dep['source_model_name'],
-                timestep,
-                self._decision_iteration
-            )) from ex
+            raise SmifDataError(
+                msg.format(
+                    output_spec.name,
+                    dep["source_model_name"],
+                    timestep,
+                    self._decision_iteration,
+                )
+            ) from ex
         return data
 
     def _get_scenario(self, dep, timestep, input_name) -> DataArray:
@@ -377,20 +388,22 @@ class DataHandle(object):
         """
         try:
             data = self._store.read_scenario_variant_data(
-                dep['source_model_name'],  # read from a given scenario model
-                dep['variant'],  # with given scenario variant
-                dep['source_output_name'],  # using output (variable) name
-                timestep
+                dep["source_model_name"],  # read from a given scenario model
+                dep["variant"],  # with given scenario variant
+                dep["source_output_name"],  # using output (variable) name
+                timestep,
             )
             data.name = input_name  # ensure name matches input (as caller expects)
         except SmifDataError as ex:
             msg = "Could not read data for output '{}' from '{}.{}' in {}"
-            raise SmifDataError(msg.format(
-                dep['source_output_name'],
-                dep['source_model_name'],
-                dep['variant'],
-                timestep
-            )) from ex
+            raise SmifDataError(
+                msg.format(
+                    dep["source_output_name"],
+                    dep["source_model_name"],
+                    dep["variant"],
+                    timestep,
+                )
+            ) from ex
         return data
 
     def _resolve_source(self, input_name) -> Dict:
@@ -426,9 +439,11 @@ class DataHandle(object):
         elif model_dep is not None:
             dep = model_dep
         else:
-            raise SmifDataError("Dependency not defined for input '{}' in model '{}'".format(
-                input_name, self._model_name
-            ))
+            raise SmifDataError(
+                "Dependency not defined for input '{}' in model '{}'".format(
+                    input_name, self._model_name
+                )
+            )
         return dep
 
     def get_base_timestep_data(self, input_name):
@@ -473,7 +488,9 @@ class DataHandle(object):
         if parameter_name not in self._parameters:
             raise KeyError(
                 "'{}' not recognised as parameter for '{}'".format(
-                    parameter_name, self._model_name))
+                    parameter_name, self._model_name
+                )
+            )
 
         return self._parameters[parameter_name]
 
@@ -495,15 +512,19 @@ class DataHandle(object):
         output_name : str
         data : numpy.ndarray
         """
-        if hasattr(data, 'as_ndarray'):
+        if hasattr(data, "as_ndarray"):
             raise TypeError("Pass in a numpy array")
 
         if output_name not in self._outputs:
             raise KeyError(
-                "'{}' not recognised as output for '{}'".format(output_name, self._model_name))
+                "'{}' not recognised as output for '{}'".format(
+                    output_name, self._model_name
+                )
+            )
 
         self.logger.debug(
-            "Write %s %s %s", self._model_name, output_name, self._current_timestep)
+            "Write %s %s %s", self._model_name, output_name, self._current_timestep
+        )
 
         spec = self._outputs[output_name]
 
@@ -514,11 +535,10 @@ class DataHandle(object):
             self._modelrun_name,
             self._model_name,
             self._current_timestep,
-            self._decision_iteration
+            self._decision_iteration,
         )
 
-    def get_results(self, output_name, decision_iteration=None,
-                    timestep=None):
+    def get_results(self, output_name, decision_iteration=None, timestep=None):
         """Get results values for model outputs
 
         Parameters
@@ -545,7 +565,9 @@ class DataHandle(object):
         if timestep is None:
             timestep = self._current_timestep
         elif isinstance(timestep, RelativeTimestep):
-            timestep = timestep.resolve_relative_to(self._current_timestep, self._timesteps)
+            timestep = timestep.resolve_relative_to(
+                self._current_timestep, self._timesteps
+            )
         else:
             assert isinstance(timestep, int) and timestep <= self._current_timestep
 
@@ -559,15 +581,10 @@ class DataHandle(object):
         if decision_iteration is None:
             decision_iteration = self._decision_iteration
 
-        self.logger.debug(
-            "Read %s %s %s", model_name, output_name, timestep)
+        self.logger.debug("Read %s %s %s", model_name, output_name, timestep)
 
         return self._store.read_results(
-            self._modelrun_name,
-            model_name,
-            spec,
-            timestep,
-            decision_iteration
+            self._modelrun_name, model_name, spec, timestep, decision_iteration
         )
 
     def read_unit_definitions(self) -> List[str]:
@@ -600,7 +617,9 @@ class DataHandle(object):
         data = self._store.read_coefficients(source_dim, destination_dim)
         return data
 
-    def write_coefficients(self, source_dim: str, destination_dim: str, data: np.ndarray):
+    def write_coefficients(
+        self, source_dim: str, destination_dim: str, data: np.ndarray
+    ):
         """Writes coefficients to the store
 
         Coefficients are uniquely identified by their source/destination dimensions.
@@ -620,12 +639,17 @@ class DataHandle(object):
 
 
 class ResultsHandle(object):
-    """Results access for decision modules
-    """
-    def __init__(self, store: Store, modelrun_name: str, sos_model,
-                 current_timestep: int,
-                 timesteps: Optional[List[int]] = None,
-                 decision_iteration: Optional[int] = None):
+    """Results access for decision modules"""
+
+    def __init__(
+        self,
+        store: Store,
+        modelrun_name: str,
+        sos_model,
+        current_timestep: int,
+        timesteps: Optional[List[int]] = None,
+        decision_iteration: Optional[int] = None,
+    ):
         self._store = store
         self._modelrun_name = modelrun_name
         self._sos_model = sos_model
@@ -651,10 +675,13 @@ class ResultsHandle(object):
     def decision_iteration(self) -> int:
         return self._decision_iteration
 
-    def get_results(self, model_name: str,
-                    output_name: str,
-                    timestep: Union[int, RelativeTimestep],
-                    decision_iteration: int) -> DataArray:
+    def get_results(
+        self,
+        model_name: str,
+        output_name: str,
+        timestep: Union[int, RelativeTimestep],
+        decision_iteration: int,
+    ) -> DataArray:
         """Access model results
 
         Parameters
@@ -671,10 +698,10 @@ class ResultsHandle(object):
             to access the data in different ways
         """
         # resolve timestep
-        if hasattr(timestep, 'resolve_relative_to'):
-            timestep_value = \
-                timestep.resolve_relative_to(self._current_timestep,
-                                             self._timesteps)  # type: Union[int, None]
+        if hasattr(timestep, "resolve_relative_to"):
+            timestep_value = timestep.resolve_relative_to(
+                self._current_timestep, self._timesteps
+            )  # type: Union[int, None]
         else:
             assert isinstance(timestep, int) and timestep <= self._current_timestep
             timestep_value = timestep
@@ -683,9 +710,9 @@ class ResultsHandle(object):
             results_model = self._sos_model.get_model(model_name)
         else:
             msg = "Model '{}' is not contained in SosModel '{}'. Found {}."
-            raise KeyError(msg.format(model_name, self._sos_model.name,
-                                      self._sos_model.models)
-                           )
+            raise KeyError(
+                msg.format(model_name, self._sos_model.name, self._sos_model.models)
+            )
 
         try:
             spec = results_model.outputs[output_name]
@@ -693,11 +720,9 @@ class ResultsHandle(object):
             msg = "'{}' not recognised as output for '{}'"
             raise KeyError(msg.format(output_name, model_name))
 
-        results = self._store.read_results(self._modelrun_name,
-                                           model_name,
-                                           spec,
-                                           timestep_value,
-                                           decision_iteration)
+        results = self._store.read_results(
+            self._modelrun_name, model_name, spec, timestep_value, decision_iteration
+        )
 
         return results
 
@@ -715,9 +740,7 @@ class ResultsHandle(object):
 
         """
         state = self._store.read_state(
-            self._modelrun_name,
-            timestep,
-            decision_iteration
+            self._modelrun_name, timestep, decision_iteration
         )
 
         return state

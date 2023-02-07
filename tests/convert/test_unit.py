@@ -10,29 +10,20 @@ from smif.metadata import Spec
 
 
 def test_convert_unit():
-    """Convert SI units
-    """
+    """Convert SI units"""
     data_handle = Mock()
     data = np.array([1], dtype=float)
 
-    from_spec = Spec(
-        name='test_variable',
-        dtype='float',
-        unit='liter'
-    )
+    from_spec = Spec(name="test_variable", dtype="float", unit="liter")
 
     data_array = DataArray(from_spec, data)
 
     data_handle.get_data = Mock(return_value=data_array)
     data_handle.read_unit_definitions = Mock(return_value=[])
 
-    adaptor = UnitAdaptor('test-ml-l')
+    adaptor = UnitAdaptor("test-ml-l")
     adaptor.add_input(from_spec)
-    adaptor.add_output(Spec(
-        name='test_variable',
-        dtype='float',
-        unit='milliliter'
-    ))
+    adaptor.add_output(Spec(name="test_variable", dtype="float", unit="milliliter"))
     adaptor.simulate(data_handle)
 
     actual = data_handle.set_results.call_args[0][1]
@@ -41,29 +32,20 @@ def test_convert_unit():
 
 
 def test_convert_custom():
-    """Convert custom units
-    """
+    """Convert custom units"""
     data_handle = Mock()
     data = np.array([0.18346346], dtype=float)
 
-    from_spec = Spec(
-        name='test_variable',
-        dtype='float',
-        unit='mcm'
-    )
+    from_spec = Spec(name="test_variable", dtype="float", unit="mcm")
 
-    to_spec = Spec(
-        name='test_variable',
-        dtype='float',
-        unit='GW'
-    )
+    to_spec = Spec(name="test_variable", dtype="float", unit="GW")
 
     data_array = DataArray(from_spec, data)
 
     data_handle.get_data = Mock(return_value=data_array)
-    data_handle.read_unit_definitions = Mock(return_value=['mcm = 10.901353 * GW'])
+    data_handle.read_unit_definitions = Mock(return_value=["mcm = 10.901353 * GW"])
 
-    adaptor = UnitAdaptor('test-mcm-GW')
+    adaptor = UnitAdaptor("test-mcm-GW")
     adaptor.add_input(from_spec)
     adaptor.add_output(to_spec)
     adaptor.simulate(data_handle)

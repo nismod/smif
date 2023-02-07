@@ -8,13 +8,13 @@ from smif.metadata import Spec
 
 
 class ModelOperation(Enum):
-    """ Enumerate that describes the possible operations on Models
-    """
-    BEFORE_MODEL_RUN = 'before_model_run'
-    SIMULATE = 'simulate'
+    """Enumerate that describes the possible operations on Models"""
+
+    BEFORE_MODEL_RUN = "before_model_run"
+    SIMULATE = "simulate"
 
 
-class Model():
+class Model:
     """Abstract class represents the interface used to implement the model classes
     `SectorModel` and `ScenarioModel`.
 
@@ -27,7 +27,7 @@ class Model():
         self.logger = getLogger(__name__)
 
         self.name = name
-        self.description = ''
+        self.description = ""
         self._inputs = {}
         self._parameters = {}
         self._outputs = {}
@@ -37,15 +37,14 @@ class Model():
 
     @classmethod
     def from_dict(cls, config):
-        """Create object from dictionary serialisation
-        """
-        model = cls(config['name'])
-        model.description = config['description']
-        for input_ in config['inputs']:
+        """Create object from dictionary serialisation"""
+        model = cls(config["name"])
+        model.description = config["description"]
+        for input_ in config["inputs"]:
             model.add_input(Spec.from_dict(input_))
-        for output in config['outputs']:
+        for output in config["outputs"]:
             model.add_output(Spec.from_dict(output))
-        for param in config['parameters']:
+        for param in config["parameters"]:
             model.add_parameter(Spec.from_dict(param))
         return model
 
@@ -57,13 +56,13 @@ class Model():
         dict
         """
         config = {
-            'name': self.name,
-            'description': self.description,
-            'path': sys.modules[self.__module__].__file__,
-            'classname': self.__class__.__name__,
-            'inputs': [inp.as_dict() for inp in self.inputs.values()],
-            'outputs': [out.as_dict() for out in self.outputs.values()],
-            'parameters': [param.as_dict() for param in self.parameters.values()]
+            "name": self.name,
+            "description": self.description,
+            "path": sys.modules[self.__module__].__file__,
+            "classname": self.__class__.__name__,
+            "inputs": [inp.as_dict() for inp in self.inputs.values()],
+            "outputs": [out.as_dict() for out in self.outputs.values()],
+            "parameters": [param.as_dict() for param in self.parameters.values()],
         }
         return config
 
@@ -152,39 +151,34 @@ class ScenarioModel(Model):
     scenario : str
         Instance of scenario (concrete instance)
     """
+
     def __init__(self, name):
         super().__init__(name)
         self.scenario = None
 
     @classmethod
     def from_dict(cls, data):
-        """Create ScenarioModel from dict serialisation
-        """
-        scenario = cls(data['name'])
-        scenario.scenario = data['scenario']
-        if 'description' in data:
-            scenario.description = data['description']
-        for output in data['outputs']:
+        """Create ScenarioModel from dict serialisation"""
+        scenario = cls(data["name"])
+        scenario.scenario = data["scenario"]
+        if "description" in data:
+            scenario.description = data["description"]
+        for output in data["outputs"]:
             spec = Spec.from_dict(output)
             scenario.add_output(spec)
 
         return scenario
 
     def as_dict(self):
-        """Serialise ScenarioModel to dict
-        """
+        """Serialise ScenarioModel to dict"""
         config = {
-            'name': self.name,
-            'description': self.description,
-            'scenario': self.scenario,
-            'outputs': [
-                output.as_dict()
-                for output in self.outputs.values()
-            ]
+            "name": self.name,
+            "description": self.description,
+            "scenario": self.scenario,
+            "outputs": [output.as_dict() for output in self.outputs.values()],
         }
         return config
 
     def simulate(self, data):
-        """No-op, as the data is assumed to be already available in the store
-        """
+        """No-op, as the data is assumed to be already available in the store"""
         return data

@@ -43,4 +43,4 @@ from smif.http_api.app import create_app
 
 # Define what should be imported as * ::
 #         from smif.http_api import *
-__all__ = ['create_app']
+__all__ = ["create_app"]

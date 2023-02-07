@@ -21,14 +21,15 @@ class EnergyAgent(RuleBased):
     interventions using a heuristic based upon LCOE (levelised cost of electricity).
 
     """
+
     def __init__(self, timesteps, register):
         super().__init__(timesteps, register)
-        self.model_name = 'energy_supply'
+        self.model_name = "energy_supply"
 
     @staticmethod
     def from_dict(config):
-        timesteps = config['timesteps']
-        register = config['register']
+        timesteps = config["timesteps"]
+        register = config["register"]
         return EnergyAgent(timesteps, register)
 
     def get_decision(self, data_handle):
@@ -47,11 +48,13 @@ class EnergyAgent(RuleBased):
         if self.current_iteration > 1:
             timestep, iteration = self.get_previous_iteration_timestep()
 
-            output_name = 'cost'
-            cost = data_handle.get_results(model_name='energy_demand',
-                                           output_name=output_name,
-                                           decision_iteration=iteration,
-                                           timestep=timestep)
+            output_name = "cost"
+            cost = data_handle.get_results(
+                model_name="energy_demand",
+                output_name=output_name,
+                decision_iteration=iteration,
+                timestep=timestep,
+            )
             budget -= sum(cost.as_ndarray())
 
             self.satisfied = True
@@ -69,15 +72,19 @@ class EnergyAgent(RuleBased):
 
         for name in self.available_interventions(state):
             item = self.get_intervention(name)
-            cheapest_first.append((name, float(item['capital_cost']['value'])))
+            cheapest_first.append((name, float(item["capital_cost"]["value"])))
         sorted(cheapest_first, key=lambda x: float(x[1]), reverse=True)
 
         within_budget = []
         remaining_budget = copy(budget)
         for intervention in cheapest_first:
             if intervention[1] <= remaining_budget:
-                within_budget.append({'name': intervention[0],
-                                      'build_year': data_handle.current_timestep})
+                within_budget.append(
+                    {
+                        "name": intervention[0],
+                        "build_year": data_handle.current_timestep,
+                    }
+                )
                 remaining_budget -= intervention[1]
 
         return within_budget
