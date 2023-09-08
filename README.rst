@@ -6,17 +6,9 @@ smif
 
 Simulation Modelling Integration Framework
 
-.. image:: https://travis-ci.org/nismod/smif.svg?branch=master
-    :target: https://travis-ci.org/nismod/smif
-    :alt: Travis CI build status
-
-.. image:: https://ci.appveyor.com/api/projects/status/g1x12yfwb4q9kjad/branch/master?svg=true
-    :target: https://ci.appveyor.com/project/nismod/smif
-    :alt: Appveyor CI Build status
-
-.. image:: https://img.shields.io/codecov/c/github/nismod/smif/master.svg
-    :target: https://codecov.io/gh/nismod/smif?branch=master
-    :alt: Code Coverage
+.. image:: https://github.com/nismod/smif/actions/workflows/test.yml/badge.svg
+    :target: https://github.com/nismod/smif/actions/workflows/test.yml
+    :alt: GitHub Actions build status
 
 .. image:: https://img.shields.io/pypi/v/smif.svg
     :target: https://pypi.python.org/pypi/smif
