@@ -6,7 +6,7 @@ Flask>=0.12
 isodate>=0.6
 minio
 networkx>=1.11
-numpy>=1.11
+numpy>=1.11,<2
 pandas
 Pint>=0.8
 psycopg2>=2.7
