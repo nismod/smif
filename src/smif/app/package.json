@@ -19,7 +19,7 @@
   "license": "MIT",
   "dependencies": {
     "ansi-to-react": "^6.1.6",
-    "bootstrap": "^4.5.2",
+    "bootstrap": "^5.0.0",
     "immutability-helper": "^2.9.1",
     "isomorphic-fetch": "^3.0.0",
     "moment": "^2.27.0",
