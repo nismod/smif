@@ -71,9 +71,9 @@ import os
 import sys
 from argparse import ArgumentParser
 
+import pandas
 import pkg_resources
 
-import pandas
 import smif
 import smif.cli.log
 from smif.controller import (

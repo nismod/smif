@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """smif"""
-from __future__ import division, print_function, absolute_import
+from __future__ import absolute_import, division, print_function
 
 import warnings
 from importlib.metadata import version

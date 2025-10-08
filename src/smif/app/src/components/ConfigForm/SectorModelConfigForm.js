@@ -63,11 +63,11 @@ class SectorModelConfigForm extends Component {
                         <div className="form-group row">
                             <label className="col-sm-2 col-form-label">Name</label>
                             <div className="col-sm-10">
-                                <input 
-                                    className="form-control" 
-                                    type="text" 
-                                    disabled="true" 
-                                    defaultValue={selected.name} 
+                                <input
+                                    className="form-control"
+                                    type="text"
+                                    disabled="true"
+                                    defaultValue={selected.name}
                                     onChange={(event) => this.handleChange('name', event.target.value)}/>
                             </div>
                         </div>
@@ -75,11 +75,11 @@ class SectorModelConfigForm extends Component {
                         <div className="form-group row">
                             <label className="col-sm-2 col-form-label">Description</label>
                             <div className="col-sm-10">
-                                <textarea 
-                                    className="form-control" 
-                                    name="description" 
-                                    rows="5" 
-                                    defaultValue={selected.description} 
+                                <textarea
+                                    className="form-control"
+                                    name="description"
+                                    rows="5"
+                                    defaultValue={selected.description}
                                     onChange={(event) => this.handleChange('description', event.target.value)}/>
                             </div>
                         </div>
@@ -100,13 +100,13 @@ class SectorModelConfigForm extends Component {
                                     <div className={`dropdown-menu${this.state.inuse_dropdown ? ' show' : ''}`} aria-labelledby="dropdownMenuButton">
                                         {
                                             this.props.sos_models.filter(sos_model => sos_model.sector_models.includes(this.props.sector_model.name)).map(sector_model => (
-                                                <a key={sector_model.name} 
-                                                    className="btn dropdown-item" 
+                                                <a key={sector_model.name}
+                                                    className="btn dropdown-item"
                                                     onClick={() => this.props.onNavigate('/configure/sos-models/' + sector_model.name)}>
                                                     {sector_model.name}
                                                 </a>
                                             ))
-                                        }   
+                                        }
                                     </div>
                                 </div>
                             </div>
@@ -122,10 +122,10 @@ class SectorModelConfigForm extends Component {
                         <div className="form-group row">
                             <label className="col-sm-2 col-form-label">Class Name</label>
                             <div className="col-sm-10">
-                                <input 
-                                    className="form-control" 
-                                    type="text" 
-                                    defaultValue={selected.classname} 
+                                <input
+                                    className="form-control"
+                                    type="text"
+                                    defaultValue={selected.classname}
                                     onChange={(event) => this.handleChange('classname', event.target.value)}/>
                             </div>
                         </div>
@@ -133,10 +133,10 @@ class SectorModelConfigForm extends Component {
                         <div className="form-group row">
                             <label className="col-sm-2 col-form-label">Path</label>
                             <div className="col-sm-10">
-                                <input 
-                                    className="form-control" 
-                                    type="text" 
-                                    defaultValue={selected.path} 
+                                <input
+                                    className="form-control"
+                                    type="text"
+                                    defaultValue={selected.path}
                                     onChange={(event) => this.handleChange('path', event.target.value)}/>
                             </div>
                         </div>
@@ -147,9 +147,9 @@ class SectorModelConfigForm extends Component {
                 <div className="card">
                     <div className="card-header">Inputs</div>
                     <div className="card-body">
-                        <SpecList 
-                            name="inputs" 
-                            specs={selected.inputs} 
+                        <SpecList
+                            name="inputs"
+                            specs={selected.inputs}
                             dims={dims}
                             enable_defaults={false}
                             onChange={(event) => this.handleChange('inputs', event.target.value)}/>
@@ -159,9 +159,9 @@ class SectorModelConfigForm extends Component {
                 <div className="card">
                     <div className="card-header">Outputs</div>
                     <div className="card-body">
-                        <SpecList 
-                            name="outputs" 
-                            specs={selected.outputs} 
+                        <SpecList
+                            name="outputs"
+                            specs={selected.outputs}
                             dims={dims}
                             enable_defaults={false}
                             onChange={(event) => this.handleChange('outputs', event.target.value)}/>
@@ -171,9 +171,9 @@ class SectorModelConfigForm extends Component {
                 <div className="card">
                     <div className="card-header">Parameters</div>
                     <div className="card-body">
-                        <SpecList 
-                            name="parameters" 
-                            specs={selected.parameters} 
+                        <SpecList
+                            name="parameters"
+                            specs={selected.parameters}
                             dims={dims}
                             onChange={(event) => this.handleChange('parameters', event.target.value)}/>
                     </div>

@@ -60,9 +60,9 @@ class JobRunner extends Component {
     startJob(modelrun_name) {
         const { dispatch } = this.props
         this.outstanding_request_from = this.props.model_run_status.status
-        dispatch(startModelRun(modelrun_name, 
+        dispatch(startModelRun(modelrun_name,
             {
-                verbosity: this.controls.state.verbosity, 
+                verbosity: this.controls.state.verbosity,
                 warm_start: this.controls.state.warm_start,
                 output_format: this.controls.state.output_format
             }))

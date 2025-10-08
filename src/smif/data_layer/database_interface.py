@@ -5,6 +5,7 @@ import json
 # import psycopg2 to handel database transactions
 import psycopg2
 import psycopg2.extras
+
 from smif.data_layer.abstract_config_store import ConfigStore
 from smif.data_layer.abstract_data_store import DataStore
 from smif.data_layer.abstract_metadata_store import MetadataStore

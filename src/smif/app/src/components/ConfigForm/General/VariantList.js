@@ -37,24 +37,24 @@ class VariantList extends Component {
         if (['name', 'description'].includes(event.target.name)) {
             this.setState({
                 variant: update(
-                    this.state.variant, 
+                    this.state.variant,
                     {[event.target.name]: {$set: event.target.value}}
                 )
             })
-        } 
+        }
         else {
             let newData = Object.assign({}, this.state.variant.data)
             newData[event.target.name] = event.target.value
-            
+
             this.setState({
                 variant: update(
-                    this.state.variant, 
+                    this.state.variant,
                     {data: {$set: newData}}
                 )
             })
         }
     }
-    
+
     handleSubmit(event) {
         event.preventDefault()
 
@@ -95,7 +95,7 @@ class VariantList extends Component {
     handleEdit(event) {
         const target = event.currentTarget
         const name = target.dataset.name
-        
+
         let variant = JSON.parse(JSON.stringify(this.props.variants[name]))
 
         // Clean keys that not exist in provides
@@ -124,7 +124,7 @@ class VariantList extends Component {
 
     handleDelete(name) {
         this.props.variants.splice(name, 1)
-        
+
         this.closeForm()
         this.props.onChange({
             target: {
@@ -167,7 +167,7 @@ class VariantList extends Component {
                                     <th className="col-text"
                                         scope="col" key={name + '_column_' + column}>
                                         {column}
-                                    </th> 
+                                    </th>
                                 ))
                             }
                         </tr>
@@ -186,7 +186,7 @@ class VariantList extends Component {
                                     </td>
                                     <td className="col-text">
                                         {
-                                            Object.keys(variant.data).map(key => 
+                                            Object.keys(variant.data).map(key =>
                                                 <div key={key}>
                                                     {key + ': '}
                                                     {variant.data[key]}
@@ -208,26 +208,26 @@ class VariantList extends Component {
                                 <div className="row">
                                     <div className="col">
                                         <label className='label'>Name</label>
-                                        <input 
+                                        <input
                                             id={name + '_variant_name'}
                                             className='form-control'
-                                            type="text" 
+                                            type="text"
                                             name='name'
                                             disabled={this.state.formEditMode}
-                                            value={this.state.variant.name} 
+                                            value={this.state.variant.name}
                                             onChange={this.handleFormInput}
-                                            autoFocus 
+                                            autoFocus
                                             required
                                         />
                                     </div>
                                     <div className="col">
                                         <label>Description</label>
-                                        <input 
-                                            id={name + '_variant_description'} 
+                                        <input
+                                            id={name + '_variant_description'}
                                             className='form-control'
                                             type="text"
-                                            name="description" 
-                                            value={this.state.variant.description} 
+                                            name="description"
+                                            value={this.state.variant.description}
                                             onChange={this.handleFormInput}
                                             required
                                         />
@@ -241,11 +241,11 @@ class VariantList extends Component {
                                                 <div className="input-group-prepend">
                                                     <span className="input-group-text">{provide.name}</span>
                                                     <input
-                                                        id={name + '_variant_data_'} 
+                                                        id={name + '_variant_data_'}
                                                         className='form-control'
                                                         type="text"
-                                                        name={provide.name} 
-                                                        value={this.state.variant.data[provide.name]} 
+                                                        name={provide.name}
+                                                        value={this.state.variant.data[provide.name]}
                                                         onChange={this.handleFormInput}
                                                         required={this.props.require_provide_full_config}
                                                     />
@@ -262,8 +262,8 @@ class VariantList extends Component {
                             <SecondaryButton id={'btn_' + name + '_cancel'} value="Cancel" onClick={() => this.closeForm()}/>
                             {
                                 !this.state.formEditMode ? null : (
-                                    <DangerButton  
-                                        id={'btn_' + name + '_delete'} 
+                                    <DangerButton
+                                        id={'btn_' + name + '_delete'}
                                         onClick={() => this.handleDelete(this.state.formEditNumber)} />
                                 )
                             }

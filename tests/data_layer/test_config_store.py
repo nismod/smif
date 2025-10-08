@@ -4,8 +4,9 @@ import getpass
 import os
 from copy import copy
 
-import smif.data_layer.database.setup_database
 from pytest import fixture, mark, param, raises
+
+import smif.data_layer.database.setup_database
 from smif.data_layer.database_interface import DbConfigStore
 from smif.data_layer.file.file_config_store import YamlConfigStore
 from smif.data_layer.memory_interface import MemoryConfigStore

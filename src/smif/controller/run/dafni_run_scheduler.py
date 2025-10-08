@@ -18,7 +18,6 @@ import time
 from collections import defaultdict
 
 import requests
-
 from minio import Minio
 from ruamel.yaml import YAML  # type: ignore
 

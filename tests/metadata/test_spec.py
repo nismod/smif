@@ -1,6 +1,7 @@
 """Test metadata specification"""
 
 from pytest import fixture, raises
+
 from smif.metadata import Coordinates, Spec
 
 

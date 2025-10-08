@@ -4,8 +4,9 @@ from copy import copy
 from unittest.mock import Mock, patch
 
 import networkx
-import smif
 from pytest import fixture, raises
+
+import smif
 from smif.controller.job import SerialJobScheduler
 from smif.controller.run import SubProcessRunScheduler
 from smif.model import ModelOperation, SectorModel

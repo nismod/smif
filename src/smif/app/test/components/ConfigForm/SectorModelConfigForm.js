@@ -49,7 +49,7 @@ describe.skip('<SectorModelConfigForm />', () => {
         expect(sector_model_parameter_0.html()).to.contain(sector_model.parameters[0].suggested_range)
         expect(sector_model_parameter_0.html()).to.contain(sector_model.parameters[0].units)
     })
-    
+
     it('renders warning when data incorrect', () => {
         let wrapper = mount(<SectorModelConfigForm
             sosModels={empty_array}
@@ -71,7 +71,7 @@ describe.skip('<SectorModelConfigForm />', () => {
         // Check if the form opens
         let popup_add_input = wrapper.find('[id="popup_add_input"]')
         expect(popup_add_input.exists()).to.equal(true)
-        
+
         // Fill in form
         wrapper.find('input#input_name').simulate('change', { target: { name: 'name', value: 'test_name'} })
         wrapper.find('input#input_units').simulate('change', { target: { name: 'units', value: 'test_units'} })
@@ -112,7 +112,7 @@ describe.skip('<SectorModelConfigForm />', () => {
         // Check if the form opens
         let popup_add_output = wrapper.find('[id="popup_add_output"]')
         expect(popup_add_output.exists()).to.equal(true)
-        
+
         // Fill in form
         wrapper.find('input#output_name').simulate('change', { target: { name: 'name', value: 'test_name'} })
         wrapper.find('input#output_units').simulate('change', { target: { name: 'units', value: 'test_units'} })
@@ -153,7 +153,7 @@ describe.skip('<SectorModelConfigForm />', () => {
         // Check if the form opens
         let popup_add_parameter = wrapper.find('[id="popup_add_parameter"]')
         expect(popup_add_parameter.exists()).to.equal(true)
-        
+
         // Fill in form
         wrapper.find('input#parameter_name').simulate('change', { target: { name: 'name', value: 'test_name'}})
         wrapper.find('input#parameter_description').simulate('change', { target: { name: 'description', value: 'test_description'}})

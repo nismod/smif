@@ -15,7 +15,7 @@ create aModelSet
 aSosModel -> aModelSet : simulate(timestep, data)
 activate aModelSet
 aModelSet -> aSectorModel : simulate(timestep, data)
-aModelSet <-- aSectorModel : results  
+aModelSet <-- aSectorModel : results
 aModelSet -> bSectorModel : simulate(timestep, data)
 aModelSet <-- bSectorModel : results
 aSosModel <-- aModelSet : results

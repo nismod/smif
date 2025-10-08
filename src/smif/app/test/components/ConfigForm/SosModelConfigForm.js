@@ -35,11 +35,11 @@ describe.skip('<SosModelConfigForm />', () => {
     it('add / remove dependency', () => {
         sos_model.dependencies = []
         const wrapper = mount(
-            <SosModelConfigForm 
-                sosModel={sos_model} 
-                sectorModels={sector_models} 
-                scenarioSets={scenario_sets} 
-                narrativeSets={narrative_sets} 
+            <SosModelConfigForm
+                sosModel={sos_model}
+                sectorModels={sector_models}
+                scenarioSets={scenario_sets}
+                narrativeSets={narrative_sets}
             />)
 
         // Open popup
@@ -52,9 +52,9 @@ describe.skip('<SosModelConfigForm />', () => {
         wrapper.find('select#select_source_output').simulate('change', { target: { name: 'SourceOutput', value: 'population'} })
         wrapper.find('select#select_sink').simulate('change', { target: { name: 'SinkModel', value: 'water_supply'} })
         wrapper.find('select#select_sink_input').simulate('change', { target: { name: 'SinkInput', value: 'population'} })
-        
+
         wrapper.find('input#btn_save_dependency').simulate('submit')
-        
+
         // Check if dependency was added
         expect(wrapper.state().selectedSosModel.dependencies[0]).to.deep.equal({
             source_model: 'population',
@@ -66,6 +66,6 @@ describe.skip('<SosModelConfigForm />', () => {
         // Delete dependency
         wrapper.find('button#btn_del_0').simulate('click')
         wrapper.find('input#deleteButton').simulate('click')
-        expect(wrapper.state().selectedSosModel.dependencies).to.deep.equal([])    
+        expect(wrapper.state().selectedSosModel.dependencies).to.deep.equal([])
     })
 })

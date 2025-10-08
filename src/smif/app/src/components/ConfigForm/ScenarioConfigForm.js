@@ -63,11 +63,11 @@ class ScenarioConfigForm extends Component {
                         <div className="form-group row">
                             <label className="col-sm-2 col-form-label">Name</label>
                             <div className="col-sm-10">
-                                <input 
-                                    className="form-control" 
-                                    type="text" 
-                                    disabled="true" 
-                                    defaultValue={selected.name} 
+                                <input
+                                    className="form-control"
+                                    type="text"
+                                    disabled="true"
+                                    defaultValue={selected.name}
                                     onChange={(event) => this.handleChange('name', event.target.value)}/>
                             </div>
                         </div>
@@ -75,10 +75,10 @@ class ScenarioConfigForm extends Component {
                         <div className="form-group row">
                             <label className="col-sm-2 col-form-label">Description</label>
                             <div className="col-sm-10">
-                                <textarea 
-                                    className="form-control" 
-                                    rows="5" 
-                                    defaultValue={selected.description} 
+                                <textarea
+                                    className="form-control"
+                                    rows="5"
+                                    defaultValue={selected.description}
                                     onChange={(event) => this.handleChange('description', event.target.value)}/>
                             </div>
                         </div>
@@ -99,13 +99,13 @@ class ScenarioConfigForm extends Component {
                                     <div className={`dropdown-menu${this.state.inuse_dropdown ? ' show' : ''}`} aria-labelledby="dropdownMenuButton">
                                         {
                                             this.props.sos_models.filter(sos_model => sos_model.scenarios.includes(this.props.scenario.name)).map(sos_model => (
-                                                <a key={sos_model.name} 
-                                                    className="btn dropdown-item" 
+                                                <a key={sos_model.name}
+                                                    className="btn dropdown-item"
                                                     onClick={() => this.props.onNavigate('/configure/sos-models/' + sos_model.name)}>
                                                     {sos_model.name}
                                                 </a>
                                             ))
-                                        }   
+                                        }
                                     </div>
                                 </div>
                             </div>
@@ -116,21 +116,21 @@ class ScenarioConfigForm extends Component {
 
                 <div className="card">
                     <div className="card-header">Provides</div>
-                    <div className="card-body">        
-                        <SpecList 
+                    <div className="card-body">
+                        <SpecList
                             name="provides"
-                            specs={selected.provides} 
-                            dims={dims} 
+                            specs={selected.provides}
+                            dims={dims}
                             onChange={(event) => this.handleChange('provides', event.target.value)} />
                     </div>
                 </div>
 
                 <div className="card">
                     <div className="card-header">Variants</div>
-                    <div className="card-body">        
-                        <VariantList 
-                            variants={selected.variants} 
-                            provides={selected.provides} 
+                    <div className="card-body">
+                        <VariantList
+                            variants={selected.variants}
+                            provides={selected.provides}
                             require_provide_full_config={this.props.require_provide_full_variant}
                             onChange={(event) => this.handleChange('description', event.target.value)} />
                     </div>

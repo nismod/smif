@@ -1,4 +1,5 @@
 from flask import Flask
+
 from smif.http_api.register import (
     register_api_endpoints,
     register_error_handlers,

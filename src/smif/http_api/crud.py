@@ -3,9 +3,10 @@
 from collections import defaultdict
 
 import dateutil.parser
-import smif
 from flask import current_app, jsonify, request
 from flask.views import MethodView
+
+import smif
 from smif.exception import (
     SmifDataError,
     SmifDataInputError,

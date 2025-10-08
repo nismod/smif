@@ -6,6 +6,7 @@ from unittest.mock import Mock
 
 import numpy as np
 from pytest import fixture, raises
+
 from smif.data_layer import DataHandle
 from smif.data_layer.data_array import DataArray
 from smif.data_layer.data_handle import ResultsHandle

@@ -11,6 +11,7 @@
 import logging
 
 import numpy as np
+
 from smif.model.sector_model import SectorModel
 
 

@@ -6,6 +6,7 @@ import pandas as pd
 import xarray as xr
 from numpy.testing import assert_array_equal
 from pytest import fixture, raises
+
 from smif.data_layer.data_array import DataArray, show_null
 from smif.exception import SmifDataMismatchError
 from smif.metadata import Spec

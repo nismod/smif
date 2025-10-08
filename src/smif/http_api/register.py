@@ -1,6 +1,8 @@
 import logging
+
 import jinja2.exceptions
 from flask import jsonify, render_template
+
 from smif.exception import (
     SmifDataExistsError,
     SmifDataMismatchError,
