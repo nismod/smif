@@ -11,6 +11,7 @@ The DAFNIRunScheduler currently only works while connected to the RAL vpn.
 Posts all of the model run information to the DAFNI API so that a DAFNI worker can start the
 model run.
 """
+
 import json
 import os
 import time

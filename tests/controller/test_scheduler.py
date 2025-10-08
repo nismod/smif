@@ -1,5 +1,5 @@
-"""Test SubProcessRunScheduler and SerialJobScheduler
-"""
+"""Test SubProcessRunScheduler and SerialJobScheduler"""
+
 from copy import copy
 from unittest.mock import Mock, patch
 

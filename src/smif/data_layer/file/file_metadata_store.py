@@ -1,5 +1,5 @@
-"""File-backed metadata store
-"""
+"""File-backed metadata store"""
+
 import copy
 import json
 import os

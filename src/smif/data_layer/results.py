@@ -1,5 +1,4 @@
-"""Results provides a common interface to access results from model runs.
-"""
+"""Results provides a common interface to access results from model runs."""
 
 from typing import Union
 

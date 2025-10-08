@@ -1,5 +1,5 @@
-"""Memory-backed store implementations
-"""
+"""Memory-backed store implementations"""
+
 from collections import OrderedDict
 from copy import copy, deepcopy
 

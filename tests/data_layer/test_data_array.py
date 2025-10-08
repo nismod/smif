@@ -1,5 +1,5 @@
-"""Test DataArray
-"""
+"""Test DataArray"""
+
 # pylint: disable=redefined-outer-name
 import numpy
 import pandas as pd

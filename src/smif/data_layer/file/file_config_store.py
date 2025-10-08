@@ -1,5 +1,5 @@
-"""File-backed config store
-"""
+"""File-backed config store"""
+
 import copy
 import os
 from logging import getLogger

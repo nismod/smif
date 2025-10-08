@@ -1,5 +1,5 @@
-"""Test aggregation/disaggregation of data between sets of areas
-"""
+"""Test aggregation/disaggregation of data between sets of areas"""
+
 from copy import copy
 from unittest.mock import Mock
 

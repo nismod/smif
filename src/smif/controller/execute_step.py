@@ -1,5 +1,5 @@
-"""Execute a single step directly
-"""
+"""Execute a single step directly"""
+
 import logging
 import os
 import sys

@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Holds fixtures for the smif package tests
-"""
+"""Holds fixtures for the smif package tests"""
 from __future__ import absolute_import, division, print_function
 
 import json

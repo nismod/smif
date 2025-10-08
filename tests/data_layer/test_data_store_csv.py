@@ -1,5 +1,5 @@
-"""Test CSV data store
-"""
+"""Test CSV data store"""
+
 # pylint: disable=redefined-outer-name
 import csv
 import logging

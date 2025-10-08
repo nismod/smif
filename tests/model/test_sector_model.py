@@ -1,5 +1,5 @@
-"""Test SectorModel and SectorModelBuilder
-"""
+"""Test SectorModel and SectorModelBuilder"""
+
 import smif.sample_project.models.water_supply
 from pytest import fixture
 from smif.metadata import Spec

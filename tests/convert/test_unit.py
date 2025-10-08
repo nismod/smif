@@ -1,5 +1,5 @@
-"""Test unit adaptor
-"""
+"""Test unit adaptor"""
+
 from unittest.mock import Mock
 
 import numpy as np

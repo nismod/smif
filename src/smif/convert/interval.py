@@ -128,6 +128,7 @@ Development Notes
   before adding them to the set of intervals
 
 """
+
 import logging
 from datetime import datetime, timedelta
 

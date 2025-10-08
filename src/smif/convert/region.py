@@ -1,5 +1,5 @@
-"""Handles conversion between the sets of regions used in the `SosModel`
-"""
+"""Handles conversion between the sets of regions used in the `SosModel`"""
+
 from collections import namedtuple
 
 from rtree import index  # type: ignore

@@ -1,5 +1,5 @@
-"""Test dependency representation
-"""
+"""Test dependency representation"""
+
 from copy import copy
 from unittest.mock import Mock
 

@@ -4,6 +4,7 @@ coefficients.
 NDimensionalRegister is used in :class:`smif.convert.interval.IntervalAdaptor` and
 :class:`smif.convert.region.RegionAdaptor`.
 """
+
 import logging
 from abc import ABCMeta, abstractmethod
 from collections import OrderedDict, defaultdict

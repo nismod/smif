@@ -1,5 +1,5 @@
-"""Test HTTP API application
-"""
+"""Test HTTP API application"""
+
 import datetime
 import json
 import os

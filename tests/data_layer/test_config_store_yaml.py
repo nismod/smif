@@ -1,5 +1,5 @@
-"""Test YAML config store
-"""
+"""Test YAML config store"""
+
 from pytest import fixture, raises
 from smif.data_layer.file.file_config_store import YamlConfigStore
 from smif.exception import (

@@ -1,5 +1,5 @@
-"""Set up a smif database
-"""
+"""Set up a smif database"""
+
 import subprocess
 from os import environ, listdir
 from os.path import dirname, isfile, join, realpath

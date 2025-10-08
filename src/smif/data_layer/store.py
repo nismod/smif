@@ -14,6 +14,7 @@ SmifDataReadError
     When unable to read data e.g. unable to handle file type or connect
     to database
 """
+
 import itertools
 import logging
 import os

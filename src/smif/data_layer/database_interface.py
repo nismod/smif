@@ -1,5 +1,5 @@
-"""Database store implementations
-"""
+"""Database store implementations"""
+
 import json
 
 # import psycopg2 to handel database transactions
@@ -529,9 +529,8 @@ class DbConfigStore(ConfigStore):
 
                     # update
                     cursor.execute(
-                        "UPDATE dependencies SET source_model=%s WHERE name=%s;", [
-                            dependency["source_model"], sos_model_name
-                        ]
+                        "UPDATE dependencies SET source_model=%s WHERE name=%s;",
+                        [dependency["source_model"], sos_model_name],
                     )
 
                     # write to database
