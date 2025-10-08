@@ -25,6 +25,7 @@ from os.path import splitext
 from typing import Dict, List, Optional, Union
 
 import numpy as np  # type: ignore
+
 from smif.data_layer import DataArray
 from smif.data_layer.abstract_data_store import DataStore
 from smif.data_layer.abstract_metadata_store import MetadataStore

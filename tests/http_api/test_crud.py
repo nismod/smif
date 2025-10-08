@@ -6,8 +6,9 @@ import os
 from unittest.mock import Mock
 
 import pytest
-import smif
 from flask import current_app
+
+import smif
 from smif.data_layer.store import Store
 from smif.exception import SmifDataNotFoundError
 from smif.http_api import create_app

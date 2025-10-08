@@ -8,8 +8,9 @@ from tempfile import TemporaryDirectory
 from time import sleep
 from unittest.mock import call, patch
 
-import smif
 from pytest import fixture, raises
+
+import smif
 from smif.cli import confirm, main, parse_arguments, setup_project_folder
 from smif.exception import SmifDataNotFoundError
 

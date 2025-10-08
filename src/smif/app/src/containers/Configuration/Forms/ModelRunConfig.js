@@ -21,7 +21,7 @@ class ModelRunConfig extends Component {
         const { dispatch } = this.props
 
         this.config_name = this.props.match.params.name
-        
+
         dispatch(fetchModelRun(this.config_name))
         dispatch(fetchSosModels())
         dispatch(fetchScenarios())
@@ -47,7 +47,7 @@ class ModelRunConfig extends Component {
     renderError(error) {
         return (
             <div>
-                {            
+                {
                     Object.keys(error).map(exception => (
                         <div key={exception} className="alert alert-danger">
                             {exception}
@@ -70,8 +70,8 @@ class ModelRunConfig extends Component {
 
         return (
             <div key={'sosModel_' + model_run.name}>
-                <ModelRunConfigForm 
-                    model_run={model_run} 
+                <ModelRunConfigForm
+                    model_run={model_run}
                     sos_models={sos_models}
                     scenarios={scenarios}
                     save={app.formReqSave}
@@ -125,7 +125,7 @@ function mapStateToProps(state) {
             ...state.scenarios.error
         }),
         isFetching: (
-            state.model_run.isFetching || 
+            state.model_run.isFetching ||
             state.sos_models.isFetching ||
             state.scenarios.isFetching
         )

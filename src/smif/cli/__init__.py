@@ -63,6 +63,7 @@ project; ``sos_models`` specify the combinations of ``sector_models`` and
 and narrative combinations to be used in each run of the models.
 
 """
+
 from __future__ import print_function
 
 import glob
@@ -70,10 +71,10 @@ import logging
 import os
 import sys
 from argparse import ArgumentParser
-
 from importlib import resources
 
 import pandas
+
 import smif
 import smif.cli.log
 from smif.controller import (
@@ -438,7 +439,7 @@ def _get_store(args):
 def _run_server(args):
     app_folder = resources.files("smif") / "app/dist"
     with resources.as_file(app_folder) as path:
-    
+
         if args.scheduler == "dafni" and args.interface != "local_csv":
             msg = "Scheduler implementation {0}, is not valid when combined with {1}."
             raise ValueError(msg.format(args.scheduler, args.interface))

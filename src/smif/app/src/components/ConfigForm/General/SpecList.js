@@ -38,7 +38,7 @@ class SpecList extends Component {
             spec: update(this.state.spec, {[event.target.name]: {$set: event.target.value}})
         })
     }
-    
+
     handleSubmit(event) {
         event.preventDefault()
 
@@ -53,7 +53,7 @@ class SpecList extends Component {
             new_spec.dims = []
             this.state.spec.dims.map((dim => {
                 new_spec.dims.push(dim.value)
-            }))            
+            }))
         }
         if (this.state.spec.default != '') {
             new_spec.default = this.state.spec.default
@@ -76,7 +76,7 @@ class SpecList extends Component {
                 parseFloat(this.state.spec.sug_range_max)
             ]
         }
- 
+
         // update specs
         let index = this.props.specs.findIndex(spec => spec.name === new_spec.name)
         if (index >= 0) {
@@ -171,7 +171,7 @@ class SpecList extends Component {
         columns.push('Unit')
         columns.push('DType')
         columns.push('Range')
-        
+
         return (
             <div>
                 <table className="table table-hover table-list">
@@ -182,7 +182,7 @@ class SpecList extends Component {
                                     <th className="col-text"
                                         scope="col" key={name + '_column_' + column}>
                                         {column}
-                                    </th> 
+                                    </th>
                                 ))
                             }
                         </tr>
@@ -201,7 +201,7 @@ class SpecList extends Component {
                                     <td className="col-text">
                                         {
                                             spec.dims != undefined ?
-                                                spec.dims.map((dim, idx) => 
+                                                spec.dims.map((dim, idx) =>
                                                     idx == 0 ? dim : ', ' + dim
                                                 ) : null
                                         }
@@ -239,26 +239,26 @@ class SpecList extends Component {
                                 <div className="row">
                                     <div className="col">
                                         <label className='label'>Name</label>
-                                        <input 
+                                        <input
                                             id={name + '_spec_name'}
                                             className='form-control'
-                                            type="text" 
+                                            type="text"
                                             name='name'
                                             disabled={this.state.formEditMode}
-                                            value={this.state.spec.name} 
+                                            value={this.state.spec.name}
                                             onChange={this.handleFormInput}
-                                            autoFocus 
+                                            autoFocus
                                             required
                                         />
                                     </div>
                                     <div className="col">
                                         <label>Description</label>
-                                        <input 
-                                            id={name + '_spec_description'} 
+                                        <input
+                                            id={name + '_spec_description'}
                                             className='form-control'
                                             type="text"
-                                            name="description" 
-                                            value={this.state.spec.description} 
+                                            name="description"
+                                            value={this.state.spec.description}
                                             onChange={this.handleFormInput}
                                             required
                                         />
@@ -278,44 +278,44 @@ class SpecList extends Component {
                                                     }
                                                 }
                                             )}
-                                            value={this.state.spec.dims} 
+                                            value={this.state.spec.dims}
                                             options={this.props.dims}
                                         />
-                                    </div> 
+                                    </div>
                                 </div>
 
                                 <div className="row">
                                     <div className="col" hidden={!this.props.enable_defaults}>
                                         <label>Default</label>
-                                        <input 
+                                        <input
                                             id={name + '_spec_default'}
                                             className='form-control'
                                             type="text"
-                                            name='default' 
-                                            value={this.state.spec.default} 
-                                            onChange={this.handleFormInput} 
+                                            name='default'
+                                            value={this.state.spec.default}
+                                            onChange={this.handleFormInput}
                                         />
                                     </div>
                                     <div className="col">
                                         <label>Unit</label>
-                                        <input 
-                                            id={name + '_spec_unit'} 
+                                        <input
+                                            id={name + '_spec_unit'}
                                             className='form-control'
                                             type="text"
-                                            name="unit" 
-                                            value={this.state.spec.unit} 
+                                            name="unit"
+                                            value={this.state.spec.unit}
                                             onChange={this.handleFormInput}
                                             required
                                         />
                                     </div>
                                     <div className="col">
                                         <label>DType</label>
-                                        <input 
+                                        <input
                                             id={name + '_spec_dtype'}
                                             className='form-control'
-                                            type="text" 
-                                            name='dtype' 
-                                            value={this.state.spec.dtype} 
+                                            type="text"
+                                            name='dtype'
+                                            value={this.state.spec.dtype}
                                             onChange={this.handleFormInput}
                                             required
                                         />
@@ -325,24 +325,24 @@ class SpecList extends Component {
                                 <label>Absolute Range</label>
                                 <div className="row">
                                     <div className="col">
-                                        <input 
-                                            id="parameter_absolute_range_low" 
+                                        <input
+                                            id="parameter_absolute_range_low"
                                             className='form-control'
-                                            type="number" 
+                                            type="number"
                                             step="any"
-                                            name="abs_range_min" 
-                                            value={this.state.spec.abs_range_min} 
+                                            name="abs_range_min"
+                                            value={this.state.spec.abs_range_min}
                                             onChange={this.handleFormInput}
                                             placeholder="Minimum" />
                                     </div>
                                     <div className="col">
-                                        <input 
-                                            id="parameter_absolute_range_high" 
+                                        <input
+                                            id="parameter_absolute_range_high"
                                             className='form-control'
-                                            type="number" 
+                                            type="number"
                                             step="any"
-                                            name="abs_range_max" 
-                                            value={this.state.spec.abs_range_max} 
+                                            name="abs_range_max"
+                                            value={this.state.spec.abs_range_max}
                                             onChange={this.handleFormInput}
                                             placeholder="Maximum" />
                                     </div>
@@ -351,23 +351,23 @@ class SpecList extends Component {
                                 <label>Suggested Range</label>
                                 <div className="row">
                                     <div className="col">
-                                        <input 
-                                            id="parameter_suggested_range_low" 
+                                        <input
+                                            id="parameter_suggested_range_low"
                                             className='form-control'
-                                            type="number" 
+                                            type="number"
                                             step="any"
-                                            name="sug_range_min" 
-                                            value={this.state.spec.sug_range_min} 
+                                            name="sug_range_min"
+                                            value={this.state.spec.sug_range_min}
                                             onChange={this.handleFormInput}
                                             placeholder="Minimum" />
                                     </div>
                                     <div className="col">
-                                        <input id="parameter_suggested_range_high" 
-                                            type="number" 
+                                        <input id="parameter_suggested_range_high"
+                                            type="number"
                                             className='form-control'
                                             step="any"
-                                            name="sug_range_max" 
-                                            value={this.state.spec.sug_range_max} 
+                                            name="sug_range_max"
+                                            value={this.state.spec.sug_range_max}
                                             onChange={this.handleFormInput}
                                             placeholder="Maximum" />
                                     </div>
@@ -380,8 +380,8 @@ class SpecList extends Component {
                             <SecondaryButton id={'btn_' + name + '_cancel'} value="Cancel" onClick={() => this.closeForm()}/>
                             {
                                 !this.state.formEditMode ? null : (
-                                    <DangerButton  
-                                        id={'btn_' + name + '_delete'} 
+                                    <DangerButton
+                                        id={'btn_' + name + '_delete'}
                                         onClick={() => this.handleDelete(this.state.spec.name)} />
                                 )
                             }

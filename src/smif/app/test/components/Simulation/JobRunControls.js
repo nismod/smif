@@ -94,7 +94,7 @@ describe('<JobRunControls />', () => {
 
     it('change warm_start', () => {
         let wrapper = mount(<JobRunControls name='my_name' output='my_output' status='stopped'/>)
-        
+
         expect(wrapper.find('[id="btn_toggle_output_format"]').find('button').at(1).html()).to.include('CSV')
         expect(wrapper.find('[id="btn_toggle_output_format"]').find('button').at(1).html()).to.not.include('active')
         wrapper.find('[id="btn_toggle_output_format"]').find('button').at(1).simulate('click')

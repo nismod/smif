@@ -21,6 +21,7 @@ ModeRun has attributes:
 from logging import getLogger
 
 import networkx as nx
+
 from smif.decision.decision import DecisionManager
 from smif.exception import SmifModelRunError, SmifTimestepResolutionError
 from smif.metadata import RelativeTimestep

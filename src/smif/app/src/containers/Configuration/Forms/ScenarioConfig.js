@@ -20,7 +20,7 @@ class ScenarioConfig extends Component {
         const { dispatch } = this.props
 
         this.config_name = this.props.match.params.name
-    
+
         dispatch(fetchScenario(this.config_name))
         dispatch(fetchDimensions())
     }
@@ -45,7 +45,7 @@ class ScenarioConfig extends Component {
     renderError(error) {
         return (
             <div>
-                {            
+                {
                     Object.keys(error).map(exception => (
                         <div key={exception} className="alert alert-danger">
                             {exception}
@@ -78,7 +78,7 @@ class ScenarioConfig extends Component {
                     onSave={(scenario) => (
                         dispatch(setAppFormSaveDone()),
                         dispatch(saveScenario(scenario))
-                    )} 
+                    )}
                     onCancel={() => dispatch(setAppNavigate('/configure/scenarios'))}
                     onEdit={() => dispatch(setAppFormEdit())}/>
             </div>

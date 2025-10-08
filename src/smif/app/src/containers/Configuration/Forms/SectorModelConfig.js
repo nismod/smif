@@ -19,7 +19,7 @@ class SectorModelConfig extends Component {
     constructor(props) {
         super(props)
         const { dispatch } = this.props
-        
+
         this.config_name = this.props.match.params.name
 
         dispatch(fetchSectorModel(this.config_name))
@@ -47,7 +47,7 @@ class SectorModelConfig extends Component {
     renderError(error) {
         return (
             <div>
-                {            
+                {
                     Object.keys(error).map(exception => (
                         <div key={exception} className="alert alert-danger">
                             {exception}
@@ -66,13 +66,13 @@ class SectorModelConfig extends Component {
     }
 
     renderSectorModelConfig() {
-        const {app, sector_model, sos_models, dimensions, error, dispatch} = this.props    
+        const {app, sector_model, sos_models, dimensions, error, dispatch} = this.props
 
         return (
             <div key={sector_model.name}>
-                <SectorModelConfigForm 
-                    sector_model={sector_model} 
-                    sos_models={sos_models} 
+                <SectorModelConfigForm
+                    sector_model={sector_model}
+                    sos_models={sos_models}
                     dimensions={dimensions}
                     error={error}
                     save={app.formReqSave}
@@ -80,7 +80,7 @@ class SectorModelConfig extends Component {
                     onSave={(sector_model) => (
                         dispatch(setAppFormSaveDone()),
                         dispatch(saveSectorModel(sector_model))
-                    )} 
+                    )}
                     onCancel={() => dispatch(setAppNavigate('/configure/sector-models'))}
                     onEdit={() => dispatch(setAppFormEdit())}/>
             </div>

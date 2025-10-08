@@ -9,6 +9,7 @@ from typing import Dict, List
 
 import pandas  # type: ignore
 from ruamel.yaml import YAML  # type: ignore
+
 from smif.data_layer.abstract_metadata_store import MetadataStore
 from smif.exception import SmifDataNotFoundError, SmifDataReadError
 

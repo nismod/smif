@@ -1,4 +1,5 @@
 from pytest import raises
+
 from smif.data_layer.model_loader import ModelLoader
 
 

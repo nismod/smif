@@ -51,7 +51,7 @@ class SosModelConfig extends Component {
     renderError(error) {
         return (
             <div>
-                {            
+                {
                     Object.keys(error).map(exception => (
                         <div key={exception} className="alert alert-danger">
                             {exception}
@@ -74,18 +74,18 @@ class SosModelConfig extends Component {
 
         return (
             <div>
-                <SosModelConfigForm 
-                    sos_model={sos_model} 
-                    model_runs={model_runs} 
-                    sector_models={sector_models} 
-                    scenarios={scenarios} 
+                <SosModelConfigForm
+                    sos_model={sos_model}
+                    model_runs={model_runs}
+                    sector_models={sector_models}
+                    scenarios={scenarios}
                     error={error}
                     save={app.formReqSave}
                     onNavigate={(dest) => dispatch(setAppNavigate(dest))}
                     onSave={(sos_model) => (
                         dispatch(setAppFormSaveDone()),
                         dispatch(saveSosModel(sos_model))
-                    )} 
+                    )}
                     onCancel={() => dispatch(setAppNavigate('/configure/sos-models'))}
                     onEdit={() => dispatch(setAppFormEdit())}/>
             </div>

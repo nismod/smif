@@ -5,7 +5,7 @@ const ModelRunSummary = (props) => (
     <dl className="row">
         <dt className="col-sm-3">Name</dt>
         <dd className="col-sm-9">{props.ModelRun.name}</dd>
-                
+
         <dt className="col-sm-3">Description</dt>
         <dd className="col-sm-9">{props.ModelRun.description}</dd>
 
@@ -33,7 +33,7 @@ const ModelRunSummary = (props) => (
         <dt className="col-sm-3">Narratives</dt>
         <dd className="col-sm-9">
             {Object.keys(props.ModelRun.narratives).map(
-                nar_set => <div key={'sum_nar_set_' + nar_set}>{nar_set}: 
+                nar_set => <div key={'sum_nar_set_' + nar_set}>{nar_set}:
                     <ul>
                         {props.ModelRun.narratives[nar_set].map(
                             nar => <li key={'sum_nar_set_' + nar_set + '_nar_' + nar}>{nar}</li>

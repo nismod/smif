@@ -8,6 +8,7 @@ from tempfile import TemporaryDirectory
 
 import numpy as np
 from pytest import fixture, mark, raises
+
 from smif.data_layer.data_array import DataArray
 from smif.data_layer.file.file_data_store import CSVDataStore
 from smif.exception import SmifDataMismatchError, SmifDataNotFoundError

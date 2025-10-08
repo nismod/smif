@@ -4,6 +4,7 @@ different operations
 
 import numpy as np
 from pytest import mark
+
 from smif.convert.adaptor import Adaptor
 
 

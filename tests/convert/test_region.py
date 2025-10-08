@@ -5,6 +5,7 @@ from unittest.mock import Mock
 
 import numpy as np
 from pytest import fixture, raises
+
 from smif.convert.region import RegionAdaptor, RegionSet
 from smif.convert.register import NDimensionalRegister
 from smif.data_layer.data_array import DataArray

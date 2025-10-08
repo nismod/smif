@@ -87,7 +87,7 @@ function app(
             formSaving: false,
             formError: false,
             formReqCancel: false
-        })    
+        })
     case APP_FORM_REJECT:
         return Object.assign({}, state, {
             formReqSave: false,
@@ -105,7 +105,7 @@ function app(
             redirect: '',
             formReqCancel: false
         })
-    
+
     default:
         return state
     }

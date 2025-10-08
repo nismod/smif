@@ -3,6 +3,7 @@
 from typing import Union
 
 import pandas as pd
+
 from smif.data_layer.store import Store
 
 

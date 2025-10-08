@@ -1,6 +1,7 @@
 """Test relative timesteps"""
 
 from pytest import raises
+
 from smif.exception import SmifTimestepResolutionError
 from smif.metadata import RelativeTimestep
 

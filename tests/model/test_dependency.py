@@ -4,6 +4,7 @@ from copy import copy
 from unittest.mock import Mock
 
 from pytest import fixture, raises
+
 from smif.metadata import RelativeTimestep, Spec
 from smif.model.dependency import Dependency
 

@@ -8,6 +8,7 @@ from logging import getLogger
 import numpy as np  # type: ignore
 import pandas  # type: ignore
 import pyarrow as pa  # type: ignore
+
 from smif.data_layer.abstract_data_store import DataStore
 from smif.exception import SmifDataMismatchError, SmifDataNotFoundError
 

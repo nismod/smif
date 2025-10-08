@@ -28,4 +28,4 @@ ConfirmPopup.propTypes = {
 
 export {
     ConfirmPopup
-} 
+}

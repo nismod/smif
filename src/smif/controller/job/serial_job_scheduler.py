@@ -9,6 +9,7 @@ import traceback
 from collections import defaultdict
 
 import networkx
+
 from smif.controller.execute_step import execute_model_before_step, execute_model_step
 from smif.model import ModelOperation
 

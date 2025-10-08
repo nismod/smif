@@ -82,9 +82,9 @@ DangerButton.propTypes = {
 }
 
 
-/** 
+/**
  * ToggleButton
- * 
+ *
  * Button for toggle actions
  */
 

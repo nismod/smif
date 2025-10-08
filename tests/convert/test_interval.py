@@ -5,6 +5,7 @@ from unittest.mock import Mock
 import numpy as np
 from numpy.testing import assert_equal
 from pytest import raises
+
 from smif.convert.interval import Interval, IntervalAdaptor, IntervalSet
 from smif.convert.register import NDimensionalRegister
 from smif.data_layer.data_array import DataArray

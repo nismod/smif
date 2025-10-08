@@ -12,8 +12,8 @@
 # import classes here if they should be accessed at the subpackage level, for example ::
 #         from smif.metadata import Spec
 from smif.metadata.coordinates import Coordinates
-from smif.metadata.timestep import RelativeTimestep
 from smif.metadata.spec import Spec
+from smif.metadata.timestep import RelativeTimestep
 
 # Define what should be imported as * ::
 #         from smif.metadata import *
