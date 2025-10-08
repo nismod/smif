@@ -118,28 +118,21 @@ Installation and Configuration
 **smif** is written in Python (Python>=3.5) and has a number of dependencies.
 See `requirements.txt` for a full list.
 
-Using conda
------------
+Using micromamba
+----------------
 
-The recommended installation method is to use `conda
-<http://conda.pydata.org/miniconda.html>`_, which handles packages and virtual environments,
-along with the `conda-forge` channel which has a host of pre-built libraries and packages.
+The recommended installation method is to use `micromamba
+<https://mamba.readthedocs.io/en/latest/installation/micromamba-installation.html>`_,
+which handles packages and virtual environments, along with the `conda-forge`
+channel which has a host of pre-built libraries and packages.
 
-Create a conda environment::
+Create an environment::
 
-    conda create --name smif_env python=3.6
+    micromamba env create -n smif --channel conda-forge --channel nodefaults python=3.12 smif
 
 Activate it (run each time you switch projects)::
 
-    conda activate smif_env
-
-Add the conda-forge channel, which has smif available::
-
-    conda config --add channels conda-forge
-
-Finally install ``smif``::
-
-    conda install smif
+    micromamba activate smif
 
 
 Installing `smif` with other methods
