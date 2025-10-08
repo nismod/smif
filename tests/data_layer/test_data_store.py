@@ -1,5 +1,5 @@
-"""Test all DataStore implementations
-"""
+"""Test all DataStore implementations"""
+
 from copy import deepcopy
 
 import numpy as np

@@ -1,5 +1,5 @@
-"""Execute a model run - discover and schedule all steps in order
-"""
+"""Execute a model run - discover and schedule all steps in order"""
+
 import logging
 import sys
 

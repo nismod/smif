@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""smif
-"""
+"""smif"""
 from __future__ import division, print_function, absolute_import
 
 import warnings

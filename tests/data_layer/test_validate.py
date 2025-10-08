@@ -1,5 +1,5 @@
-"""Test config validation
-"""
+"""Test config validation"""
+
 from smif.data_layer.validate import validate_sos_model_config
 from smif.exception import SmifDataError
 

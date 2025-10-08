@@ -1,5 +1,4 @@
-"""Test command line interface
-"""
+"""Test command line interface"""
 
 import os
 import sys

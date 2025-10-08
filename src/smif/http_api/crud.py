@@ -1,5 +1,5 @@
-"""HTTP API endpoint
-"""
+"""HTTP API endpoint"""
+
 from collections import defaultdict
 
 import dateutil.parser
@@ -455,7 +455,7 @@ def check_timestamp(data):
     if "stamp" in data:
         try:
             data["stamp"] = dateutil.parser.parse(data["stamp"])
-        except (ValueError):
+        except ValueError:
             pass
     return data
 

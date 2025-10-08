@@ -1,5 +1,5 @@
-"""DataArray provides a thin wrapper around multidimensional arrays and metadata
-"""
+"""DataArray provides a thin wrapper around multidimensional arrays and metadata"""
+
 from logging import getLogger
 
 import numpy as np  # type: ignore

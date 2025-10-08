@@ -1,5 +1,5 @@
-"""File-backed data store
-"""
+"""File-backed data store"""
+
 import glob
 import os
 from abc import abstractmethod

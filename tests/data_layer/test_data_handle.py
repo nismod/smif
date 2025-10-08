@@ -1,5 +1,5 @@
-"""Test ModelData
-"""
+"""Test ModelData"""
+
 # pylint: disable=redefined-outer-name
 from copy import copy, deepcopy
 from unittest.mock import Mock

@@ -1,7 +1,5 @@
-"""Tests to ensure that the example simulation model fixtures are behaving
+"""Tests to ensure that the example simulation model fixtures are behaving"""
 
-
-"""
 import math
 import os
 import subprocess

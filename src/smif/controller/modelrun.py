@@ -17,6 +17,7 @@ ModeRun has attributes:
 - status
 
 """
+
 from logging import getLogger
 
 import networkx as nx

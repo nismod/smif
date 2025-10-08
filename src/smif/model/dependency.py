@@ -8,6 +8,7 @@ A Dependency can have a timestep specified - by default this is the current time
 system-of-systems model may also want to specify that data should be provided from the previous
 timestep or a base timestep.
 """
+
 from smif.metadata import RelativeTimestep
 
 

@@ -1,5 +1,5 @@
-"""Test all ConfigStore implementations
-"""
+"""Test all ConfigStore implementations"""
+
 import getpass
 import os
 from copy import copy

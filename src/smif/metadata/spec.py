@@ -2,6 +2,7 @@
 each dataset which is supplied to - or output from - each :class:`~smif.model.model.Model` in a
 :class:`~smif.model.model.CompositeModel`
 """
+
 from collections import defaultdict
 
 from smif.metadata.coordinates import Coordinates

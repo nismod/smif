@@ -10,6 +10,7 @@ Calls smif run ... on the selected model in a sub process, where ...
 are the options set in the app for info/debug messages, warm start
 and output format.
 """
+
 import subprocess
 from collections import defaultdict
 from datetime import datetime

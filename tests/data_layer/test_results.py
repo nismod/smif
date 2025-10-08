@@ -1,5 +1,4 @@
-"""Test the Results interface
-"""
+"""Test the Results interface"""
 
 import os
 from collections import OrderedDict

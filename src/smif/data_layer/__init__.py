@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Data access modules for loading system-of-systems model configuration
-"""
+"""Data access modules for loading system-of-systems model configuration"""
 
 # import classes for access like ::
 #         from smif.data_layer import DataHandle`

@@ -4,6 +4,7 @@ data between units or dimensions.
 The method to override is `generate_coefficients`, which accepts two
 :class:`~smif.metadata.spec.Spec` definitions.
 """
+
 from abc import ABCMeta, abstractmethod
 
 import numpy as np  # type: ignore
