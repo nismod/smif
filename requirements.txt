@@ -3,12 +3,12 @@
 # Remember to also add them in setup.cfg and environment.yml but unpinned.
 fiona>=1.10
 isodate>=0.7
-networkx>=1.11
+networkx>=3,<4
 numpy>=2,<3
 pandas
 Pint>=0.25
-pyarrow==14.0.1
+pyarrow
 requests
-shapely>=1.3
+shapely>=2,<3
 tomli-w
 xarray
