@@ -60,3 +60,4 @@ energy_demand_data/*
 *.ipynb
 src/smif/_version.py
 .mypy_cache
+tmp/

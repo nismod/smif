@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "smif"
 dynamic = ["version"]
 description = "Simulation Modelling Integration Framework"
-readme = "README.rst"
+readme = "README.md"
 license = "mit"
 authors = [
     { name = "Will Usher", email = "william.usher@ouce.ox.ac.uk" },
