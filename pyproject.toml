@@ -42,7 +42,6 @@ dependencies = [
 data = ["pandas", "xarray"]
 database = ["psycopg2"]
 spatial = ["fiona", "shapely", "Rtree"]
-win32 = ["pywin32"]
 
 [project.scripts]
 smif = "smif.cli:main"
