@@ -10,13 +10,14 @@ dependencies:
   - black # dev
   - codecov # test
   - fiona
-  - flask
   - isodate
   - minio
+  - mypy # dev
   - networkx
   - numpy
   - pandas
   - pint
+  - pre-commit # dev
   - psycopg2
   - pyarrow
   - pylint # dev
@@ -28,7 +29,4 @@ dependencies:
   - tomli-w
   - xarray
   - pip:
-      - mypy # dev
-      - minio
-      - pre-commit # dev
       - -e .
