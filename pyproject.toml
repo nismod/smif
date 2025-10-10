@@ -34,7 +34,6 @@ dependencies = [
     "numpy",
     "Pint",
     "pyarrow",
-    "python-dateutil",
     "requests",
 ]
 

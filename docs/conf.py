@@ -49,8 +49,6 @@ class Mock(MagicMock):
 
 # mock modules which we can avoid installing for docs-building
 mock_modules = [
-    "dateutil",
-    "dateutil.parser",
     "fiona",
     "flask",
     "flask.views",

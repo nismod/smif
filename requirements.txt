@@ -10,7 +10,7 @@ numpy>=2,<3
 pandas
 Pint>=0.8
 psycopg2>=2.7
-pyarrow
+pyarrow==14.0.1
 python-dateutil>=2.6
 requests
 shapely>=1.3
