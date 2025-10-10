@@ -31,6 +31,7 @@ dependencies = ["isodate", "networkx", "numpy", "Pint", "pyarrow", "requests"]
 [project.optional-dependencies]
 data = ["pandas", "xarray"]
 spatial = ["fiona", "shapely"]
+docs = ["myst-parser", "Sphinx==8.2.3"]
 
 [project.scripts]
 smif = "smif.cli:main"
