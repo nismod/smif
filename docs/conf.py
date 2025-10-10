@@ -61,7 +61,6 @@ mock_modules = [
     "numpy",
     "pint",
     "pyarrow",
-    "rtree",
     "shapely",
     "shapely.geometry",
     "shapely.validation",

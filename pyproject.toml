@@ -41,7 +41,7 @@ dependencies = [
 [project.optional-dependencies]
 data = ["pandas", "xarray"]
 database = ["psycopg2"]
-spatial = ["fiona", "shapely", "Rtree"]
+spatial = ["fiona", "shapely"]
 
 [project.scripts]
 smif = "smif.cli:main"

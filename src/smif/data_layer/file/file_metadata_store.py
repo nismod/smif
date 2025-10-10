@@ -171,7 +171,7 @@ class FileMetadataStore(MetadataStore):
             msg += "Please install fiona to read geographic data files. Try running: \n"
             msg += "    pip install smif[spatial]\n"
             msg += "or:\n"
-            msg += "    conda install fiona shapely rtree\n"
+            msg += "    conda install fiona shapely\n"
             raise SmifDataReadError(msg) from ex
         except IOError as ex:
             msg = "Could not read spatial dimension definition '%s' " % (filepath)
