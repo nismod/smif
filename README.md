@@ -96,7 +96,7 @@ appropriate tool for you.
 
 ## Installation and Configuration
 
-**smif** is written in Python (Python\>=3.5) and has a number of
+**smif** is written in Python (Python\>=3.11) and has a number of
 dependencies. See <span class="title-ref">requirements.txt</span> for a
 full list.
 
