@@ -30,7 +30,6 @@ dependencies:
   - sphinx # docs
   - xarray
   - pip:
-      - better-apidoc # docs
       - mypy # dev
       - minio
       - pre-commit # dev

@@ -1,2 +1,4 @@
 .. _authors:
-.. include:: ../AUTHORS.rst
+
+.. include:: ../AUTHORS.md
+    :parser: myst
