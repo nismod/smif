@@ -12,13 +12,8 @@ The :code:`smif` codebase is contained in ``src/smif``.
 
 Install the library in develop mode using the command::
 
-    python setup.py develop
+    pip install -e .
 
-If you also wish to use the GUI while using smif in develop mode, you'll need
-to navigate to the ``src/smif/app`` folder and run the commands::
-
-    npm install
-    npm run build
 
 Testing
 -------
@@ -33,7 +28,7 @@ Install requirements for testing::
 
 Run tests::
 
-    python setup.py test
+    python -m pytest tests
 
 
 Integration testing
@@ -144,10 +139,10 @@ Errors and messages
 -------------------
 
 As a general guideline, `smif`_ fails fast, with errors that users can understand in
-context, whether they call smif through the python api, CLI, HTTP API or GUI.
+context, whether they call smif through the python api or CLI.
 
 When handling errors, we raise custom exceptions (with an informative name and
-message) which can be communicated out through STDERR, HTTP response or error box.
+message) which can be communicated out through STDERR.
 
 In normal operations, we catch all errors from the standard library and other
 dependencies close to where they may arise, re-raising with a custom `SmifException` if it
@@ -193,8 +188,7 @@ Logging
 Log messages should be used sparingly, following the
 `python guidelines`<https://docs.python.org/3/howto/logging.html#when-to-use-logging>:
 
-- print() displays console output for ordinary usage of the CLI (respond with a message or
-  similar usual channel for API/GUI)
+- print() displays console output for ordinary usage of the CLI
 - CRITICAL errors are the  last thing logged before a daemon is forced to quit (scheduler or
   server process)
 - ERROR level errors are communicated to user, typically causing jobs, requests or batch

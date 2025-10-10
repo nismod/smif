@@ -2,6 +2,11 @@
 Changelog
 =========
 
+Development
+===========
+
+- Remove app user interface
+
 Version 1.3.2
 =============
 

@@ -46,7 +46,6 @@ docs/_build/*
 cover/*
 MANIFEST
 node_modules
-src/smif/app/dist
 
 .DS_Store
 
@@ -59,6 +58,5 @@ energy_demand_data/*
 
 # Other files
 *.ipynb
-src/smif/app/.nyc_output
 src/smif/_version.py
 .mypy_cache

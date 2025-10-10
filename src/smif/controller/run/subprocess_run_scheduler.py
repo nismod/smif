@@ -7,8 +7,7 @@ Future implementations may interface with common schedulers to queue
 up models to run in parallel and/or distributed.
 
 Calls smif run ... on the selected model in a sub process, where ...
-are the options set in the app for info/debug messages, warm start
-and output format.
+are the options for info/debug messages, warm start and output format.
 """
 
 import subprocess
@@ -127,8 +126,7 @@ class SubProcessRunScheduler(object):
         Returns
         -------
         dict: A message containing the status, command-line
-        output and error that can be directly sent back over
-        the http api.
+        output and error.
 
         Notes
         -----
