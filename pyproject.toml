@@ -27,7 +27,6 @@ classifiers = [
     "Topic :: Scientific/Engineering",
 ]
 dependencies = [
-    "flask",
     "isodate",
     "minio",
     "networkx",

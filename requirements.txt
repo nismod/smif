@@ -2,7 +2,6 @@
 # pip install -r requirements.txt
 # Remember to also add them in setup.cfg and environment.yml but unpinned.
 fiona>=1.10
-Flask>=0.12
 isodate>=0.7
 minio
 networkx>=1.11

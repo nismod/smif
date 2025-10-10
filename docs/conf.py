@@ -50,8 +50,6 @@ class Mock(MagicMock):
 # mock modules which we can avoid installing for docs-building
 mock_modules = [
     "fiona",
-    "flask",
-    "flask.views",
     "isodate",
     "minio",
     "minio.error",
