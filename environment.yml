@@ -22,7 +22,6 @@ dependencies:
   - pylint # dev
   - pytest # test
   - pytest-cov # test
-  - python-dateutil
   - requests
   - shapely
   - sphinx # docs
