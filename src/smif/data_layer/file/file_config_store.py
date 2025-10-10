@@ -218,7 +218,7 @@ class YamlConfigStore(ConfigStore):
         _assert_file_exists(self.config_folders, "sector_model", model_name)
         model = copy.deepcopy(model)
 
-        # ignore interventions and initial conditions which the app doesn't handle
+        # ignore interventions and initial conditions (which the app UI didn't handle)
         if model["interventions"] or model["initial_conditions"]:
 
             old_model = _read_yaml_file(

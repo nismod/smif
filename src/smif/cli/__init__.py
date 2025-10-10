@@ -7,7 +7,6 @@ This command line interface implements a number of methods.
 - `run` performs a simulation of an individual sector model, or the whole system
         of systems model
 - `validate` performs a validation check of the configuration file
-- `app` runs the graphical user interface, opening in a web browser
 
 Folder structure
 ----------------
@@ -72,7 +71,6 @@ import sys
 from argparse import ArgumentParser
 
 import pandas
-import pkg_resources
 
 import smif
 import smif.cli.log
@@ -83,7 +81,6 @@ from smif.controller import (
     execute_model_run,
     execute_model_step,
 )
-from smif.controller.run import DAFNIRunScheduler, SubProcessRunScheduler
 from smif.data_layer import Store
 from smif.data_layer.file import (
     CSVDataStore,
@@ -91,19 +88,6 @@ from smif.data_layer.file import (
     ParquetDataStore,
     YamlConfigStore,
 )
-from smif.http_api import create_app
-
-try:
-    import _thread
-except ImportError:
-    import thread as _thread
-
-try:
-    import win32api
-
-    USE_WIN32 = True
-except ImportError:
-    USE_WIN32 = False
 
 __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell"
@@ -435,64 +419,6 @@ def _get_store(args):
     return store
 
 
-def _run_server(args):
-    app_folder = pkg_resources.resource_filename("smif", "app/dist")
-    if args.scheduler == "dafni" and args.interface != "local_csv":
-        msg = "Scheduler implementation {0}, is not valid when combined with {1}."
-        raise ValueError(msg.format(args.scheduler, args.interface))
-
-    if args.scheduler == "default":
-        model_scheduler = SubProcessRunScheduler()
-    elif args.scheduler == "dafni":
-        model_scheduler = DAFNIRunScheduler(args.username, args.password)
-    else:
-        raise ValueError(
-            "Scheduler implentation {} not recognised.".format(args.scheduler)
-        )
-
-    app = create_app(
-        static_folder=app_folder,
-        template_folder=app_folder,
-        data_interface=_get_store(args),
-        scheduler=model_scheduler,
-    )
-
-    print("    Opening smif app\n")
-    print("    Copy/paste this URL into your web browser to connect:")
-    print("        http://localhost:" + str(args.port) + "\n")
-    # add flush to ensure that text is printed before server thread starts
-    print("    Close your browser then type Control-C here to quit.", flush=True)
-    app.run(host="0.0.0.0", port=args.port, threaded=True)
-
-
-def run_app(args):
-    """Run the client/server application
-
-    Parameters
-    ----------
-    args
-    """
-    # avoid one of two error messages from 'forrtl error(200)' when running
-    # on windows cmd - seems related to scipy's underlying Fortran
-    os.environ["FOR_DISABLE_CONSOLE_CTRL_HANDLER"] = "T"
-
-    if USE_WIN32:
-        # Set handler for CTRL-C. Necessary to avoid `forrtl: error (200):
-        # program aborting...` crash on CTRL-C if we're runnging from Windows
-        # cmd.exe
-        def handler(dw_ctrl_type, hook_sigint=_thread.interrupt_main):
-            """Handler for CTRL-C interrupt"""
-            if dw_ctrl_type == 0:  # CTRL-C
-                hook_sigint()
-                return 1  # don't chain to the next handler
-            return 0  # chain to the next handler
-
-        win32api.SetConsoleCtrlHandler(handler, 1)
-
-    # Create backend server process
-    _run_server(args)
-
-
 def setup_project_folder(args):
     """Setup a sample project"""
     copy_project_folder(args.directory)
@@ -631,38 +557,6 @@ def parse_arguments():
         "--noclobber",
         help="Skip converting data files which already exist as parquet",
         action="store_true",
-    )
-
-    # APP
-    parser_app = subparsers.add_parser(
-        "app", help="Open smif app", parents=[parent_parser]
-    )
-    parser_app.set_defaults(func=run_app)
-    parser_app.add_argument(
-        "-p",
-        "--port",
-        type=int,
-        default=5000,
-        help="The port over which to serve the app",
-    )
-    parser_app.add_argument(
-        "-s",
-        "--scheduler",
-        default="default",
-        choices=["default", "dafni"],
-        help="The module scheduling implementation to use",
-    )
-    parser_app.add_argument(
-        "-u",
-        "--username",
-        help="The username for logging in to the dafni JobSubmissionAPI, \
-                                  only needed with the dafni job scheduler",
-    )
-    parser_app.add_argument(
-        "-pw",
-        "--password",
-        help="The password for logging in to the dafni JobSubmissionAPI, \
-                                  only needed with the dafni job scheduler",
     )
 
     # RUN
