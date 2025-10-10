@@ -33,7 +33,7 @@ from smif.data_layer.file import (
     CSVDataStore,
     FileMetadataStore,
     ParquetDataStore,
-    YamlConfigStore,
+    TomlConfigStore,
 )
 from smif.data_layer.validate import (
     validate_sos_model_config,
@@ -100,7 +100,7 @@ class Store:
             )
 
         return cls(
-            config_store=YamlConfigStore(directory),
+            config_store=TomlConfigStore(directory),
             metadata_store=FileMetadataStore(directory),
             data_store=data_store,
             model_base_folder=directory,

@@ -16,25 +16,25 @@ used.  In this example, there is one system-of-systems model, combining a water
 supply and an energy demand model::
 
     /config
-        project.yaml
+        project.toml
         /sector_models
-            energy_demand.yml
-            water_supply.yml
+            energy_demand.toml
+            water_supply.toml
         /sos_models
-            energy_water.yml
+            energy_water.toml
         /model_runs
-            run_to_2050.yml
-            short_test_run.yml
+            run_to_2050.toml
+            short_test_run.toml
             ...
     /data
         /initial_conditions
-            reservoirs.yml
+            reservoirs.toml
         /interval_definitions
             annual_intervals.csv
         /interventions
-            water_supply.yml
+            water_supply.toml
         /narratives
-            high_tech_dsm.yml
+            high_tech_dsm.toml
         /region_definitions
             /oxfordshire
                 regions.geojson
@@ -49,14 +49,14 @@ supply and an energy demand model::
         energy_demand.py
         water_supply.py
     /planning
-        expected_to_2020.yaml
-        national_infrastructure_pipeline.yml
+        expected_to_2020.toml
+        national_infrastructure_pipeline.toml
 
 The sector model implementations can be installed independently of the model run
 configuration. The paths to python wrapper classes (implementing SectorModel)
-should be specified in each ``sector_model/*.yml`` configuration.
+should be specified in each ``sector_model/*.toml`` configuration.
 
-The project.yaml file specifies the metadata shared by all elements of the
+The project.toml file specifies the metadata shared by all elements of the
 project; ``sos_models`` specify the combinations of ``sector_models`` and
 ``scenarios`` while individual ``model_runs`` specify the scenario, strategy
 and narrative combinations to be used in each run of the models.
@@ -86,7 +86,7 @@ from smif.data_layer.file import (
     CSVDataStore,
     FileMetadataStore,
     ParquetDataStore,
-    YamlConfigStore,
+    TomlConfigStore,
 )
 
 __author__ = "Will Usher, Tom Russell"
@@ -213,14 +213,14 @@ def prepare_convert(args):
     src_store = _get_store(args)
     if isinstance(src_store.data_store, CSVDataStore):
         tgt_store = Store(
-            config_store=YamlConfigStore(args.directory),
+            config_store=TomlConfigStore(args.directory),
             metadata_store=FileMetadataStore(args.directory),
             data_store=ParquetDataStore(args.directory),
             model_base_folder=(args.directory),
         )
     else:
         tgt_store = Store(
-            config_store=YamlConfigStore(args.directory),
+            config_store=TomlConfigStore(args.directory),
             metadata_store=FileMetadataStore(args.directory),
             data_store=CSVDataStore(args.directory),
             model_base_folder=(args.directory),
@@ -400,14 +400,14 @@ def _get_store(args):
     """Contruct store as configured by arguments"""
     if args.interface == "local_csv":
         store = Store(
-            config_store=YamlConfigStore(args.directory),
+            config_store=TomlConfigStore(args.directory),
             metadata_store=FileMetadataStore(args.directory),
             data_store=CSVDataStore(args.directory),
             model_base_folder=args.directory,
         )
     elif args.interface == "local_binary":
         store = Store(
-            config_store=YamlConfigStore(args.directory),
+            config_store=TomlConfigStore(args.directory),
             metadata_store=FileMetadataStore(args.directory),
             data_store=ParquetDataStore(args.directory),
             model_base_folder=args.directory,

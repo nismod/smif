@@ -332,7 +332,7 @@ class TestNarrativeVariantData:
     def test_narrative_data(
         self, setup_folder_structure, config_handler, get_narrative
     ):
-        """Test to dump a narrative (yml) data-file and then read the file
+        """Test to dump a narrative data-file and then read the file
         using the datafile interface. Finally check the data shows up in the
         returned dictionary.
         """

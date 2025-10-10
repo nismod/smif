@@ -24,10 +24,10 @@ dependencies:
   - pytest-cov # test
   - python-dateutil
   - requests
-  - ruamel.yaml
   - rtree
   - shapely
   - sphinx # docs
+  - tomli-w
   - xarray
   - pip:
       - mypy # dev

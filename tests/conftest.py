@@ -14,7 +14,7 @@ from pytest import fixture
 
 from smif.data_layer import Store
 from smif.data_layer.data_array import DataArray
-from smif.data_layer.file.file_config_store import _write_yaml_file as dump
+from smif.data_layer.file.file_config_store import _write_toml_file as dump
 from smif.data_layer.memory_interface import (
     MemoryConfigStore,
     MemoryDataStore,
@@ -97,19 +97,21 @@ def setup_folder_structure(
     region_file = test_folder.join("data", "dimensions", "test_region.geojson")
     region_file.write(json.dumps(oxford_region))
 
-    intervals_file = test_folder.join("data", "dimensions", "annual.yml")
+    intervals_file = test_folder.join("data", "dimensions", "annual.toml")
     intervals_file.write(
         """\
-- name: '1'
-  interval: [[P0Y, P1Y]]
+[[list]]
+name = '1'
+interval = "[[P0Y, P1Y]]"
 """
     )
 
-    intervals_file = test_folder.join("data", "dimensions", "hourly.yml")
+    intervals_file = test_folder.join("data", "dimensions", "hourly.toml")
     intervals_file.write(
         """\
-- name: '1'
-  interval: [[PT0H, PT1H]]
+[[list]]
+name = '1'
+interval = "[[PT0H, PT1H]]"
 """
     )
 

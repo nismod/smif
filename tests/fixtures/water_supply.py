@@ -76,7 +76,7 @@ class WaterSupplySectorModel(SectorModel):
         decisions: list
         state: list
         data: dict
-            A dict of parameters, as define by inputs.yaml, each entry of which
+            A dict of parameters, as define by inputs.toml, each entry of which
             contains a :class:`numpy.ndarray` with dimension regions x intervals
 
         """

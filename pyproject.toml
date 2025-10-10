@@ -36,7 +36,6 @@ dependencies = [
     "pyarrow",
     "python-dateutil",
     "requests",
-    "ruamel.yaml>=0.15.50",
 ]
 
 [project.optional-dependencies]

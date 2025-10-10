@@ -8,7 +8,7 @@ from pytest import fixture, mark, param, raises
 
 import smif.data_layer.database.setup_database
 from smif.data_layer.database_interface import DbConfigStore
-from smif.data_layer.file.file_config_store import YamlConfigStore
+from smif.data_layer.file.file_config_store import TomlConfigStore
 from smif.data_layer.memory_interface import MemoryConfigStore
 from smif.exception import SmifDataExistsError, SmifDataNotFoundError
 
@@ -56,7 +56,7 @@ def init_handler(request, setup_empty_folder_structure):
         handler = MemoryConfigStore()
     elif request.param == "text_file":
         base_folder = setup_empty_folder_structure
-        handler = YamlConfigStore(base_folder)
+        handler = TomlConfigStore(base_folder)
     elif request.param == "database":
         # migrations dir
         migrations_dir = os.path.join(
