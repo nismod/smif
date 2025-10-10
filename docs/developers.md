@@ -124,6 +124,15 @@ can be installed from the root of the repository using:
 
     pre-commit install
 
+Use [black](https://black.readthedocs.io/en/stable/) to format code.
+
+Use [mypy](https://mypy.readthedocs.io/en/stable/index.html) to type check.
+Install type packages before running mypy to report on typing. Current
+situation is only partially typed, check will report various errors:
+
+    mypy --install-types
+    mypy .
+
 ## Errors and messages
 
 As a general guideline, [smif](https://pypi.python.org/pypi/smif) fails

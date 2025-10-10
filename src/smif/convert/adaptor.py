@@ -7,7 +7,7 @@ The method to override is `generate_coefficients`, which accepts two
 
 from abc import ABCMeta, abstractmethod
 
-import numpy as np  # type: ignore
+import numpy as np
 
 from smif.data_layer.data_array import DataArray
 from smif.data_layer.data_handle import DataHandle

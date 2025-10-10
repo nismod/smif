@@ -14,7 +14,7 @@ dependencies:
   - isodate
   - minio
   - networkx
-  - numpy <2
+  - numpy
   - pandas
   - pint
   - psycopg2
