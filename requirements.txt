@@ -6,8 +6,7 @@ isodate>=0.7
 networkx>=1.11
 numpy>=2,<3
 pandas
-Pint>=0.8
-psycopg2>=2.7
+Pint>=0.25
 pyarrow==14.0.1
 requests
 shapely>=1.3

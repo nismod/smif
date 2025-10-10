@@ -1,1 +1,0 @@
-DROP TABLE IF EXISTS simulation_model_port;

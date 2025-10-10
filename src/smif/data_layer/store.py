@@ -11,8 +11,7 @@ SmifDataMismatchError
     Data presented to read, write and update methods is in the
     incorrect format or of wrong dimensions to that expected
 SmifDataReadError
-    When unable to read data e.g. unable to handle file type or connect
-    to database
+    When unable to read data e.g. unable to handle file type
 """
 
 import itertools
@@ -24,7 +23,7 @@ from operator import itemgetter
 from os.path import splitext
 from typing import Dict, List, Optional, Union
 
-import numpy as np  # type: ignore
+import numpy as np
 
 from smif.data_layer import DataArray
 from smif.data_layer.abstract_data_store import DataStore
