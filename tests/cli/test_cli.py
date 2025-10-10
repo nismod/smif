@@ -1,8 +1,8 @@
 """Test command line interface"""
 
 import os
+import shutil
 import sys
-from distutils.dir_util import copy_tree, remove_tree
 from itertools import product
 from tempfile import TemporaryDirectory
 from time import sleep
@@ -20,11 +20,8 @@ def tmp_sample_project(tmpdir_factory):
     """Copy sample_project folder to temporary directory, ignoring any results"""
     dst = str(tmpdir_factory.mktemp("smif"))
     src = os.path.join(os.path.dirname(smif.__file__), "sample_project")
-    copy_tree(src, dst)
-    try:
-        remove_tree(os.path.join(dst, "results"))
-    except FileNotFoundError:
-        pass
+    shutil.copytree(src, dst, dirs_exist_ok=True)
+    shutil.rmtree(os.path.join(dst, "results"), ignore_errors=True)
     return dst
 
 
