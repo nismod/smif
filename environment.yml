@@ -24,7 +24,6 @@ dependencies:
   - pytest-cov # test
   - python-dateutil
   - requests
-  - rtree
   - shapely
   - sphinx # docs
   - tomli-w
