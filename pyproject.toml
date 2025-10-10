@@ -30,7 +30,6 @@ dependencies = ["isodate", "networkx", "numpy", "Pint", "pyarrow", "requests"]
 
 [project.optional-dependencies]
 data = ["pandas", "xarray"]
-database = ["psycopg2"]
 spatial = ["fiona", "shapely"]
 
 [project.scripts]

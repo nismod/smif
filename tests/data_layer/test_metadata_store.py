@@ -1,22 +1,18 @@
 """Test all MetadataStore implementations"""
 
-from pytest import fixture, mark, param
+from pytest import fixture
 
-from smif.data_layer.database_interface import DbMetadataStore
 from smif.data_layer.file.file_metadata_store import FileMetadataStore
 from smif.data_layer.memory_interface import MemoryMetadataStore
 
 
-@fixture(params=["memory", "file", param("database", marks=mark.skip)])
+@fixture(params=["memory", "file"])
 def init_handler(request, setup_empty_folder_structure):
     if request.param == "memory":
         handler = MemoryMetadataStore()
     elif request.param == "file":
         base_folder = setup_empty_folder_structure
         handler = FileMetadataStore(base_folder)
-    elif request.param == "database":
-        handler = DbMetadataStore()
-        raise NotImplementedError
 
     return handler
 

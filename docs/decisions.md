@@ -1,7 +1,7 @@
 # Strategies, Interventions and Decision Modules
 
-**smif** makes a sharp distinction between *simulating* the operation of
-a system, and *deciding* on which interventions to introduce to meet
+**smif** makes a sharp distinction between _simulating_ the operation of
+a system, and _deciding_ on which interventions to introduce to meet
 goals or constraints on the whole system-of-systems.
 
 The decision aspects of **smif** include a number of components.
@@ -73,8 +73,8 @@ transmission system is composed of a set of generation sites (power
 stations, wind farms...), transmission lines and bus bars.
 
 A simulation model has access to several methods to obtain its current
-*state*. The DataHandle.get_state and
-DataHandle.get_current_interventions provide direct access the database
+_state_. The DataHandle.get_state and
+DataHandle.get_current_interventions provide direct access to the set
 of interventions relevant for the current timestep.
 
 ## Deciding on Interventions

@@ -34,7 +34,7 @@ the package.
 It is difficult to provide exhaustive details for every type of sector
 model implementation -our decision to leave this largely up to the user
 is enabled by the flexibility afforded by python. The wrapper can write
-to a database or structured text file before running a model from a
+to a structured text file before running a model from a
 command line prompt, or import a python sector model and pass in
 parameters values directly. As such, what follows is a recipe of
 components from which you can construct a wrapper to full integrate your
@@ -186,59 +186,6 @@ comma-separated-values (.csv) file:
         writer.writerow(base_price_set)
         writer.writerow(current_price_set)
 
-### Writing data to a database
-
-The exact implementation of writing input and parameter data will differ
-on a case-by-case basis. In the following example, we write model inputs
-`energy_demand` to a postgreSQL database table `ElecLoad` using the
-psycopg2 library[^2] :
-
-    def simulate(self, data):
-
-        # Open a connection to the database
-        conn = psycopg2.connect("dbname=vagrant user=vagrant")
-        # Open a cursor to perform database operations
-        cur = conn.cursor()
-
-        # Returns a smif.DataArray
-        demand = data.get_data('electricity_demand')
-
-        # Convert to DataFrame (could also convert to numpy.ndarray or xarray.DataArray)
-        demand_df = demand.as_df().reset_index()  # reset index for easier iteration later on
-
-        # Build the SQL string
-        sql = """INSERT INTO "ElecLoad" (Year, Interval, BusID, ElecLoad)
-                 VALUES (%s, %s, %s, %s)"""
-
-        # Get the dimensions associated with the input
-        # e.g. ['bus_region', 'hour']
-        dims = demand.dims
-
-        # Get the dimension definitions associated with the input, here regions and intervals
-        regions = demand.dim_elements('bus_regions')
-        intervals = demand.dim_elements('hours')
-
-        # Iterate over the energy demand data and write each value into the table
-        for item in demand_df.itertuples():
-                # This line calls out to a helper method which associates
-                # electricity grid bus bars to energy demand regions
-                bus_number = get_bus_number(item.bus_region)
-                # Build the tuple to write to the table
-                insert_data = (
-                    data.current_timestep,
-                    item.hour,
-                    bus_number,
-                    item.electricity_demand
-                )
-                cur.execute(sql, insert_data)
-
-        # Make the changes to the database persistent
-        conn.commit()
-
-        # Close communication with the database
-        cur.close()
-        conn.close()
-
 ### Writing model results to the data handler
 
 Writing results back to the data handler is as simple as calling the
@@ -275,5 +222,3 @@ present at runtime.
 ## References
 
 [^1]: <https://github.com/nismod/smif/issues>
-
-[^2]: <http://initd.org/psycopg/>

@@ -50,7 +50,7 @@ class SmifDataMismatchError(SmifDataError):
 class SmifDataReadError(SmifDataError):
     """Raise when unable to read data
 
-    E.g. unable to handle file type or connect to database
+    E.g. unable to handle file type
     """
 
     pass

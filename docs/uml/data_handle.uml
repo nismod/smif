@@ -9,7 +9,7 @@ skinparam {
 
 package smif.data_layer {
   abstract class DataInterface {
-    - details of file system/database/API
+    - details of file system/API
     ..
     + {method} other methods to access model configuration and metadata
     ...
