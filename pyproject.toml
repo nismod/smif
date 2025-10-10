@@ -26,15 +26,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Topic :: Scientific/Engineering",
 ]
-dependencies = [
-    "isodate",
-    "minio",
-    "networkx",
-    "numpy",
-    "Pint",
-    "pyarrow",
-    "requests",
-]
+dependencies = ["isodate", "networkx", "numpy", "Pint", "pyarrow", "requests"]
 
 [project.optional-dependencies]
 data = ["pandas", "xarray"]

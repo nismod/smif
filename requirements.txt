@@ -3,7 +3,6 @@
 # Remember to also add them in setup.cfg and environment.yml but unpinned.
 fiona>=1.10
 isodate>=0.7
-minio
 networkx>=1.11
 numpy>=2,<3
 pandas

@@ -1,7 +1,6 @@
 """Test SubProcessRunScheduler and SerialJobScheduler"""
 
 from copy import copy
-from unittest.mock import Mock, patch
 
 import networkx
 from pytest import fixture, raises

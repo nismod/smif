@@ -51,8 +51,6 @@ class Mock(MagicMock):
 mock_modules = [
     "fiona",
     "isodate",
-    "minio",
-    "minio.error",
     "networkx",
     "numpy",
     "pint",
