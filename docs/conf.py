@@ -15,33 +15,30 @@
 
 # -- Hack for ReadTheDocs and apidoc options -----------------------------------
 # This hack is necessary since RTD does not issue `sphinx-apidoc` before running
-# If extensions (or modules to document with autodoc) are in another directory,
-# DON'T FORGET: Check the box "Install your project inside a virtualenv using
-# setup.py install" in the RTD Advanced Settings.
 # `sphinx-build -b html . _build/html`. See Issue:
 # https://github.com/rtfd/readthedocs.org/issues/1139
 
-# It also appears necessary in order to pass options to sphinx-apidoc which obr
-# or setuptools don't currently allow. See issue:
-# https://github.com/sphinx-doc/sphinx/issues/1861
+# It also appears necessary in order to pass options to sphinx-apidoc. See
+# issue: https://github.com/sphinx-doc/sphinx/issues/1861
 
 import inspect
 import os
 import sys
 from unittest.mock import MagicMock
 
-import better_apidoc
+from sphinx.ext.apidoc import main as run_apidoc
 
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 # sys.path.insert(0, os.path.abspath('.'))
-__location__ = os.path.join(os.getcwd(), os.path.dirname(
-    inspect.getfile(inspect.currentframe())))
+__location__ = os.path.join(
+    os.getcwd(), os.path.dirname(inspect.getfile(inspect.currentframe()))
+)
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-sys.path.insert(0, os.path.join(__location__, '../src'))
+sys.path.insert(0, os.path.join(__location__, "../src"))
 
 
 class Mock(MagicMock):
@@ -52,51 +49,33 @@ class Mock(MagicMock):
 
 # mock modules which we can avoid installing for docs-building
 mock_modules = [
-    'dateutil',
-    'dateutil.parser',
-    'fiona',
-    'flask',
-    'flask.views',
-    'isodate',
-    'minio',
-    'minio.error',
-    'networkx',
-    'numpy',
-    'pint',
-    'pyarrow',
-    'rtree',
-    'ruamel.yaml',
-    'shapely',
-    'shapely.geometry',
-    'shapely.validation',
-    'pandas',
-    'pandas.core',
-    'pandas.core.internals',
-    'xarray'
+    "fiona",
+    "isodate",
+    "networkx",
+    "numpy",
+    "pint",
+    "pyarrow",
+    "shapely",
+    "shapely.geometry",
+    "shapely.validation",
+    "pandas",
+    "pandas.core",
+    "pandas.core.internals",
+    "xarray",
 ]
 sys.modules.update((mod_name, Mock()) for mod_name in mock_modules)
 
 output_dir = os.path.join(__location__, "api")
 module_dir = os.path.join(__location__, "../src/smif")
-templates_dir = os.path.join(__location__, "_templates")
 
-better_apidoc.main([
-    'better-apidoc',
-    '-t',
-    templates_dir,
-    '--force',
-    '--separate',
-    '-o',
-    output_dir,
-    module_dir
-])
+run_apidoc(["--force", "--module-first", "--output-dir", output_dir, module_dir])
 
 # -- General configuration -----------------------------------------------------
 
 
 # Extra styles, found in _static
 def setup(app):
-    app.add_stylesheet('theme_tweaks.css')
+    app.add_css_file("theme_tweaks.css")
 
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -104,37 +83,51 @@ def setup(app):
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.napoleon',
-              'sphinx.ext.inheritance_diagram', 'sphinx.ext.autosummary',
-              'sphinx.ext.imgmath', 'sphinx.ext.intersphinx', 'sphinx.ext.todo',
-              'sphinx.ext.autosummary', 'sphinx.ext.viewcode',
-              'sphinx.ext.coverage', 'sphinx.ext.doctest',
-              'sphinx.ext.ifconfig', 'sphinx.ext.graphviz', 'sphinx.ext.autosectionlabel']
+extensions = [
+    "myst_parser",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.inheritance_diagram",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.imgmath",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.todo",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.viewcode",
+    "sphinx.ext.coverage",
+    "sphinx.ext.doctest",
+    "sphinx.ext.ifconfig",
+    "sphinx.ext.graphviz",
+    "sphinx.ext.autosectionlabel",
+]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # The suffix of source filenames.
-source_suffix = '.rst'
+source_suffix = {
+    ".md": "markdown",
+    ".rst": "restructuredtext",
+}
 
 # The encoding of source files.
 # source_encoding = 'utf-8-sig'
 
 # The master toctree document.
-master_doc = 'index'
+master_doc = "index"
 
 # General information about the project.
-project = u'smif'
-copyright = u'2017, Will Usher, Tom Russell'
+project = "smif"
+copyright = "2017, Will Usher, Tom Russell"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
 # The short X.Y version.
-version = ''  # Is set by calling `setup.py docs`
+version = ""  # TODO check configuration without setuptools
 # The full version, including alpha/beta/rc tags.
-release = ''  # Is set by calling `setup.py docs`
+release = ""  # TODO check configuration without setuptools
 
 # The language for content autogenerated by Sphinx. Refer to documentation
 # for a list of supported languages.
@@ -148,7 +141,7 @@ release = ''  # Is set by calling `setup.py docs`
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ['_build', '../tests/**']
+exclude_patterns = ["_build", "../tests/**"]
 
 # The reST default role (used for this markup: `text`) to use for all documents.
 # default_role = None
@@ -165,10 +158,10 @@ exclude_patterns = ['_build', '../tests/**']
 # show_authors = False
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'paraiso-dark'
+pygments_style = "paraiso-dark"
 
 # A list of ignored prefixes for module index sorting.
-modindex_common_prefix = ['smif.']
+modindex_common_prefix = ["smif."]
 
 # If true, keep warnings as "system message" paragraphs in the built documents.
 # keep_warnings = False
@@ -178,7 +171,7 @@ modindex_common_prefix = ['smif.']
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'alabaster'
+html_theme = "alabaster"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -192,6 +185,7 @@ html_theme = 'alabaster'
 # "<project> v<release> documentation".
 try:
     from smif import __version__
+
     version = __version__
 except ImportError:
     pass
@@ -213,7 +207,7 @@ else:
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_static_path = ["_static"]
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
@@ -257,18 +251,16 @@ html_static_path = ['_static']
 # html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'smif-doc'
+htmlhelp_basename = "smif-doc"
 
 
 # -- Options for LaTeX output --------------------------------------------------
 
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
-    'papersize': 'a4paper',
-
+    "papersize": "a4paper",
     # The font size ('10pt', '11pt' or '12pt').
     # 'pointsize': '10pt',
-
     # Additional stuff for the LaTeX preamble.
     # 'preamble': '',
 }
@@ -276,8 +268,13 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-    ('index', 'user_guide.tex', u'smif Documentation',
-     u'Will Usher & Tom Russell', 'manual'),
+    (
+        "index",
+        "user_guide.tex",
+        "smif Documentation",
+        "Will Usher & Tom Russell",
+        "manual",
+    ),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -301,11 +298,11 @@ latex_documents = [
 # latex_domain_indices = True
 
 # -- External mapping ------------------------------------------------------------
-python_version = '.'.join(map(str, sys.version_info[0:2]))
+python_version = ".".join(map(str, sys.version_info[0:2]))
 intersphinx_mapping = {
-    'numpy': ('https://docs.scipy.org/doc/numpy/', None),
-    'pandas': ('http://pandas.pydata.org/pandas-docs/stable/', None),
-    'python': ('https://docs.python.org/' + python_version, None),
-    'sphinx': ('http://www.sphinx-doc.org/en/stable/', None),
-    'xarray': ('http://xarray.pydata.org/en/stable/', None),
+    "numpy": ("https://docs.scipy.org/doc/numpy/", None),
+    "pandas": ("http://pandas.pydata.org/pandas-docs/stable/", None),
+    "python": ("https://docs.python.org/" + python_version, None),
+    "sphinx": ("http://www.sphinx-doc.org/en/stable/", None),
+    "xarray": ("http://xarray.pydata.org/en/stable/", None),
 }

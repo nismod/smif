@@ -1,14 +1,16 @@
-"""File-backed metadata store
-"""
+"""File-backed metadata store"""
+
 import copy
 import json
 import os
+import tomllib
 from functools import lru_cache
 from logging import getLogger
 from typing import Dict, List
 
 import pandas  # type: ignore
-from ruamel.yaml import YAML  # type: ignore
+import tomli_w
+
 from smif.data_layer.abstract_metadata_store import MetadataStore
 from smif.exception import SmifDataNotFoundError, SmifDataReadError
 
@@ -20,7 +22,7 @@ except ImportError:
 
 
 class FileMetadataStore(MetadataStore):
-    """File-based metadata store (supports YAML, CSV, or GDAL-compatible files)"""
+    """File-based metadata store (supports TOML, CSV, or GDAL-compatible files)"""
 
     def __init__(self, base_folder):
         super().__init__()
@@ -50,11 +52,11 @@ class FileMetadataStore(MetadataStore):
 
     # region Dimensions
     def read_dimensions(self, skip_coords=False) -> List[dict]:
-        dim_names = _read_filenames_in_dir(self.config_folder, ".yml")
+        dim_names = _read_filenames_in_dir(self.config_folder, ".toml")
         return [self.read_dimension(name, skip_coords) for name in dim_names]
 
     def read_dimension(self, dimension_name: str, skip_coords=False):
-        dim = _read_yaml_file(self.config_folder, dimension_name)
+        dim = _read_toml_file(self.config_folder, dimension_name)
         if skip_coords:
             del dim["elements"]
         else:
@@ -70,12 +72,12 @@ class FileMetadataStore(MetadataStore):
         # refer to elements by filename and add to config
         dimension_with_ref = copy.copy(dimension)
         dimension_with_ref["elements"] = elements_filename
-        _write_yaml_file(self.config_folder, dimension["name"], dimension_with_ref)
+        _write_toml_file(self.config_folder, dimension["name"], dimension_with_ref)
 
     def update_dimension(self, dimension_name: str, dimension: Dict):
         # look up elements filename and write elements
 
-        old_dim = _read_yaml_file(self.config_folder, dimension_name)
+        old_dim = _read_toml_file(self.config_folder, dimension_name)
         elements_filename = old_dim["elements"]
         elements = dimension["elements"]
         self._write_dimension_file(elements_filename, elements)
@@ -84,17 +86,17 @@ class FileMetadataStore(MetadataStore):
         dimension_with_ref = copy.copy(dimension)
         dimension_with_ref["elements"] = elements_filename
 
-        _write_yaml_file(self.config_folder, dimension_name, dimension_with_ref)
+        _write_toml_file(self.config_folder, dimension_name, dimension_with_ref)
 
     def delete_dimension(self, dimension_name: str):
         # read to find filename
 
-        old_dim = _read_yaml_file(self.config_folder, dimension_name)
+        old_dim = _read_toml_file(self.config_folder, dimension_name)
         elements_filename = old_dim["elements"]
         # remove elements data
         os.remove(os.path.join(self.data_folder, elements_filename))
         # remove description
-        os.remove(os.path.join(self.config_folder, "{}.yml".format(dimension_name)))
+        os.remove(os.path.join(self.config_folder, "{}.toml".format(dimension_name)))
 
     @lru_cache(maxsize=32)
     def _read_dimension_file(self, filename: str) -> List[Dict]:
@@ -169,7 +171,7 @@ class FileMetadataStore(MetadataStore):
             msg += "Please install fiona to read geographic data files. Try running: \n"
             msg += "    pip install smif[spatial]\n"
             msg += "or:\n"
-            msg += "    conda install fiona shapely rtree\n"
+            msg += "    conda install fiona shapely\n"
             raise SmifDataReadError(msg) from ex
         except IOError as ex:
             msg = "Could not read spatial dimension definition '%s' " % (filepath)
@@ -187,48 +189,50 @@ def _read_spatial_data(filepath):
     return data
 
 
-def _read_yaml_file(directory, name):
-    """Parse yaml config file into plain data (lists, dicts and simple values)
+def _read_toml_file(directory, name):
+    """Parse toml config file into plain data (lists, dicts and simple values)
 
     Parameters
     ----------
     directory : str
     name : str
-        file basename (without yml extension)
+        file basename (without toml extension)
     """
-    path = os.path.join(directory, "{}.yml".format(name))
-    with open(path, "r") as file_handle:
-        return YAML().load(file_handle)
+    path = os.path.join(directory, "{}.toml".format(name))
+    with open(path, "rb") as file_handle:
+        data = tomllib.load(file_handle)
+        if list(data.keys()) == ["list"]:
+            data = data["list"]
+    return data
 
 
-def _write_yaml_file(directory, name, data):
-    """Write plain data to a file as yaml
+def _write_toml_file(directory, name, data):
+    """Write plain data to a file as toml
 
     Parameters
     ----------
     directory : str
     name : str
-        file basename (without yml extension)
+        file basename (without toml extension)
     data
         Data to write (should be lists, dicts and simple values)
     """
-    path = os.path.join(directory, "{}.yml".format(name))
-    with open(path, "w") as file_handle:
-        yaml = YAML()
-        yaml.default_flow_style = False
-        yaml.allow_unicode = True
-        return yaml.dump(data, file_handle)
+    path = os.path.join(directory, "{}.toml".format(name))
+    if type(data) == list:
+        data = {"list": data}
+    with open(path, "wb") as file_handle:
+        return tomli_w.dump(data, file_handle)
 
 
 def _read_filenames_in_dir(path, extension):
-    """Returns the name of the Yaml files in a certain directory
+    """Returns the name of the files in a certain directory
 
     Arguments
     ---------
     path: str
         Path to directory
     extension: str
-        Extension of files (such as: '.yml' or '.csv')
+        Extension of files (such as: '.toml' or '.csv')
 
     Returns
     -------

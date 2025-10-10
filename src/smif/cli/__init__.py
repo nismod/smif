@@ -7,7 +7,6 @@ This command line interface implements a number of methods.
 - `run` performs a simulation of an individual sector model, or the whole system
         of systems model
 - `validate` performs a validation check of the configuration file
-- `app` runs the graphical user interface, opening in a web browser
 
 Folder structure
 ----------------
@@ -17,25 +16,25 @@ used.  In this example, there is one system-of-systems model, combining a water
 supply and an energy demand model::
 
     /config
-        project.yaml
+        project.toml
         /sector_models
-            energy_demand.yml
-            water_supply.yml
+            energy_demand.toml
+            water_supply.toml
         /sos_models
-            energy_water.yml
+            energy_water.toml
         /model_runs
-            run_to_2050.yml
-            short_test_run.yml
+            run_to_2050.toml
+            short_test_run.toml
             ...
     /data
         /initial_conditions
-            reservoirs.yml
+            reservoirs.toml
         /interval_definitions
             annual_intervals.csv
         /interventions
-            water_supply.yml
+            water_supply.toml
         /narratives
-            high_tech_dsm.yml
+            high_tech_dsm.toml
         /region_definitions
             /oxfordshire
                 regions.geojson
@@ -50,14 +49,14 @@ supply and an energy demand model::
         energy_demand.py
         water_supply.py
     /planning
-        expected_to_2020.yaml
-        national_infrastructure_pipeline.yml
+        expected_to_2020.toml
+        national_infrastructure_pipeline.toml
 
 The sector model implementations can be installed independently of the model run
 configuration. The paths to python wrapper classes (implementing SectorModel)
-should be specified in each ``sector_model/*.yml`` configuration.
+should be specified in each ``sector_model/*.toml`` configuration.
 
-The project.yaml file specifies the metadata shared by all elements of the
+The project.toml file specifies the metadata shared by all elements of the
 project; ``sos_models`` specify the combinations of ``sector_models`` and
 ``scenarios`` while individual ``model_runs`` specify the scenario, strategy
 and narrative combinations to be used in each run of the models.
@@ -71,9 +70,8 @@ import os
 import sys
 from argparse import ArgumentParser
 
-import pkg_resources
-
 import pandas
+
 import smif
 import smif.cli.log
 from smif.controller import (
@@ -83,27 +81,13 @@ from smif.controller import (
     execute_model_run,
     execute_model_step,
 )
-from smif.controller.run import DAFNIRunScheduler, SubProcessRunScheduler
 from smif.data_layer import Store
 from smif.data_layer.file import (
     CSVDataStore,
     FileMetadataStore,
     ParquetDataStore,
-    YamlConfigStore,
+    TomlConfigStore,
 )
-from smif.http_api import create_app
-
-try:
-    import _thread
-except ImportError:
-    import thread as _thread
-
-try:
-    import win32api
-
-    USE_WIN32 = True
-except ImportError:
-    USE_WIN32 = False
 
 __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell"
@@ -229,14 +213,14 @@ def prepare_convert(args):
     src_store = _get_store(args)
     if isinstance(src_store.data_store, CSVDataStore):
         tgt_store = Store(
-            config_store=YamlConfigStore(args.directory),
+            config_store=TomlConfigStore(args.directory),
             metadata_store=FileMetadataStore(args.directory),
             data_store=ParquetDataStore(args.directory),
             model_base_folder=(args.directory),
         )
     else:
         tgt_store = Store(
-            config_store=YamlConfigStore(args.directory),
+            config_store=TomlConfigStore(args.directory),
             metadata_store=FileMetadataStore(args.directory),
             data_store=CSVDataStore(args.directory),
             model_base_folder=(args.directory),
@@ -416,14 +400,14 @@ def _get_store(args):
     """Contruct store as configured by arguments"""
     if args.interface == "local_csv":
         store = Store(
-            config_store=YamlConfigStore(args.directory),
+            config_store=TomlConfigStore(args.directory),
             metadata_store=FileMetadataStore(args.directory),
             data_store=CSVDataStore(args.directory),
             model_base_folder=args.directory,
         )
     elif args.interface == "local_binary":
         store = Store(
-            config_store=YamlConfigStore(args.directory),
+            config_store=TomlConfigStore(args.directory),
             metadata_store=FileMetadataStore(args.directory),
             data_store=ParquetDataStore(args.directory),
             model_base_folder=args.directory,
@@ -433,64 +417,6 @@ def _get_store(args):
             "Store interface type {} not recognised.".format(args.interface)
         )
     return store
-
-
-def _run_server(args):
-    app_folder = pkg_resources.resource_filename("smif", "app/dist")
-    if args.scheduler == "dafni" and args.interface != "local_csv":
-        msg = "Scheduler implementation {0}, is not valid when combined with {1}."
-        raise ValueError(msg.format(args.scheduler, args.interface))
-
-    if args.scheduler == "default":
-        model_scheduler = SubProcessRunScheduler()
-    elif args.scheduler == "dafni":
-        model_scheduler = DAFNIRunScheduler(args.username, args.password)
-    else:
-        raise ValueError(
-            "Scheduler implentation {} not recognised.".format(args.scheduler)
-        )
-
-    app = create_app(
-        static_folder=app_folder,
-        template_folder=app_folder,
-        data_interface=_get_store(args),
-        scheduler=model_scheduler,
-    )
-
-    print("    Opening smif app\n")
-    print("    Copy/paste this URL into your web browser to connect:")
-    print("        http://localhost:" + str(args.port) + "\n")
-    # add flush to ensure that text is printed before server thread starts
-    print("    Close your browser then type Control-C here to quit.", flush=True)
-    app.run(host="0.0.0.0", port=args.port, threaded=True)
-
-
-def run_app(args):
-    """Run the client/server application
-
-    Parameters
-    ----------
-    args
-    """
-    # avoid one of two error messages from 'forrtl error(200)' when running
-    # on windows cmd - seems related to scipy's underlying Fortran
-    os.environ["FOR_DISABLE_CONSOLE_CTRL_HANDLER"] = "T"
-
-    if USE_WIN32:
-        # Set handler for CTRL-C. Necessary to avoid `forrtl: error (200):
-        # program aborting...` crash on CTRL-C if we're runnging from Windows
-        # cmd.exe
-        def handler(dw_ctrl_type, hook_sigint=_thread.interrupt_main):
-            """Handler for CTRL-C interrupt"""
-            if dw_ctrl_type == 0:  # CTRL-C
-                hook_sigint()
-                return 1  # don't chain to the next handler
-            return 0  # chain to the next handler
-
-        win32api.SetConsoleCtrlHandler(handler, 1)
-
-    # Create backend server process
-    _run_server(args)
 
 
 def setup_project_folder(args):
@@ -631,38 +557,6 @@ def parse_arguments():
         "--noclobber",
         help="Skip converting data files which already exist as parquet",
         action="store_true",
-    )
-
-    # APP
-    parser_app = subparsers.add_parser(
-        "app", help="Open smif app", parents=[parent_parser]
-    )
-    parser_app.set_defaults(func=run_app)
-    parser_app.add_argument(
-        "-p",
-        "--port",
-        type=int,
-        default=5000,
-        help="The port over which to serve the app",
-    )
-    parser_app.add_argument(
-        "-s",
-        "--scheduler",
-        default="default",
-        choices=["default", "dafni"],
-        help="The module scheduling implementation to use",
-    )
-    parser_app.add_argument(
-        "-u",
-        "--username",
-        help="The username for logging in to the dafni JobSubmissionAPI, \
-                                  only needed with the dafni job scheduler",
-    )
-    parser_app.add_argument(
-        "-pw",
-        "--password",
-        help="The password for logging in to the dafni JobSubmissionAPI, \
-                                  only needed with the dafni job scheduler",
     )
 
     # RUN

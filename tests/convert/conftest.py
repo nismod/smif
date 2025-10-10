@@ -1,5 +1,5 @@
-"""Conversion data fixtures
-"""
+"""Conversion data fixtures"""
+
 import numpy as np
 from pytest import fixture
 

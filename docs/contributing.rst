@@ -1,2 +1,4 @@
 .. _contributing:
-.. include:: ../CONTRIBUTING.rst
+
+.. include:: ../CONTRIBUTING.md
+    :parser: myst

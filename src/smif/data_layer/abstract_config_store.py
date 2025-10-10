@@ -6,6 +6,7 @@
 - scenarios and scenario variants
 - narratives
 """
+
 from abc import ABCMeta, abstractmethod
 
 

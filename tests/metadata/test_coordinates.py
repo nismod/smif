@@ -1,8 +1,9 @@
-"""Test Coordinates metadata
-"""
+"""Test Coordinates metadata"""
+
 from collections import OrderedDict
 
 from pytest import mark, raises
+
 from smif.metadata import Coordinates
 
 

@@ -34,6 +34,7 @@ Around each of the above simulation models, subclassed wrappers based on
 import logging
 
 import numpy as np
+
 from smif.model.sector_model import SectorModel
 
 __author__ = "Will Usher, Tom Russell"
@@ -75,7 +76,7 @@ class WaterSupplySectorModel(SectorModel):
         decisions: list
         state: list
         data: dict
-            A dict of parameters, as define by inputs.yaml, each entry of which
+            A dict of parameters, as define by inputs.toml, each entry of which
             contains a :class:`numpy.ndarray` with dimension regions x intervals
 
         """

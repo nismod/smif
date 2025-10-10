@@ -72,7 +72,7 @@ class ModelRun {
   + set_modelling_horizon(timestep_list)
   -- Running --
   + run()
-  
+
 }
 note right of ModelRun : We need to set one\n (and only one) scenario\n for each ScenarioSet defined
 note right of ModelRun : We need to set one\n (and only one) narrative\n for each NarrativeSet defined
@@ -94,7 +94,7 @@ abstract class Model {
 
 
 class SosModel {
-  - sector_models : list 
+  - sector_models : list
   - dependencies : list
 
   -- Building --
@@ -151,7 +151,7 @@ abstract class ModelInputOutput {
   + get_temporal_resolution()
 }
 
-ModelInputOutput <|-- ModelInput 
+ModelInputOutput <|-- ModelInput
 ModelInputOutput <|-- ModelOutput
 ModelInputOutput -- SpaceRes
 ModelInputOutput -- TimeRes
@@ -198,7 +198,7 @@ ModelRunner -- SosModel
 SectorModel *-- "*" Intervention
 class Intervention {
 + {static} names
-+ {static} attributes 
++ {static} attributes
 - name : string
 - attributes : dict
 + Intervention(name)

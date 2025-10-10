@@ -2,6 +2,7 @@ from typing import Dict, List
 from unittest.mock import Mock
 
 from pytest import fixture, raises
+
 from smif.data_layer.store import Store
 from smif.decision.decision import DecisionManager, RuleBased
 from smif.exception import SmifDataNotFoundError

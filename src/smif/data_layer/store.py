@@ -11,9 +11,9 @@ SmifDataMismatchError
     Data presented to read, write and update methods is in the
     incorrect format or of wrong dimensions to that expected
 SmifDataReadError
-    When unable to read data e.g. unable to handle file type or connect
-    to database
+    When unable to read data e.g. unable to handle file type
 """
+
 import itertools
 import logging
 import os
@@ -23,7 +23,8 @@ from operator import itemgetter
 from os.path import splitext
 from typing import Dict, List, Optional, Union
 
-import numpy as np  # type: ignore
+import numpy as np
+
 from smif.data_layer import DataArray
 from smif.data_layer.abstract_data_store import DataStore
 from smif.data_layer.abstract_metadata_store import MetadataStore
@@ -31,7 +32,7 @@ from smif.data_layer.file import (
     CSVDataStore,
     FileMetadataStore,
     ParquetDataStore,
-    YamlConfigStore,
+    TomlConfigStore,
 )
 from smif.data_layer.validate import (
     validate_sos_model_config,
@@ -98,7 +99,7 @@ class Store:
             )
 
         return cls(
-            config_store=YamlConfigStore(directory),
+            config_store=TomlConfigStore(directory),
             metadata_store=FileMetadataStore(directory),
             data_store=data_store,
             model_base_folder=directory,

@@ -1,0 +1,28 @@
+# Conda environment specification
+# To import/create a copy of the environment:
+#    micromamba env create -f environment.yml
+name: smif
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python=3.12
+  - black # dev
+  - codecov # test
+  - fiona
+  - isodate
+  - mypy # dev
+  - networkx
+  - numpy
+  - pandas
+  - pint
+  - pre-commit # dev
+  - pyarrow
+  - pytest # test
+  - pytest-cov # test
+  - shapely
+  - sphinx # docs
+  - tomli-w
+  - xarray
+  - pip:
+      - -e .

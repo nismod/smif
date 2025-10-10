@@ -1,0 +1,56 @@
+name = "energy_demand"
+description = ""
+path = "models/energy_demand.py"
+classname = "EDMWrapper"
+interventions = [
+    "energy_supply",
+    "energy_supply_alt",
+]
+initial_conditions = []
+
+[[inputs]]
+name = "population"
+dims = [
+    "country",
+]
+dtype = "int"
+unit = "people"
+
+[[inputs]]
+name = "energy_demand"
+dims = [
+    "country",
+]
+dtype = "float"
+unit = "kWh"
+
+[[outputs]]
+name = "cost"
+dims = [
+    "country",
+]
+dtype = "float"
+unit = "million GBP"
+
+[[outputs]]
+name = "water_demand"
+dims = [
+    "country",
+]
+dtype = "float"
+unit = "Ml"
+
+[[parameters]]
+name = "smart_meter_savings"
+description = "The savings from smart meters"
+abs_range = [
+    0,
+    100,
+]
+exp_range = [
+    3,
+    10,
+]
+default = "defaults"
+dtype = "float"
+unit = "%"

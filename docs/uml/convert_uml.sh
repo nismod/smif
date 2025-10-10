@@ -3,7 +3,7 @@
 # PlantUML converts plain text diagram notation to images
 #
 # Requires plantuml jar from http://plantuml.com/download to provide plantuml
-# command. 
+# command.
 #
 # Depends on GraphViz from http://www.graphviz.org/Download..php to create
 # diagrams. E.g. set environment variable

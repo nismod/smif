@@ -1,1 +1,0 @@
-DROP TABLE IF EXISTS sos_model_simulation_models;

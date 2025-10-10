@@ -1,53 +1,20 @@
-"""Test all ConfigStore implementations
-"""
+"""Test all ConfigStore implementations"""
+
 import getpass
 import os
 from copy import copy
 
-import smif.data_layer.database.setup_database
-from pytest import fixture, mark, param, raises
-from smif.data_layer.database_interface import DbConfigStore
-from smif.data_layer.file.file_config_store import YamlConfigStore
+from pytest import fixture, mark, raises
+
+from smif.data_layer.file.file_config_store import TomlConfigStore
 from smif.data_layer.memory_interface import MemoryConfigStore
 from smif.exception import SmifDataExistsError, SmifDataNotFoundError
-
-SKIP_ON_APPVEYOR = mark.skipif(
-    "APPVEYOR" in os.environ and os.environ["APPVEYOR"],
-    reason="Not yet set up with postgresql service on Appveyor CI",
-)
-
-
-# For testing, always use `test_smif` database; other connection details are configurable
-DB_OPTIONS = {"dbname": "test_smif"}
-
-# Try setting sane defaults if environment variables are not set
-try:
-    DB_OPTIONS["host"] = os.environ["PGHOST"]
-except KeyError:
-    DB_OPTIONS["host"] = "localhost"
-
-try:
-    DB_OPTIONS["port"] = os.environ["PGPORT"]
-except KeyError:
-    DB_OPTIONS["port"] = 5432
-
-try:
-    DB_OPTIONS["user"] = os.environ["PGUSER"]
-except KeyError:
-    DB_OPTIONS["user"] = getpass.getuser()
-
-try:
-    DB_OPTIONS["password"] = os.environ["PGPASSWORD"]
-except KeyError:
-    DB_OPTIONS["password"] = ""
 
 
 @fixture(
     params=[
         "memory",
         "text_file",
-        # param('database', marks=SKIP_ON_APPVEYOR)
-        param("database", marks=mark.skip),
     ]
 )
 def init_handler(request, setup_empty_folder_structure):
@@ -55,41 +22,8 @@ def init_handler(request, setup_empty_folder_structure):
         handler = MemoryConfigStore()
     elif request.param == "text_file":
         base_folder = setup_empty_folder_structure
-        handler = YamlConfigStore(base_folder)
-    elif request.param == "database":
-        # migrations dir
-        migrations_dir = os.path.join(
-            os.path.dirname(
-                os.path.realpath(smif.data_layer.database.setup_database.__file__)
-            ),
-            "migrations",
-        )
-
-        # run up migrations
-        smif.data_layer.database.setup_database.up_migrations(
-            migrations_dir, DB_OPTIONS["dbname"]
-        )
-
-        # run down migrations with fixture teardown
-        def teardown():
-            smif.data_layer.database.setup_database.down_migrations(
-                migrations_dir, DB_OPTIONS["dbname"]
-            )
-
-        request.addfinalizer(teardown)
-
-        handler = DbConfigStore(**DB_OPTIONS)
-
+        handler = TomlConfigStore(base_folder)
     return handler
-
-
-@mark.skip
-def test_db_connection():
-    """Test that we can connect to a database in the test environment"""
-    store = DbConfigStore(**DB_OPTIONS)
-    with store.database_connection.cursor() as cur:
-        cur.execute("SELECT 1;")
-        assert cur.fetchone() == (1,)
 
 
 @fixture

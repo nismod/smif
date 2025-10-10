@@ -1,10 +1,11 @@
-"""Handles conversion between the sets of regions used in the `SosModel`
-"""
+"""Handles conversion between the sets of regions used in the `SosModel`"""
+
 from collections import namedtuple
 
-from rtree import index  # type: ignore
+from shapely import STRtree
 from shapely.geometry import mapping, shape  # type: ignore
 from shapely.validation import explain_validity  # type: ignore
+
 from smif.convert.adaptor import Adaptor
 from smif.convert.register import NDimensionalRegister, ResolutionSet
 
@@ -64,9 +65,7 @@ class RegionSet(ResolutionSet):
         self._regions = []
         self.data = [e["feature"] for e in elements]
 
-        self._idx = index.Index()
-        for pos, region in enumerate(self._regions):
-            self._idx.insert(pos, region.shape.bounds)
+        self._idx = STRtree(list(region for _, region in self._regions))
 
     @property
     def data(self):
@@ -122,9 +121,9 @@ class RegionSet(ResolutionSet):
         ]
 
     def intersection(self, to_entry):
-        """Return the set of regions intersecting with the bounds of `to_entry`"""
-        bounds = to_entry.shape.bounds
-        return [x for x in self._idx.intersection(bounds)]
+        """Return the set of region indexes intersecting with the bounds of `to_entry`"""
+        bounds = to_entry.shape
+        return self._idx.query(bounds)
 
     def get_proportion(self, from_idx, entry_b):
         """Calculate the proportion of shape a that intersects with shape b"""

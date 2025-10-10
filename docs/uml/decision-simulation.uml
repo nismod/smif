@@ -22,7 +22,7 @@ package smif.model_run {
     - timesteps
     - scenarios : ScenarioCombination [*]
     - narratives : NarrativeCombination [*]
-    - strategy : 
+    - strategy :
     -- Building --
     + set_description(description)
     + set_sos_model(SosModel)
@@ -32,7 +32,7 @@ package smif.model_run {
     + set_modelling_horizon(timestep_list)
     -- Running --
     + run()
-    
+
   }
   ModelRunner *-- ModelRun
 }

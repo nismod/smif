@@ -1,16 +1,16 @@
-"""Test command line interface
-"""
+"""Test command line interface"""
 
 import os
+import shutil
 import sys
-from distutils.dir_util import copy_tree, remove_tree
 from itertools import product
 from tempfile import TemporaryDirectory
 from time import sleep
 from unittest.mock import call, patch
 
-import smif
 from pytest import fixture, raises
+
+import smif
 from smif.cli import confirm, main, parse_arguments, setup_project_folder
 from smif.exception import SmifDataNotFoundError
 
@@ -20,11 +20,8 @@ def tmp_sample_project(tmpdir_factory):
     """Copy sample_project folder to temporary directory, ignoring any results"""
     dst = str(tmpdir_factory.mktemp("smif"))
     src = os.path.join(os.path.dirname(smif.__file__), "sample_project")
-    copy_tree(src, dst)
-    try:
-        remove_tree(os.path.join(dst, "results"))
-    except FileNotFoundError:
-        pass
+    shutil.copytree(src, dst, dirs_exist_ok=True)
+    shutil.rmtree(os.path.join(dst, "results"), ignore_errors=True)
     return dst
 
 
@@ -304,7 +301,7 @@ def test_fixture_prepare_model_runs(capsys, tmp_sample_project):
     main(["prepare-run", "population", "energy_central", "-d", tmp_sample_project])
 
     for suffix in pop_variants:
-        filename = "energy_central_population_" + suffix + ".yml"
+        filename = "energy_central_population_" + suffix + ".toml"
         assert os.path.isfile(
             os.path.join(tmp_sample_project, "config/model_runs", filename)
         )
@@ -329,18 +326,18 @@ def test_fixture_prepare_model_runs(capsys, tmp_sample_project):
             ]
         )
         for suffix in pop_variants[s : e + 1]:
-            filename = "energy_central_population_" + suffix + ".yml"
+            filename = "energy_central_population_" + suffix + ".toml"
             assert os.path.isfile(
                 os.path.join(tmp_sample_project, "config/model_runs", filename)
             )
         for suffix in pop_variants[0:s]:
-            filename = "energy_central_population_" + suffix + ".yml"
+            filename = "energy_central_population_" + suffix + ".toml"
             assert not os.path.isfile(
                 os.path.join(tmp_sample_project, "config/model_runs", filename)
             )
         if e < variant_range[-1]:
             for suffix in pop_variants[e + 1 :]:
-                filename = "energy_central_population_" + suffix + ".yml"
+                filename = "energy_central_population_" + suffix + ".toml"
                 assert not os.path.isfile(
                     os.path.join(tmp_sample_project, "config/model_runs", filename)
                 )
@@ -351,7 +348,7 @@ def clear_model_runs(config_dir):
     test_fixture_prepare_model_runs
     """
     for suffix in ["low", "med", "high"]:
-        filename = "energy_central_population_" + suffix + ".yml"
+        filename = "energy_central_population_" + suffix + ".toml"
         if os.path.isfile(os.path.join(config_dir, "config/model_runs", filename)):
             os.remove(os.path.join(config_dir, "config/model_runs", filename))
 

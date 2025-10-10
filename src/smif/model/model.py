@@ -1,5 +1,5 @@
-"""Model abstract class
-"""
+"""Model abstract class"""
+
 import sys
 from enum import Enum
 from logging import getLogger

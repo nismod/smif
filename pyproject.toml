@@ -1,0 +1,49 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "smif"
+dynamic = ["version"]
+description = "Simulation Modelling Integration Framework"
+readme = "README.md"
+license = "mit"
+authors = [
+    { name = "Will Usher", email = "william.usher@ouce.ox.ac.uk" },
+    { name = "Tom Russell", email = "tom.russell@ouce.ox.ac.uk" },
+    { name = "Roald Schoenmakers" },
+    { name = "Craig Robson" },
+    { name = "Fergus Cooper" },
+    { name = "Thibault Lestang" },
+    { name = "Rose Dickinson" },
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Programming Language :: JavaScript",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering",
+]
+dependencies = ["isodate", "networkx", "numpy", "Pint", "pyarrow", "requests"]
+
+[project.optional-dependencies]
+data = ["pandas", "xarray"]
+spatial = ["fiona", "shapely"]
+docs = ["myst-parser", "Sphinx==8.2.3"]
+
+[project.scripts]
+smif = "smif.cli:main"
+
+[project.urls]
+Homepage = "http://www.itrc.org.uk"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "src/smif/_version.py"
+
+[tool.hatch.build.targets.sdist]
+include = ["src"]

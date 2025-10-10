@@ -31,8 +31,8 @@ div.highlight pre {
     background: transparent;
     padding: 0.5em 0.5em;
 }
-.highlight-yaml .l {
-    /* override YAML highlighting not to be mostly orange! */
+.highlight-toml .l {
+    /* override toml highlighting not to be mostly orange! */
     color: #e7e9db;
 }
 div.figure {
