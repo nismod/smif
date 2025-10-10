@@ -1,0 +1,23 @@
+name = "energy"
+description = "The future demand of energy for the UK"
+scenarios = [
+    "population",
+    "water_sector_energy_demand",
+]
+narratives = []
+sector_models = [
+    "energy_demand",
+]
+model_dependencies = []
+
+[[scenario_dependencies]]
+source = "population"
+source_output = "population"
+sink = "energy_demand"
+sink_input = "population"
+
+[[scenario_dependencies]]
+source = "water_sector_energy_demand"
+source_output = "energy_demand"
+sink = "energy_demand"
+sink_input = "energy_demand"

@@ -1,0 +1,18 @@
+name = "climate"
+description = "UKCP09 Climate Projections"
+
+[[provides]]
+name = "precipitation"
+description = "Rainfall in the UK"
+dims = [
+    "country",
+]
+dtype = "float"
+unit = "ml"
+
+[[variants]]
+name = "central"
+description = "Central Rainfall"
+
+[variants.data]
+precipitation = "precipitation"

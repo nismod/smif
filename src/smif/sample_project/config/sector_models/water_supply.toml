@@ -1,0 +1,105 @@
+name = "water_supply"
+description = "Simulates the optimal operation of the UK water supply system"
+path = "models/water_supply.py"
+classname = "WaterSupplySectorModel"
+interventions = [
+    "water_supply",
+]
+initial_conditions = [
+    "water_supply_oxford",
+    "reservoirs",
+]
+
+[[inputs]]
+name = "precipitation"
+dims = [
+    "country",
+]
+dtype = "float"
+unit = "ml"
+
+[[inputs]]
+name = "population"
+dims = [
+    "country",
+]
+dtype = "int"
+unit = "people"
+
+[[inputs]]
+name = "water_demand"
+dims = [
+    "country",
+]
+dtype = "float"
+unit = "Ml"
+
+[[inputs]]
+name = "reservoir_level"
+dims = [
+    "country",
+]
+dtype = "float"
+unit = "Ml"
+
+[[outputs]]
+name = "cost"
+dims = [
+    "country",
+]
+dtype = "float"
+unit = "million GBP"
+
+[[outputs]]
+name = "energy_demand"
+dims = [
+    "country",
+]
+dtype = "float"
+unit = "kWh"
+
+[[outputs]]
+name = "water"
+dims = [
+    "country",
+]
+dtype = "float"
+unit = "Ml"
+
+[[outputs]]
+name = "reservoir_level"
+dims = [
+    "country",
+]
+dtype = "float"
+unit = "Ml"
+
+[[parameters]]
+name = "clever_water_meter_savings"
+description = "The savings from smart water meters"
+abs_range = [
+    0,
+    100,
+]
+exp_range = [
+    3,
+    10,
+]
+default = "defaults"
+dtype = "float"
+unit = "%"
+
+[[parameters]]
+name = "per_capita_water_demand"
+description = "The assumed per capita demand for water"
+abs_range = [
+    0,
+    1.5,
+]
+exp_range = [
+    1,
+    1.3,
+]
+default = "defaults"
+dtype = "float"
+unit = "liter/person"
