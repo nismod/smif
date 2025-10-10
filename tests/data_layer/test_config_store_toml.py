@@ -1,8 +1,8 @@
-"""Test YAML config store"""
+"""Test TOML config store"""
 
 from pytest import fixture, raises
 
-from smif.data_layer.file.file_config_store import YamlConfigStore
+from smif.data_layer.file.file_config_store import TomlConfigStore
 from smif.exception import (
     SmifDataExistsError,
     SmifDataMismatchError,
@@ -12,7 +12,7 @@ from smif.exception import (
 
 @fixture(scope="function")
 def config_handler(setup_folder_structure, get_sector_model, sample_scenarios):
-    handler = YamlConfigStore(str(setup_folder_structure), validation=False)
+    handler = TomlConfigStore(str(setup_folder_structure), validation=False)
     for scenario in sample_scenarios:
         handler.write_scenario(scenario)
     handler.write_model(get_sector_model)
@@ -23,8 +23,8 @@ class TestModelRun:
     """Model runs should be defined once, hard to overwrite"""
 
     def test_model_run_read_all(self, model_run, config_handler):
-        """Test to write two model_run configurations to Yaml files, then
-        read the Yaml files and compare that the result is equal.
+        """Test to write two model_run configurations to TOML files, then
+        read the TOML files and compare that the result is equal.
         """
 
         model_run1 = model_run
@@ -129,8 +129,8 @@ class TestSosModel:
     """SoSModel configurations should be accessible and editable."""
 
     def test_sos_model_read_all(self, get_sos_model, config_handler):
-        """Test to write two sos_model configurations to Yaml files, then
-        read the Yaml files and compare that the result is equal.
+        """Test to write two sos_model configurations to TOML files, then
+        read the TOML files and compare that the result is equal.
         """
 
         sos_model1 = get_sos_model
@@ -237,8 +237,8 @@ class TestSectorModel:
     """
 
     def test_sector_model_read_all(self, get_sector_model, config_handler):
-        """Test to write two sector_model configurations to Yaml files, then
-        read the Yaml files and compare that the result is equal.
+        """Test to write two sector_model configurations to TOML files, then
+        read the TOML files and compare that the result is equal.
         """
 
         sector_model1 = get_sector_model

@@ -15,11 +15,11 @@ model run.
 import json
 import os
 import time
+import tomllib
 from collections import defaultdict
 
 import requests
 from minio import Minio
-from ruamel.yaml import YAML  # type: ignore
 
 if "BACKEND_NISMOD_MINIO_SECRETS_FILE" in os.environ:
     MINIO_CREDENTIALS_FILE = os.environ["BACKEND_NISMOD_MINIO_SECRETS_FILE"]
@@ -97,7 +97,7 @@ class DAFNIRunScheduler(object):
             self._output[model_run_name] = ""
             self._status[model_run_name] = "queing"
 
-            yaml_files = self.get_yamls(model_run_name, args)
+            toml_files = self.get_tomls(model_run_name, args)
             model_run_id = model_run_name.replace("_", "-")
 
             minio_credentials = self.get_dict_from_json(MINIO_CREDENTIALS_FILE)
@@ -116,13 +116,11 @@ class DAFNIRunScheduler(object):
                     minio_client.remove_bucket(model_run_id)
 
             minio_client.make_bucket(model_run_id)
-            for yml in yaml_files:
-                local_path = args["directory"] + yml
-                with open(local_path, "rb") as yml_data:
-                    yml_stat = os.stat(local_path)
-                    minio_client.put_object(
-                        model_run_id, yml[1:], yml_data, yml_stat.st_size
-                    )
+            for fname in toml_files:
+                local_path = args["directory"] + fname
+                with open(local_path, "rb") as data:
+                    stat = os.stat(local_path)
+                    minio_client.put_object(model_run_id, fname[1:], data, stat.st_size)
 
             response = requests.get(URL_JOBS, headers=self.auth_header)
             response.raise_for_status()
@@ -148,24 +146,24 @@ class DAFNIRunScheduler(object):
     def get_scheduler_type(self):
         return "dafni"
 
-    def get_yamls(self, model_run_name, args):
-        yaml_files = []
-        yaml_files.append("/config/model_runs/" + model_run_name + ".yml")
-        f = open(args["directory"] + yaml_files[0], "r")
-        doc = YAML(typ="safe").load(f.read())
+    def get_tomls(self, model_run_name, args):
+        toml_files = []
+        toml_files.append("/config/model_runs/" + model_run_name + ".toml")
+        with open(args["directory"] + toml_files[0], "rb") as f:
+            doc = tomllib.load(f)
 
-        yaml_files.append("/config/sos_models/" + doc["sos_model"] + ".yml")
+        toml_files.append("/config/sos_models/" + doc["sos_model"] + ".toml")
 
-        sos_f = open(args["directory"] + yaml_files[1])
-        sos_doc = YAML(typ="safe").load(sos_f.read())
+        with open(args["directory"] + toml_files[1], "rb") as sos_f:
+            sos_doc = tomllib.load(sos_f)
 
         for sector_model in sos_doc["sector_models"]:
-            yaml_files.append("/config/sector_models/" + sector_model + ".yml")
+            toml_files.append("/config/sector_models/" + sector_model + ".toml")
 
         for scenario in sos_doc["scenarios"]:
-            yaml_files.append("/config/scenarios/" + scenario + ".yml")
+            toml_files.append("/config/scenarios/" + scenario + ".toml")
 
-        return yaml_files
+        return toml_files
 
     def get_dict_from_json(self, file_path):
         """
@@ -205,8 +203,8 @@ class DAFNIRunScheduler(object):
         )
 
         model_run_id = model_run_name.replace("_", "-")
-        yaml_files_minio = minio_client.list_objects(model_run_id, recursive=True)
-        for d in yaml_files_minio:
+        toml_files_minio = minio_client.list_objects(model_run_id, recursive=True)
+        for d in toml_files_minio:
             minio_client.remove_object(model_run_id, d.object_name)
 
         minio_client.remove_bucket(model_run_id)

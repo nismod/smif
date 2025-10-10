@@ -370,8 +370,8 @@ package datalayer {
     + {abstract} write_dependency(data)
   }
 
-DataReader <|-- YamlReader
-class YamlReader {
+DataReader <|-- TomlReader
+class TomlReader {
     - filepath : string
     + read_model_run(id)
     + read_sos_model(name)

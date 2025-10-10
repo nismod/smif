@@ -10,27 +10,27 @@ to run models, configure simulation models and define system-of-system models.
 
 The basic folder structure looks like this::
 
-    project.yml
+    project.toml
     /config
         /dimensions
-            annual.yml
-            country.yml
-            oxfordshire.yml
+            annual.toml
+            country.toml
+            oxfordshire.toml
         /model_runs
-            energy_central.yml
-            energy_water_cp_cr.yml
+            energy_central.toml
+            energy_water_cp_cr.toml
         /narratives
-            technology.yml
+            technology.toml
         /scenarios
-            climate.yml
-            population.yml
-            water_sector_energy_demand.yml
+            climate.toml
+            population.toml
+            water_sector_energy_demand.toml
         /sector_models
-            energy_demand.yml
-            water_supply.yml
+            energy_demand.toml
+            water_supply.toml
         /sos_models
-            energy_water.yml
-            energy.yml
+            energy_water.toml
+            energy.toml
     /data
         /coefficients
             ...

@@ -304,7 +304,7 @@ def test_fixture_prepare_model_runs(capsys, tmp_sample_project):
     main(["prepare-run", "population", "energy_central", "-d", tmp_sample_project])
 
     for suffix in pop_variants:
-        filename = "energy_central_population_" + suffix + ".yml"
+        filename = "energy_central_population_" + suffix + ".toml"
         assert os.path.isfile(
             os.path.join(tmp_sample_project, "config/model_runs", filename)
         )
@@ -329,18 +329,18 @@ def test_fixture_prepare_model_runs(capsys, tmp_sample_project):
             ]
         )
         for suffix in pop_variants[s : e + 1]:
-            filename = "energy_central_population_" + suffix + ".yml"
+            filename = "energy_central_population_" + suffix + ".toml"
             assert os.path.isfile(
                 os.path.join(tmp_sample_project, "config/model_runs", filename)
             )
         for suffix in pop_variants[0:s]:
-            filename = "energy_central_population_" + suffix + ".yml"
+            filename = "energy_central_population_" + suffix + ".toml"
             assert not os.path.isfile(
                 os.path.join(tmp_sample_project, "config/model_runs", filename)
             )
         if e < variant_range[-1]:
             for suffix in pop_variants[e + 1 :]:
-                filename = "energy_central_population_" + suffix + ".yml"
+                filename = "energy_central_population_" + suffix + ".toml"
                 assert not os.path.isfile(
                     os.path.join(tmp_sample_project, "config/model_runs", filename)
                 )
@@ -351,7 +351,7 @@ def clear_model_runs(config_dir):
     test_fixture_prepare_model_runs
     """
     for suffix in ["low", "med", "high"]:
-        filename = "energy_central_population_" + suffix + ".yml"
+        filename = "energy_central_population_" + suffix + ".toml"
         if os.path.isfile(os.path.join(config_dir, "config/model_runs", filename)):
             os.remove(os.path.join(config_dir, "config/model_runs", filename))
 

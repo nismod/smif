@@ -62,7 +62,6 @@ mock_modules = [
     "pint",
     "pyarrow",
     "rtree",
-    "ruamel.yaml",
     "shapely",
     "shapely.geometry",
     "shapely.validation",
