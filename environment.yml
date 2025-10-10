@@ -11,7 +11,6 @@ dependencies:
   - codecov # test
   - fiona
   - isodate
-  - minio
   - mypy # dev
   - networkx
   - numpy
@@ -20,10 +19,8 @@ dependencies:
   - pre-commit # dev
   - psycopg2
   - pyarrow
-  - pylint # dev
   - pytest # test
   - pytest-cov # test
-  - requests
   - shapely
   - sphinx # docs
   - tomli-w
