@@ -12,7 +12,6 @@ Pint>=0.8
 psycopg2>=2.7
 pyarrow==14.0.1
 python-dateutil>=2.6
-pywin32; sys_platform == 'win32'
 requests
 Rtree>=0.7
 shapely>=1.3
