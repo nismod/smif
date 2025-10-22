@@ -3,5 +3,5 @@
 better-apidoc
 m2r
 requests
-Sphinx==1.8
+Sphinx
 Setuptools<81
