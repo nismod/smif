@@ -3,4 +3,3 @@
 m2r
 requests
 Sphinx
-Setuptools<81
