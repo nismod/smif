@@ -2,8 +2,7 @@ import logging
 import os
 import shutil
 
-import pkg_resources
-
+from importlib import resources
 
 def copy_project_folder(directory):
     """Creates folder structure in the target directory
@@ -21,13 +20,14 @@ def copy_project_folder(directory):
     logging.info("Created sample project in %s", dirname)
 
 
-def _recursive_overwrite(pkg, src, dest):
-    if pkg_resources.resource_isdir(pkg, src):
+def _recursive_overwrite(pkg: str, src: str, dest: str):
+    if resources.files(pkg).joinpath(src).is_dir():
         if not os.path.isdir(dest):
             os.makedirs(dest)
-        contents = pkg_resources.resource_listdir(pkg, src)
+        contents = resources.files(pkg).joinpath(src).iterdir()
         for item in contents:
-            _recursive_overwrite(pkg, os.path.join(src, item), os.path.join(dest, item))
+            _recursive_overwrite(pkg, os.path.join(src, item.name), os.path.join(dest, item.name))
     else:
-        filename = pkg_resources.resource_filename(pkg, src)
-        shutil.copyfile(filename, dest)
+        filename = resources.files(pkg) / src
+        with resources.as_file(filename) as path:
+            shutil.copyfile(path, dest)

@@ -71,7 +71,7 @@ import os
 import sys
 from argparse import ArgumentParser
 
-import pkg_resources
+from importlib import resources
 
 import pandas
 import smif
@@ -436,26 +436,28 @@ def _get_store(args):
 
 
 def _run_server(args):
-    app_folder = pkg_resources.resource_filename("smif", "app/dist")
-    if args.scheduler == "dafni" and args.interface != "local_csv":
-        msg = "Scheduler implementation {0}, is not valid when combined with {1}."
-        raise ValueError(msg.format(args.scheduler, args.interface))
+    app_folder = resources.files("smif") / "app/dist"
+    with resources.as_file(app_folder) as path:
+    
+        if args.scheduler == "dafni" and args.interface != "local_csv":
+            msg = "Scheduler implementation {0}, is not valid when combined with {1}."
+            raise ValueError(msg.format(args.scheduler, args.interface))
 
-    if args.scheduler == "default":
-        model_scheduler = SubProcessRunScheduler()
-    elif args.scheduler == "dafni":
-        model_scheduler = DAFNIRunScheduler(args.username, args.password)
-    else:
-        raise ValueError(
-            "Scheduler implentation {} not recognised.".format(args.scheduler)
+        if args.scheduler == "default":
+            model_scheduler = SubProcessRunScheduler()
+        elif args.scheduler == "dafni":
+            model_scheduler = DAFNIRunScheduler(args.username, args.password)
+        else:
+            raise ValueError(
+                "Scheduler implentation {} not recognised.".format(args.scheduler)
+            )
+
+        app = create_app(
+            static_folder=path,
+            template_folder=path,
+            data_interface=_get_store(args),
+            scheduler=model_scheduler,
         )
-
-    app = create_app(
-        static_folder=app_folder,
-        template_folder=app_folder,
-        data_interface=_get_store(args),
-        scheduler=model_scheduler,
-    )
 
     print("    Opening smif app\n")
     print("    Copy/paste this URL into your web browser to connect:")
