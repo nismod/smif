@@ -30,7 +30,7 @@ import os
 import sys
 from unittest.mock import MagicMock
 
-import better_apidoc
+from sphinx.ext.apidoc import main as run_apidoc
 
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
@@ -80,23 +80,14 @@ output_dir = os.path.join(__location__, "api")
 module_dir = os.path.join(__location__, "../src/smif")
 templates_dir = os.path.join(__location__, "_templates")
 
-better_apidoc.main([
-    'better-apidoc',
-    '-t',
-    templates_dir,
-    '--force',
-    '--separate',
-    '-o',
-    output_dir,
-    module_dir
-])
+run_apidoc(["--force", "--module-first", "--output-dir", output_dir, module_dir])
 
 # -- General configuration -----------------------------------------------------
 
 
 # Extra styles, found in _static
 def setup(app):
-    app.add_stylesheet('theme_tweaks.css')
+    app.add_css_file('theme_tweaks.css')
 
 
 # If your documentation needs a minimal Sphinx version, state it here.
