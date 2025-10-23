@@ -10,7 +10,7 @@ numpy>=1.11,<2
 pandas
 Pint>=0.8
 psycopg2>=2.7
-pyarrow==14.0.1
+pyarrow
 python-dateutil>=2.6
 pywin32; sys_platform == 'win32'
 requests
