@@ -10,6 +10,7 @@
 __pycache__/*
 .cache/*
 .*.swp
+tmp.*
 
 # Virtualenv (if used)
 venv
