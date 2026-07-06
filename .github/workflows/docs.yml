@@ -21,15 +21,15 @@ jobs:
     build:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v7
             - name: Setup Pages
               id: pages
-              uses: actions/configure-pages@v3
+              uses: actions/configure-pages@v6
 
             - name: Set up Python
-              uses: actions/setup-python@v5
+              uses: actions/setup-python@v6
               with:
-                  python-version: "3.11"
+                  python-version: "3.13"
 
             - name: Install dependencies and build python module
               run: |
@@ -44,7 +44,7 @@ jobs:
                   popd
 
             - name: Upload artifact
-              uses: actions/upload-pages-artifact@v2
+              uses: actions/upload-pages-artifact@v3
               with:
                   path: docs/build/html
 
@@ -58,4 +58,4 @@ jobs:
         steps:
             - name: Deploy to GitHub Pages
               id: deployment
-              uses: actions/deploy-pages@v2
+              uses: actions/deploy-pages@v4
