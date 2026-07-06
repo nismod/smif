@@ -128,11 +128,14 @@ Versions under development can be installed from github using pip too:
 
     pip install git+http://github.com/nismod/smif
 
-To install from the source code in development mode:
+To install from the source code in development mode, in a Python virtualenv,
+with all optional dependencies:
 
     git clone http://github.com/nismod/smif
     cd smif
-    pip install -e .
+    python -m venv venv
+    source ./venv/bin/activate
+    pip install -e .[dev,docs,data,spatial]
 
 ### Spatial libraries
 
