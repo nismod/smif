@@ -74,7 +74,6 @@ class TomlConfigStore(ConfigStore):
             The project configuration
         """
         if self._project_config_cache_invalid:
-
             self._project_config_cache = _read_toml_file(self.base_folder, "project")
             self._project_config_cache_invalid = False
         return copy.deepcopy(self._project_config_cache)
@@ -221,7 +220,6 @@ class TomlConfigStore(ConfigStore):
 
         # ignore interventions and initial conditions (which the app UI didn't handle)
         if model["interventions"] or model["initial_conditions"]:
-
             old_model = _read_toml_file(
                 self.config_folders["sector_models"], model["name"]
             )
@@ -360,7 +358,7 @@ def _write_toml_file(directory, name, data):
         Data to be written to the file
     """
     path = os.path.join(directory, "{}.toml".format(name))
-    if type(data) == list:
+    if isinstance(data, list):
         data = {"list": data}
     with open(path, "wb") as file_handle:
         return tomli_w.dump(data, file_handle)

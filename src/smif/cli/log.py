@@ -52,7 +52,6 @@ def summary(self, *args, **kws):
 
         # body
         for profile in logging.Logger._profile.keys():
-
             # calculate time diff
             profile_data = logging.Logger._profile[profile]
             diff = profile_data["stop"] - profile_data["start"]

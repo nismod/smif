@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Holds fixtures for the smif package tests"""
+
 from __future__ import absolute_import, division, print_function
 
 import json
@@ -393,7 +394,7 @@ def get_sector_model(annual, hourly, lad):
             },
             {
                 "name": "homogeneity_coefficient",
-                "description": "How homegenous the centralisation" "process is",
+                "description": "How homegenous the centralisationprocess is",
                 "absolute_range": [0, 1],
                 "expected_range": [0, 1],
                 "unit": "percentage",

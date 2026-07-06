@@ -26,6 +26,7 @@ The key functions include:
   approaches
 
 """
+
 from smif.model.model import Model
 
 __author__ = "Will Usher, Tom Russell"

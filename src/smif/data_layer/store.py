@@ -354,7 +354,7 @@ class Store:
         # Check that template scenario file does not define more than one variant
         if not scenario["variants"] or len(scenario["variants"]) > 1:
             raise SmifDataError(
-                "Template scenario file must define one" " unique template variant."
+                "Template scenario file must define one unique template variant."
             )
 
         # Read variant defined in template scenario file
@@ -933,8 +933,9 @@ class Store:
             self.data_store.write_interventions(string_id, interventions)
         else:
             raise SmifDataNotFoundError(
-                "Intervention {} not found for"
-                " sector model {}.".format(string_id, model_name)
+                "Intervention {} not found for sector model {}.".format(
+                    string_id, model_name
+                )
             )
 
     def read_interventions_file(self, model_name, string_id, assert_exists=False):
@@ -946,8 +947,9 @@ class Store:
                 return self.data_store.read_interventions([string_id])
         else:
             raise SmifDataNotFoundError(
-                "Intervention {} not found for"
-                " sector model {}.".format(string_id, model_name)
+                "Intervention {} not found for sector model {}.".format(
+                    string_id, model_name
+                )
             )
 
     def convert_interventions_data(self, sector_model_name, tgt_store, noclobber=False):
@@ -1014,8 +1016,9 @@ class Store:
             self.data_store.write_initial_conditions(string_id, initial_conditions)
         else:
             raise SmifDataNotFoundError(
-                "Initial condition {} not found for"
-                " sector model {}.".format(string_id, model_name)
+                "Initial condition {} not found for sector model {}.".format(
+                    string_id, model_name
+                )
             )
 
     def read_initial_conditions_file(self, model_name, string_id, assert_exists=False):
@@ -1027,8 +1030,9 @@ class Store:
                 return self.data_store.read_initial_conditions([string_id])
         else:
             raise SmifDataNotFoundError(
-                "Initial conditions {} not found for"
-                " sector model {}.".format(string_id, model_name)
+                "Initial conditions {} not found for sector model {}.".format(
+                    string_id, model_name
+                )
             )
 
     def convert_initial_conditions_data(
@@ -1422,7 +1426,6 @@ class Store:
 
         # For each sector model, get the outputs and create the tuples
         for model_name in sos_config["sector_models"]:
-
             model_config = self.read_model(model_name)
             outputs = model_config["outputs"]
 
@@ -1483,7 +1486,6 @@ class Store:
         model = self.read_model(model_name)
 
         for output in model["outputs"]:
-
             # Ignore if the output name doesn't match
             if output_name != output["name"]:
                 continue
@@ -1654,9 +1656,11 @@ class Store:
         available_outputs = [output["name"] for output in outputs]
 
         for output_name in output_names:
-            assert (
-                output_name in available_outputs
-            ), "{} is not an output of sector model {}.".format(output_name, model_name)
+            assert output_name in available_outputs, (
+                "{} is not an output of sector model {}.".format(
+                    output_name, model_name
+                )
+            )
 
         # The spec for each requested output must be the same. We check they have the same
         # coordinates

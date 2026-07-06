@@ -1,9 +1,7 @@
-from typing import Dict, List
 from unittest.mock import Mock
 
 from pytest import fixture, raises
 
-from smif.data_layer.store import Store
 from smif.decision.decision import DecisionManager, RuleBased
 from smif.exception import SmifDataNotFoundError
 
@@ -346,9 +344,7 @@ class TestDecisionManagerDecisions:
 
         dm.get_and_save_decisions(0, 2010)
 
-        actual = dm._store.read_state(
-            "test", 2010, decision_iteration=0
-        )  # type: List[Dict]
+        actual = dm._store.read_state("test", 2010, decision_iteration=0)  # type: List[Dict]
 
         expected = set([("decided", 2010), ("planned", 2010)])
         assert set([(x["name"], x["build_year"]) for x in actual]) == expected

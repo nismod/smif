@@ -338,9 +338,9 @@ class FileDataStore(DataStore):
         if timestep:
             assert isinstance(timestep, int), "Timestep must be an integer"
         if decision_iteration:
-            assert isinstance(
-                decision_iteration, int
-            ), "Decision iteration must be an integer"
+            assert isinstance(decision_iteration, int), (
+                "Decision iteration must be an integer"
+            )
 
         results_path = self._get_results_path(
             modelrun_id, model_name, data_array.name, timestep, decision_iteration
@@ -362,9 +362,9 @@ class FileDataStore(DataStore):
         if timestep:
             assert isinstance(timestep, int), "Timestep must be an integer"
         if decision_iteration:
-            assert isinstance(
-                decision_iteration, int
-            ), "Decision iteration must be an integer"
+            assert isinstance(decision_iteration, int), (
+                "Decision iteration must be an integer"
+            )
 
         results_path = self._get_results_path(
             model_run_name, model_name, output_name, timestep, decision_iteration

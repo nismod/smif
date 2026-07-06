@@ -2,6 +2,7 @@
 """Validate the correct format and presence of the config data
 for the system-of-systems model
 """
+
 import itertools
 
 from smif.exception import SmifDataError, SmifDataInputError, SmifValidationError
@@ -124,7 +125,6 @@ def _validate_sos_model_narratives(sos_model, sector_models):
     for narrative in sos_model["narratives"]:
         # Check provides are valid
         for model_name in narrative["provides"]:
-
             # A narrative can only provides for enabled models
             if model_name not in sos_model["sector_models"]:
                 errors.append(
@@ -665,7 +665,6 @@ def validate_planning_config(planning):
                 or not isinstance(planning_type["files"], list)
                 or len(planning_type["files"]) == 0
             ):
-
                 fmt = (
                     "No 'files' provided for the '{}' "
                     + "planning type in main config file."

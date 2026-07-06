@@ -232,7 +232,6 @@ class DataHandle(object):
         if self._current_timestep is None:
             raise ValueError("You must pass a timestep value to get state")
         else:
-
             sos_state = self._store.read_state(
                 self._modelrun_name, self._current_timestep, self._decision_iteration
             )

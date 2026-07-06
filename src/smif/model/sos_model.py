@@ -6,6 +6,7 @@ A system of systems model contains simulation and scenario models,
 and the dependencies between the models.
 
 """
+
 import itertools
 import logging
 from collections import defaultdict

@@ -218,7 +218,7 @@ def _write_toml_file(directory, name, data):
         Data to write (should be lists, dicts and simple values)
     """
     path = os.path.join(directory, "{}.toml".format(name))
-    if type(data) == list:
+    if isinstance(data, list):
         data = {"list": data}
     with open(path, "wb") as file_handle:
         return tomli_w.dump(data, file_handle)

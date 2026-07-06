@@ -8,7 +8,7 @@ NDimensionalRegister is used in :class:`smif.convert.interval.IntervalAdaptor` a
 import logging
 from abc import ABCMeta, abstractmethod
 from collections import OrderedDict, defaultdict
-from typing import Dict, List
+from typing import List
 
 import numpy as np  # type: ignore
 

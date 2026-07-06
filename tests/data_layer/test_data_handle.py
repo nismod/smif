@@ -315,7 +315,11 @@ class TestDataHandle:
         output_da = DataArray(output_spec, data)
 
         mock_store.write_results(
-            output_da, 1, "test_source", 2015, None  # write source model results
+            output_da,
+            1,
+            "test_source",
+            2015,
+            None,  # write source model results
         )
         actual = data_handle.get_data("population")
         assert output_da.name == "test"
@@ -461,7 +465,7 @@ class TestDataHandle:
         with raises(SmifDataMismatchError) as ex:
             DataArray(spec, data)
 
-        msg = "Data shape (1, 2) does not match spec " "(2, 1)"
+        msg = "Data shape (1, 2) does not match spec (2, 1)"
         assert msg in str(ex.value)
 
     def test_set_data_with_square_brackets(self, mock_store, mock_model):

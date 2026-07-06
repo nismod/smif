@@ -1,10 +1,8 @@
 """Test all ConfigStore implementations"""
 
-import getpass
-import os
 from copy import copy
 
-from pytest import fixture, mark, raises
+from pytest import fixture, raises
 
 from smif.data_layer.file.file_config_store import TomlConfigStore
 from smif.data_layer.memory_interface import MemoryConfigStore

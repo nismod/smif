@@ -25,7 +25,6 @@ def execute_model_run(model_run_ids, store, warm=False, dry=False):
     job_scheduler = SerialJobScheduler(store=store)
 
     for model_run_config in model_run_definitions:
-
         logging.info("Build model run from configuration data")
         modelrun = build_model_run(model_run_config)
 

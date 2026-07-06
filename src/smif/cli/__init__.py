@@ -70,7 +70,6 @@ import logging
 import os
 import sys
 from argparse import ArgumentParser
-from importlib import resources
 
 import pandas
 
@@ -167,9 +166,9 @@ def list_available_results(args):
                         if d == dec and sec == sec_model and out == output
                     }
                 )
-                assert (
-                    len(ts) > 0
-                ), "If a decision is available, so is at least one time step"
+                assert len(ts) > 0, (
+                    "If a decision is available, so is at least one time step"
+                )
 
                 res_str = ", ".join([str(t) for t in ts])
                 print("{} {}".format(base_str, res_str))
@@ -310,7 +309,7 @@ def prepare_model_runs(args):
             raise ValueError("Lower bound of variant range must be >=0")
         if var_start > nb_variants:
             raise ValueError(
-                "Lower bound of variant range greater" " than number of variants"
+                "Lower bound of variant range greater than number of variants"
             )
     if args.end is not None:
         var_end = args.end
@@ -318,13 +317,13 @@ def prepare_model_runs(args):
             raise ValueError("Upper bound of variant range must be >=0")
         if var_end > nb_variants - 1:
             raise ValueError(
-                "Upper bound of variant range cannot be greater"
-                " than {:d}".format(nb_variants - 1)
+                "Upper bound of variant range cannot be greater than {:d}".format(
+                    nb_variants - 1
+                )
             )
         if var_end < var_start:
             raise ValueError(
-                "Upper bound of variant range must be >= lower"
-                " bound of variant range"
+                "Upper bound of variant range must be >= lower bound of variant range"
             )
 
     store.prepare_model_runs(

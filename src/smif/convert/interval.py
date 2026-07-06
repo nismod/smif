@@ -235,9 +235,9 @@ class Interval(object):
 
         if isinstance(list_of_intervals, list):
             for interval in list_of_intervals:
-                assert isinstance(
-                    interval, tuple
-                ), "Interval must be constructed with tuples"
+                assert isinstance(interval, tuple), (
+                    "Interval must be constructed with tuples"
+                )
                 if len(interval) != 2:
                     msg = "Interval tuple must take form (<start>, <end>)"
                     raise ValueError(msg)

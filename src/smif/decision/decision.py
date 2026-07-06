@@ -18,7 +18,7 @@ import os
 from abc import ABCMeta, abstractmethod
 from logging import getLogger
 from types import MappingProxyType
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from smif.data_layer.data_handle import ResultsHandle
 from smif.data_layer.model_loader import ModelLoader
@@ -92,7 +92,6 @@ class DecisionManager(object):
         for index, strategy in enumerate(strategies):
             # Extract pre-specified planning interventions
             if strategy["type"] == "pre-specified-planning":
-
                 msg = "Adding %s planned interventions to pre-specified-planning %s"
                 self.logger.info(msg, len(strategy["interventions"]), index)
 
@@ -112,9 +111,7 @@ class DecisionManager(object):
             raise NotImplementedError(msg)
 
         for strategy in strategies:
-
             if strategy["type"] != "pre-specified-planning":
-
                 loader = ModelLoader()
 
                 # absolute path to be crystal clear for ModelLoader when loading python class
