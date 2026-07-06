@@ -128,11 +128,13 @@ Development Notes
   before adding them to the set of intervals
 
 """
+
 import logging
 from datetime import datetime, timedelta
 
 import numpy as np  # type: ignore
 from isodate import parse_duration  # type: ignore
+
 from smif.convert.adaptor import Adaptor
 from smif.convert.register import NDimensionalRegister, ResolutionSet
 

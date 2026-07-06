@@ -3,11 +3,13 @@
 Many methods simply proxy to config/metadata/data store implementations, but there is some
 cross-coordination and there are some convenience methods implemented at this layer.
 """
+
 import os
 
 import numpy as np
 import numpy.testing
 from pytest import fixture, raises
+
 from smif.data_layer import Store
 from smif.data_layer.data_array import DataArray
 from smif.data_layer.memory_interface import (

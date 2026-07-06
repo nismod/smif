@@ -1,8 +1,7 @@
 import logging
 import os
-import shutil
+from importlib import resources as importlib_resources
 
-from importlib import resources
 
 def copy_project_folder(directory):
     """Creates folder structure in the target directory
@@ -10,9 +9,10 @@ def copy_project_folder(directory):
     Parameters
     ----------
     directory:
-        Location where the sample project should be copied to
+        Location where the sample project should be copied
     """
-    _recursive_overwrite("smif", "sample_project", directory)
+    root = importlib_resources.files("smif").joinpath("sample_project")
+    _copy_traversable(root, directory)
     if directory == ".":
         dirname = "the current directory"
     else:
@@ -20,14 +20,18 @@ def copy_project_folder(directory):
     logging.info("Created sample project in %s", dirname)
 
 
-def _recursive_overwrite(pkg: str, src: str, dest: str):
-    if resources.files(pkg).joinpath(src).is_dir():
-        if not os.path.isdir(dest):
-            os.makedirs(dest)
-        contents = resources.files(pkg).joinpath(src).iterdir()
-        for item in contents:
-            _recursive_overwrite(pkg, os.path.join(src, item.name), os.path.join(dest, item.name))
+def _copy_traversable(traversable, dst):
+    """Recursively copy package resources to filesystem."""
+    if traversable.is_dir():
+        os.makedirs(dst, exist_ok=True)
+        for child in traversable.iterdir():
+            _copy_traversable(child, os.path.join(dst, child.name))
     else:
-        filename = resources.files(pkg) / src
-        with resources.as_file(filename) as path:
-            shutil.copyfile(path, dest)
+        # Ensure parent directory exists
+        parent = os.path.dirname(dst)
+        if parent and not os.path.isdir(parent):
+            os.makedirs(parent, exist_ok=True)
+        # Write bytes from the resource to the destination file
+        data = traversable.read_bytes()
+        with open(dst, "wb") as fh:
+            fh.write(data)

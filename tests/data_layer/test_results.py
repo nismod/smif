@@ -1,5 +1,4 @@
-"""Test the Results interface
-"""
+"""Test the Results interface"""
 
 import os
 from collections import OrderedDict
@@ -7,6 +6,7 @@ from collections import OrderedDict
 import numpy as np
 import pandas as pd
 from pytest import fixture, raises
+
 from smif.data_layer import DataArray, Results
 from smif.exception import SmifDataNotFoundError
 from smif.metadata import Spec

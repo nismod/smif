@@ -1,8 +1,9 @@
-"""DataArray provides a thin wrapper around multidimensional arrays and metadata
-"""
+"""DataArray provides a thin wrapper around multidimensional arrays and metadata"""
+
 from logging import getLogger
 
 import numpy as np  # type: ignore
+
 from smif.exception import SmifDataError, SmifDataMismatchError
 from smif.metadata.spec import Spec
 

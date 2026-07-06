@@ -9,7 +9,7 @@ planning:
   pre_specified:
     use: true
     files:
-      - pre-specified.yaml # The build instructions
+      - pre-specified.toml # The build instructions
   rule_based:
     use: false
   optimisation:

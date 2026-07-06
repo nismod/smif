@@ -6,6 +6,7 @@ from unittest.mock import Mock, PropertyMock
 
 import numpy as np
 from pytest import fixture, raises
+
 from smif.exception import SmifDataMismatchError, SmifValidationError
 from smif.metadata import RelativeTimestep, Spec
 from smif.model.dependency import Dependency

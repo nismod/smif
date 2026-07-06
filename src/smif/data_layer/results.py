@@ -1,9 +1,9 @@
-"""Results provides a common interface to access results from model runs.
-"""
+"""Results provides a common interface to access results from model runs."""
 
 from typing import Union
 
 import pandas as pd
+
 from smif.data_layer.store import Store
 
 
@@ -202,8 +202,7 @@ class Results:
             Data presented to read, write and update methods is in the
             incorrect format or of wrong dimensions to that expected
         SmifDataReadError
-            When unable to read data e.g. unable to handle file type or connect
-            to database
+            When unable to read data e.g. unable to handle file type
 
         Returns
         -------
@@ -293,8 +292,7 @@ class Results:
             Data presented to read, write and update methods is in the
             incorrect format or of wrong dimensions to that expected
         SmifDataReadError
-            When unable to read data e.g. unable to handle file type or connect
-            to database
+            When unable to read data e.g. unable to handle file type
 
         Returns
         -------

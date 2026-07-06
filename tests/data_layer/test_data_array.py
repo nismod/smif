@@ -1,11 +1,12 @@
-"""Test DataArray
-"""
+"""Test DataArray"""
+
 # pylint: disable=redefined-outer-name
 import numpy
 import pandas as pd
 import xarray as xr
 from numpy.testing import assert_array_equal
 from pytest import fixture, raises
+
 from smif.data_layer.data_array import DataArray, show_null
 from smif.exception import SmifDataMismatchError
 from smif.metadata import Spec
@@ -521,6 +522,9 @@ class TestMissingData:
         small_da_non_numeric.data[1, 1, 1] = None
         df = small_da_non_numeric.as_df()
         actual = show_null(df)
+        actual.test_data = actual.test_data.astype(
+            float
+        )  # coerce to float to handle NaN consistently as StringDtype is experimental
         levels = [["a1", "a2"], ["b1", "b2", "b3"], ["c1", "c2", "c3", "c4"]]
         codes = [[1], [1], [1]]
         names = ["a", "b", "c"]
@@ -530,6 +534,8 @@ class TestMissingData:
             index = pd.MultiIndex(levels=levels, labels=codes, names=names)
 
         expected = pd.DataFrame(
-            data=numpy.array([[None]], dtype=object), index=index, columns=["test_data"]
+            data=numpy.array([[None]], dtype=float),
+            index=index,
+            columns=["test_data"],
         )
         pd.testing.assert_frame_equal(actual, expected)

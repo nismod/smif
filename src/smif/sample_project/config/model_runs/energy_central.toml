@@ -1,0 +1,27 @@
+name = "energy_central"
+description = "Energy demand under central scenario, only 2010"
+stamp = "2017-09-18T12:53:23+00:00"
+timesteps = [
+    2010,
+    2015,
+    2020,
+]
+sos_model = "energy"
+
+[scenarios]
+population = "population_med"
+water_sector_energy_demand = "central"
+
+[narratives]
+
+[[strategies]]
+type = "pre-specified-planning"
+description = "build_nuclear"
+filename = "build_nuke"
+model_name = "energy_supply"
+
+[[strategies]]
+type = "rule-based"
+description = "reduce emissions"
+path = "planning/energyagent.py"
+classname = "EnergyAgent"

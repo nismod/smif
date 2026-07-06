@@ -6,6 +6,7 @@ another in the context of the set of planning timesteps.
 For example, if a model needs to know its own outputs from a previous year, we can specify the
 self-dependency using a relative timestep.
 """
+
 from enum import Enum
 from typing import List, Union
 

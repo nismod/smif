@@ -1,20 +1,18 @@
-"""Test all DataStore implementations
-"""
+"""Test all DataStore implementations"""
+
 from copy import deepcopy
 
 import numpy as np
-from pytest import fixture, mark, param, raises
+from pytest import fixture, raises
+
 from smif.data_layer.data_array import DataArray
-from smif.data_layer.database_interface import DbDataStore
 from smif.data_layer.file.file_data_store import CSVDataStore, ParquetDataStore
 from smif.data_layer.memory_interface import MemoryDataStore
 from smif.exception import SmifDataNotFoundError
 from smif.metadata import Spec
 
 
-@fixture(
-    params=["memory", "file_csv", "file_parquet", param("database", marks=mark.skip)]
-)
+@fixture(params=["memory", "file_csv", "file_parquet"])
 def handler(request, setup_empty_folder_structure):
     if request.param == "memory":
         handler = MemoryDataStore()
@@ -24,9 +22,6 @@ def handler(request, setup_empty_folder_structure):
     elif request.param == "file_parquet":
         base_folder = setup_empty_folder_structure
         handler = ParquetDataStore(base_folder)
-    elif request.param == "database":
-        handler = DbDataStore()
-        raise NotImplementedError
 
     return handler
 

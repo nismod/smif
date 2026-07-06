@@ -2,6 +2,7 @@ from copy import copy
 from unittest.mock import Mock
 
 from pytest import fixture, raises
+
 from smif.controller.modelrun import ModelRun, ModelRunner
 from smif.exception import SmifModelRunError
 from smif.metadata import RelativeTimestep, Spec

@@ -8,18 +8,21 @@ Simulation Modelling Integration Framework
    :target: https://github.com/nismod/smif/
    :alt: nismod/smif on github
 
-.. include:: ../README.rst
+.. include:: ../README.md
    :start-line: 8
    :end-line: 36
+   :parser: myst
 
 
-.. include:: ../README.rst
+.. include:: ../README.md
    :start-line: 36
    :end-line: 118
+   :parser: myst
 
 
-.. include:: ../README.rst
+.. include:: ../README.md
    :start-line: 241
+   :parser: myst
 
 
 Contents

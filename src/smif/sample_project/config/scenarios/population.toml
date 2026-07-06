@@ -1,0 +1,44 @@
+name = "population"
+description = "Growth in UK population"
+
+[[provides]]
+name = "population"
+description = ""
+dims = [
+    "country",
+]
+dtype = "int"
+unit = "people"
+
+[[provides]]
+name = "population_density"
+description = ""
+dims = [
+    "country",
+]
+dtype = "float"
+unit = "people/km²"
+
+[[variants]]
+name = "population_low"
+description = "Central Population (Low)"
+
+[variants.data]
+population = "population_low"
+population_density = "population_density_low"
+
+[[variants]]
+name = "population_med"
+description = "Central Population (Medium)"
+
+[variants.data]
+population = "population_med"
+population_density = "population_density_med"
+
+[[variants]]
+name = "population_high"
+description = "Central Population (High)"
+
+[variants.data]
+population = "population_high"
+population_density = "population_density_high"

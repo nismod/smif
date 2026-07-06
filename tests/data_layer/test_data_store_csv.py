@@ -1,5 +1,5 @@
-"""Test CSV data store
-"""
+"""Test CSV data store"""
+
 # pylint: disable=redefined-outer-name
 import csv
 import logging
@@ -8,6 +8,7 @@ from tempfile import TemporaryDirectory
 
 import numpy as np
 from pytest import fixture, mark, raises
+
 from smif.data_layer.data_array import DataArray
 from smif.data_layer.file.file_data_store import CSVDataStore
 from smif.exception import SmifDataMismatchError, SmifDataNotFoundError
@@ -331,7 +332,7 @@ class TestNarrativeVariantData:
     def test_narrative_data(
         self, setup_folder_structure, config_handler, get_narrative
     ):
-        """Test to dump a narrative (yml) data-file and then read the file
+        """Test to dump a narrative data-file and then read the file
         using the datafile interface. Finally check the data shows up in the
         returned dictionary.
         """

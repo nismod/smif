@@ -1,0 +1,26 @@
+name = "energy_water_cp_cr"
+description = "Combined energy and water under central scenarios"
+stamp = "2017-09-18T12:53:23+00:00"
+timesteps = [
+    2010,
+    2015,
+    2020,
+]
+sos_model = "energy_water"
+
+[scenarios]
+population = "population_med"
+climate = "central"
+reservoir_level = "historical"
+water_sector_energy_demand = "central"
+
+[narratives]
+technology = [
+    "high_tech_dsm",
+]
+
+[[strategies]]
+type = "pre-specified-planning"
+description = "build_nuclear"
+filename = "build_nuke"
+model_name = "energy_demand"

@@ -5,6 +5,7 @@ metadata is provided in the :class:`~smif.metadata.spec.Spec` definition.
 These should be useful to link models in simple cases, where it may be reasonable to rely on
 strong assumptions about the underlying distributions of the variables to be converted.
 """
+
 from smif.convert.adaptor import Adaptor
 from smif.convert.interval import IntervalAdaptor
 from smif.convert.region import RegionAdaptor

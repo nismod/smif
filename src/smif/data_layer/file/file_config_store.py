@@ -1,10 +1,12 @@
-"""File-backed config store
-"""
+"""File-backed config store"""
+
 import copy
 import os
+import tomllib
 from logging import getLogger
 
-from ruamel.yaml import YAML  # type: ignore
+import tomli_w
+
 from smif.data_layer.abstract_config_store import ConfigStore
 from smif.data_layer.validate import (
     validate_sos_model_config,
@@ -17,8 +19,8 @@ from smif.exception import (
 )
 
 
-class YamlConfigStore(ConfigStore):
-    """Config backend saving to YAML configuration files.
+class TomlConfigStore(ConfigStore):
+    """Config backend saving to toml configuration files.
 
     Arguments
     ---------
@@ -73,7 +75,7 @@ class YamlConfigStore(ConfigStore):
         """
         if self._project_config_cache_invalid:
 
-            self._project_config_cache = _read_yaml_file(self.base_folder, "project")
+            self._project_config_cache = _read_toml_file(self.base_folder, "project")
             self._project_config_cache_invalid = False
         return copy.deepcopy(self._project_config_cache)
 
@@ -87,7 +89,7 @@ class YamlConfigStore(ConfigStore):
         """
         self._project_config_cache_invalid = True
         self._project_config_cache = None
-        _write_yaml_file(self.base_folder, "project", data)
+        _write_toml_file(self.base_folder, "project", data)
 
     def _read_config(self, config_type, config_name):
         """Read config item - used by decorators for existence/consistency checks"""
@@ -100,7 +102,7 @@ class YamlConfigStore(ConfigStore):
 
     # region Model runs
     def read_model_runs(self):
-        names = _read_filenames_in_dir(self.config_folders["model_runs"], ".yml")
+        names = _read_filenames_in_dir(self.config_folders["model_runs"], ".toml")
         model_runs = [self.read_model_run(name) for name in names]
         return model_runs
 
@@ -111,16 +113,16 @@ class YamlConfigStore(ConfigStore):
         return modelrun_config
 
     def _read_model_run(self, model_run_name):
-        return _read_yaml_file(self.config_folders["model_runs"], model_run_name)
+        return _read_toml_file(self.config_folders["model_runs"], model_run_name)
 
     def _overwrite_model_run(self, model_run_name, model_run):
-        _write_yaml_file(self.config_folders["model_runs"], model_run_name, model_run)
+        _write_toml_file(self.config_folders["model_runs"], model_run_name, model_run)
 
     def write_model_run(self, model_run):
         _assert_file_not_exists(self.config_folders, "model_run", model_run["name"])
         config = copy.copy(model_run)
         config["strategies"] = []
-        _write_yaml_file(self.config_folders["model_runs"], config["name"], config)
+        _write_toml_file(self.config_folders["model_runs"], config["name"], config)
 
     def update_model_run(self, model_run_name, model_run):
         if model_run["name"] != model_run_name:
@@ -137,28 +139,28 @@ class YamlConfigStore(ConfigStore):
     def delete_model_run(self, model_run_name):
         _assert_file_exists(self.config_folders, "model_run", model_run_name)
         os.remove(
-            os.path.join(self.config_folders["model_runs"], model_run_name + ".yml")
+            os.path.join(self.config_folders["model_runs"], model_run_name + ".toml")
         )
 
     # endregion
 
     # region System-of-system models
     def read_sos_models(self):
-        names = _read_filenames_in_dir(self.config_folders["sos_models"], ".yml")
+        names = _read_filenames_in_dir(self.config_folders["sos_models"], ".toml")
         sos_models = [self.read_sos_model(name) for name in names]
         return sos_models
 
     def read_sos_model(self, sos_model_name):
         _assert_file_exists(self.config_folders, "sos_model", sos_model_name)
 
-        data = _read_yaml_file(self.config_folders["sos_models"], sos_model_name)
+        data = _read_toml_file(self.config_folders["sos_models"], sos_model_name)
         if self.validation:
             validate_sos_model_format(data)
         return data
 
     def write_sos_model(self, sos_model):
         _assert_file_not_exists(self.config_folders, "sos_model", sos_model["name"])
-        _write_yaml_file(
+        _write_toml_file(
             self.config_folders["sos_models"], sos_model["name"], sos_model
         )
 
@@ -175,28 +177,28 @@ class YamlConfigStore(ConfigStore):
                 self.read_models(),
                 self.read_scenarios(),
             )
-        _write_yaml_file(
+        _write_toml_file(
             self.config_folders["sos_models"], sos_model["name"], sos_model
         )
 
     def delete_sos_model(self, sos_model_name):
         _assert_file_exists(self.config_folders, "sos_model", sos_model_name)
         os.remove(
-            os.path.join(self.config_folders["sos_models"], sos_model_name + ".yml")
+            os.path.join(self.config_folders["sos_models"], sos_model_name + ".toml")
         )
 
     # endregion
 
     # region Models
     def read_models(self):
-        names = _read_filenames_in_dir(self.config_folders["sector_models"], ".yml")
+        names = _read_filenames_in_dir(self.config_folders["sector_models"], ".toml")
         models = [self.read_model(name) for name in names]
         return models
 
     def read_model(self, model_name):
         _assert_file_exists(self.config_folders, "sector_model", model_name)
 
-        model = _read_yaml_file(self.config_folders["sector_models"], model_name)
+        model = _read_toml_file(self.config_folders["sector_models"], model_name)
         return model
 
     def write_model(self, model):
@@ -207,7 +209,7 @@ class YamlConfigStore(ConfigStore):
             model["interventions"] = []
 
         model = _skip_coords(model, ("inputs", "outputs", "parameters"))
-        _write_yaml_file(self.config_folders["sector_models"], model["name"], model)
+        _write_toml_file(self.config_folders["sector_models"], model["name"], model)
 
     def update_model(self, model_name, model):
         if model["name"] != model_name:
@@ -217,10 +219,10 @@ class YamlConfigStore(ConfigStore):
         _assert_file_exists(self.config_folders, "sector_model", model_name)
         model = copy.deepcopy(model)
 
-        # ignore interventions and initial conditions which the app doesn't handle
+        # ignore interventions and initial conditions (which the app UI didn't handle)
         if model["interventions"] or model["initial_conditions"]:
 
-            old_model = _read_yaml_file(
+            old_model = _read_toml_file(
                 self.config_folders["sector_models"], model["name"]
             )
 
@@ -234,12 +236,12 @@ class YamlConfigStore(ConfigStore):
 
         model = _skip_coords(model, ("inputs", "outputs", "parameters"))
 
-        _write_yaml_file(self.config_folders["sector_models"], model["name"], model)
+        _write_toml_file(self.config_folders["sector_models"], model["name"], model)
 
     def delete_model(self, model_name):
         _assert_file_exists(self.config_folders, "sector_model", model_name)
         os.remove(
-            os.path.join(self.config_folders["sector_models"], model_name + ".yml")
+            os.path.join(self.config_folders["sector_models"], model_name + ".toml")
         )
 
     # endregion
@@ -247,31 +249,31 @@ class YamlConfigStore(ConfigStore):
     # region Scenarios
     def read_scenarios(self):
         scenario_names = _read_filenames_in_dir(
-            self.config_folders["scenarios"], ".yml"
+            self.config_folders["scenarios"], ".toml"
         )
         return [self.read_scenario(name) for name in scenario_names]
 
     def read_scenario(self, scenario_name):
         _assert_file_exists(self.config_folders, "scenario", scenario_name)
 
-        scenario = _read_yaml_file(self.config_folders["scenarios"], scenario_name)
+        scenario = _read_toml_file(self.config_folders["scenarios"], scenario_name)
         return scenario
 
     def write_scenario(self, scenario):
         _assert_file_not_exists(self.config_folders, "scenario", scenario["name"])
         scenario = _skip_coords(scenario, ["provides"])
-        _write_yaml_file(self.config_folders["scenarios"], scenario["name"], scenario)
+        _write_toml_file(self.config_folders["scenarios"], scenario["name"], scenario)
 
     def update_scenario(self, scenario_name, scenario):
         _assert_file_exists(self.config_folders, "scenario", scenario_name)
         scenario = _skip_coords(scenario, ["provides"])
-        _write_yaml_file(self.config_folders["scenarios"], scenario["name"], scenario)
+        _write_toml_file(self.config_folders["scenarios"], scenario["name"], scenario)
 
     def delete_scenario(self, scenario_name):
         _assert_file_exists(self.config_folders, "scenario", scenario_name)
         os.remove(
             os.path.join(
-                self.config_folders["scenarios"], "{}.yml".format(scenario_name)
+                self.config_folders["scenarios"], "{}.toml".format(scenario_name)
             )
         )
 
@@ -329,37 +331,39 @@ class YamlConfigStore(ConfigStore):
     # endregion
 
 
-def _read_yaml_file(directory, name):
-    """Read yaml config file into plain data (lists, dicts and simple values)
+def _read_toml_file(directory, name):
+    """Read config file into plain data (lists, dicts and simple values)
 
     Parameters
     ----------
     directory : str
     name : str
     """
-    path = os.path.join(directory, "{}.yml".format(name))
-    with open(path, "r") as file_handle:
-        return YAML().load(file_handle)
+    path = os.path.join(directory, "{}.toml".format(name))
+    with open(path, "rb") as file_handle:
+        data = tomllib.load(file_handle)
+        if list(data.keys()) == ["list"]:
+            data = data["list"]
+    return data
 
 
-def _write_yaml_file(directory, name, data):
-    """Write plain data to a file as yaml
+def _write_toml_file(directory, name, data):
+    """Write plain data to a file
 
     Arguments
     ---------
     directory: str
         Path to directory
     name: str
-        Name of config item (filename without .yml extension)
+        Name of config item (filename without .toml extension)
     data
         Data to be written to the file
     """
-    path = os.path.join(directory, "{}.yml".format(name))
-    with open(path, "w") as file_handle:
-        yaml = YAML()
-        yaml.default_flow_style = False
-        yaml.allow_unicode = True
-        return yaml.dump(data, file_handle)
+    path = os.path.join(directory, "{}.toml".format(name))
+    if type(data) == list:
+        data = {"list": data}
+    with open(path, "wb") as file_handle:
+        return tomli_w.dump(data, file_handle)
 
 
 def _assert_file_exists(file_dir, dtype, name):
@@ -375,21 +379,21 @@ def _assert_file_not_exists(file_dir, dtype, name):
 def _file_exists(file_dir, dtype, name):
     dir_key = "%ss" % dtype
     try:
-        return os.path.exists(os.path.join(file_dir[dir_key], name + ".yml"))
+        return os.path.exists(os.path.join(file_dir[dir_key], name + ".toml"))
     except TypeError:
         msg = "Could not parse file name {} and dtype {}"
         raise SmifDataNotFoundError(msg.format(name, dtype))
 
 
 def _read_filenames_in_dir(path, extension):
-    """Returns the name of the Yaml files in a certain directory
+    """Returns the name of the files in a certain directory
 
     Arguments
     ---------
     path: str
         Path to directory
     extension: str
-        Extension of files (such as: '.yml' or '.csv')
+        Extension of files (such as: '.toml' or '.csv')
 
     Returns
     -------

@@ -2,12 +2,14 @@
 
 Runs a job graph by calling execute_model_step for each operation in order
 """
+
 import itertools
 import logging
 import traceback
 from collections import defaultdict
 
 import networkx
+
 from smif.controller.execute_step import execute_model_before_step, execute_model_step
 from smif.model import ModelOperation
 

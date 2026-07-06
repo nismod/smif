@@ -1,8 +1,10 @@
 """Tests functionality of NDimensionalRegister class that computes coefficients for
 different operations
 """
+
 import numpy as np
 from pytest import mark
+
 from smif.convert.adaptor import Adaptor
 
 

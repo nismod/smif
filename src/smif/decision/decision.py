@@ -8,6 +8,7 @@ and assets available within a model run.
 The interventions available in a model run are stored in a dict keyed by name.
 
 """
+
 __author__ = "Will Usher, Tom Russell"
 __copyright__ = "Will Usher, Tom Russell"
 __license__ = "mit"
@@ -585,9 +586,9 @@ class RuleBased(DecisionModule):
         if self.satisfied and (self.current_timestep == self.last_timestep):
             return None
         elif self.satisfied and (self.current_timestep < self.last_timestep):
-            self._max_iteration_by_timestep[
-                self.current_timestep
-            ] = self.current_iteration
+            self._max_iteration_by_timestep[self.current_timestep] = (
+                self.current_iteration
+            )
             self.satisfied = False
             self.current_timestep = self.next_timestep
             self.current_iteration += 1

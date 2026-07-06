@@ -1,0 +1,41 @@
+name: package
+
+on:
+    release:
+        types: [published]
+
+jobs:
+    build:
+        name: Build
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Build SDist and wheel
+              run: pipx run build
+
+            - name: Check metadata
+              run: pipx run twine check dist/*
+
+            - uses: actions/upload-artifact@v4
+              with:
+                  path: dist/*
+
+    upload_all:
+        name: Upload if release
+        needs: [build]
+        runs-on: ubuntu-latest
+        environment:
+            name: pypi
+            url: https://pypi.org/p/smif
+        permissions:
+            id-token: write
+        if: github.event_name == 'release' && github.event.action == 'published'
+
+        steps:
+            - uses: actions/download-artifact@v4
+              with:
+                  path: dist
+
+            - name: Deploy to PyPI
+              uses: pypa/gh-action-pypi-publish@release/v1
